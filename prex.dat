@@ -1,0 +1,40 @@
+
+# (optional) Setup parameters for hamc for PREX
+
+# Setup choices for HRS
+hrs_setup warmseptum uselerose
+
+spreader_collim radlen 0.042
+
+# HRS momentum and angle
+HRS_P0 1.06
+HRS_angle 5
+
+# The HRS_acceptoff is normally commented out (or deleted)
+# When uncommented it's a way of testing the acceptance model.
+# Turn on one thing at a time to check the cuts at each point.
+#  1         2       3        4             5     6     7        8        9   10
+# target, septin, septout, collim(collim2), q1, dipin, dipexit, q3in, q3exit, focal
+# HRS_acceptoff 0 0 0 0 0 0 0 0 1 0 0 0
+
+# Beam parameters.  Raster is in centimeters.
+beam  E0 1.04 E0sigma 0.00011   rastered  xraster 0.005  yraster 0.005
+
+# range of angles (scatt, azimuth) in degrees
+# phi=0 is up.  phi=90 is into HRS,  phi=180 is down.
+out_angles thetamin 0.2 thetamax 12  phimin 0 phimax 180
+
+kick:collimator Y=0.2 X=0.4 Z=54 And nothing else
+
+ntuple hamcTgtPREX Ztgt 0
+ntuple hamcTrackOut theta 0
+ntuple hamcTrackOut phi 0
+ntuple hamcPhysPREX pmom 4
+
+# uncomment the following line if you want to iterate
+# iterate
+
+# Here is the variable to iterate
+kick:track theta 0.1
+
+

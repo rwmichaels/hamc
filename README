@@ -1,0 +1,38 @@
+
+============================================================================
+
+     hamc  =  Hall  A  Monte  Carlo
+
+     R. Michaels,  Nov 2008
+
+============================================================================
+
+To proceed do the following
+
+Compile:
+
+    make clean
+    make
+
+Run
+
+    ./hamc
+   (and don't forget the dot "." and slash "/")
+
+Histogram output
+
+    hamc.root
+
+
+I/O control of code
+
+    prex.dat
+
+
+Known issues
+
+-  Makefile does not have all dependencies correct yet
+   (sometimes need to "make clean ; make")
+
+-  all the classes are somewhat incomplete, under test
+
