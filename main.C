@@ -27,6 +27,14 @@ int main(int argc, char **argv)
 //   happex = new hamcExptHAPPEX();
 
 
+  Int_t nevents = 200000;
+
+  if (argc >= 2) {
+    nevents = atoi(argv[1]);
+  }
+ 
+  cout << "Number of events to process "<<nevents<<endl;
+
   string setupfile="prex.dat";
 
   prex->Init(setupfile);
