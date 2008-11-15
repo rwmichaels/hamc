@@ -217,7 +217,7 @@ void hamcSpecHRS::AddBreakPoint(Int_t where) {
       break;
 
     case ICOLLIM:
-      break_point.push_back(new hamcSpecBrk(where, new hamcBox(-3.5,3.5,-5,5)));
+      break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.12,0.12,-0.12,0.12)));
       idx = break_point.size()-1;
       break_point[idx]->aperture->SetCenter(0,0);
       break;

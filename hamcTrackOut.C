@@ -39,6 +39,8 @@ hamcTrackOut::~hamcTrackOut() {
 
 Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 
+  hamcStrParser parser;
+
   hamcSpecHRS *spec = expt->GetSpectrom(ispec);
   if (!spec) {
     cout << "hamcTrackOut::ERROR: no spectrometer "<<ispec<<endl;
@@ -46,6 +48,15 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
   }
 
   P0 = spec->GetP0();
+  dP0_iter = 0;
+
+  parser.Load(expt->inout->GetStrVect("kick:track"));
+  parser.Print();
+  if (parser.IsFound("P0")) {
+    if (expt->inout->numiter > 1) dP0_iter = parser.GetData();  
+    cout << "Will iterate P0 by "<<100*dP0_iter<<" %"<<endl;
+  }   
+
   P0sigma = spec->GetP0Sigma();
   hamcTrack::Init();
 
@@ -63,13 +74,12 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 
 // Obtain the ranges from the input file if it exists
 
-   hamcStrParser parser;
    parser.Load(expt->inout->GetStrVect("out_angles"));
    if (parser.IsFound("thetamin")) {
     parser.Print();
     thetamin = PI*parser.GetData()/180; 
-   }   
-   if (parser.IsFound("thetamax")) {
+   }    
+  if (parser.IsFound("thetamax")) {
      thetamax = PI*parser.GetData()/180; 
    }
    if (parser.IsFound("phimin")) {
@@ -87,7 +97,7 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
    Int_t nbin=120;
 
 
-// Book a few default histograms (this is just an example)
+// Book a few default histograms 
 //
 //                        to-weight        brk point
 //                           ^   care-acc?   ^     hist id
@@ -124,6 +134,9 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
    expt->inout->BookHisto(kFALSE, kFALSE, IFOCAL, "thph",
 	  "Theta-Phi at target (unbiased)",&ph0,nbin,-0.3,0.3,
 			  &th0,nbin,-0.3,0.3);
+   expt->inout->BookHisto(kFALSE, kTRUE, ICOLLIM, "thphc",
+	  "Theta-Phi at target (collimated)",&ph0,nbin,-0.3,0.3,
+			  &th0,nbin,-0.3,0.3);
    expt->inout->BookHisto(kFALSE, kTRUE, IFOCAL, "thpha",
 	  "Theta-Phi at target (accepted)",&ph0,nbin,-0.3,0.3,
 			  &th0,nbin,-0.3,0.3);
@@ -131,6 +144,21 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 	  "Theta-Phi at target (accepted, weighted)",
                           &ph0,nbin,-0.3,0.3,
 			  &th0,nbin,-0.3,0.3);
+   expt->inout->BookHisto(kFALSE, kFALSE, IFOCAL, "dpp",
+			  "Dpp generated ",
+                          &dpp0,nbin,-0.003,0.006);
+
+// For designing the collimator
+   expt->inout->BookHisto(kFALSE, kFALSE, ICOLLIM, "xycoll",
+			  "X-Y at collimator",
+			  &ytrans, nbin, -0.5, 0.5,
+                          &xtrans, nbin, -0.5, 0.5);
+
+   expt->inout->BookHisto(kFALSE, kTRUE, ICOLLIM, "xycolla",
+			  "X-Y at collimator in acceptance",
+			  &ytrans, nbin, -0.5, 0.5,
+                          &xtrans, nbin, -0.5, 0.5);
+
 
 
    htp = new TH2F("htp","Generated Theta-Phi",
@@ -217,16 +245,24 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 
    expt->inout->BookHisto(kFALSE, kFALSE, IFOCAL, "xyfoc1", 
 		      "X-Y at focal plane (even if not accepted)", 
-                            &ytrans, nbin,-1,1,
-                            &xtrans, nbin,-1,1); 
+                            &ytrans, nbin,-0.4,0.4,
+                            &xtrans, nbin,-0.4,0.4); 
    expt->inout->BookHisto(kFALSE, kTRUE, IFOCAL, "xyfoc2", 
 		      "Accepted X-Y at focal plane", 
-                            &ytrans, nbin,-1,1,
-                            &xtrans, nbin,-1,1); 
+                            &ytrans, nbin,-0.4,0.4,
+                            &xtrans, nbin,-0.4,0.4); 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "xyfoc3", 
 		      "Weighted X-Y at focal plane", 
-                            &ytrans, nbin,-1,1,
-                            &xtrans, nbin,-1,1);
+                            &ytrans, nbin,-0.4,0.4,
+                            &xtrans, nbin,-0.4,0.4);
+    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "xyfoc4", 
+		      "Weighted X-Y at focal plane (X on X-axis)", 
+                            &xtrans, nbin,-0.2,0.2,
+                            &ytrans, nbin,-0.2,0.2);
+    expt->inout->BookHisto(kFALSE, kTRUE, IFOCAL, "xyfoc5", 
+		      "Unweighted X-Y at focal plane (X on X-axis)", 
+                            &xtrans, nbin,-0.2,0.2,
+                            &ytrans, nbin,-0.2,0.2);
 
 
     // Add some variables to the event ntuple
@@ -328,10 +364,14 @@ Int_t hamcTrackOut::Generate(hamcExpt *expt) {
 
 // Generate momentum
   pmom = P0 + P0sigma*gRandom->Gaus();
+  if (expt->iteration > 0) {
+       pmom = P0 * (1 + dP0_iter) + P0sigma*gRandom->Gaus();
+  }
   energy = TMath::Sqrt(pmom*pmom + mass*mass);
   
   Float_t dpp = 0;
   if (P0 != 0) dpp = (pmom - P0)/P0;
+
 
   tvect->PutDpp(dpp);
 
