@@ -39,7 +39,7 @@ int main(int argc, char **argv)
 
   prex->Init(setupfile);
 
-  prex->Run(20000);
+  prex->Run(nevents);
 
   prex->Summary();
 

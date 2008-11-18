@@ -83,7 +83,7 @@ class hamcPhyPREX : public hamcPhysics {
     /*-----Radiative Corrections */
      Int_t InitRadCor(Float_t*, Int_t, Float_t, TH1F*); /*Divide the function (calculated by CalcualteIe() into cells and saves in elist */
 
-     Float_t tlen;  // target length (RL)
+     Float_t tlen,tgtM;  // target length (RL), target mass (GeV)
      Float_t *elistInternal;
      Float_t *elistExternal;
          

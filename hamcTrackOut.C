@@ -261,8 +261,8 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
                             &ytrans, nbin,-0.2,0.2);
     expt->inout->BookHisto(kFALSE, kTRUE, IFOCAL, "xyfoc5", 
 		      "Unweighted X-Y at focal plane (X on X-axis)", 
-                            &xtrans, nbin,-0.2,0.2,
-                            &ytrans, nbin,-0.2,0.2);
+                            &xtrans, nbin,-0.06,0.1,
+                            &ytrans, nbin,-0.1,0.1);
 
 
     // Add some variables to the event ntuple

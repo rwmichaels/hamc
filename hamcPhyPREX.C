@@ -52,6 +52,8 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
 
   tlen = expt->target->GetRadLength();
 
+  tgtM = expt->target->GetMass();
+
   /* Initializing Radiative Corrections*/
   ncell1 = 19065; //initializing constants (number of cells)
   ncell2 = 9768;  //@todo This number shouldn't be constant, but stop when 20% are reached
@@ -72,21 +74,14 @@ Int_t hamcPhyPREX::Radiate(){
 
 Int_t hamcPhyPREX::Generate(hamcExpt *expt) {
 
-#ifdef TEST1
-  // Hmmm. CrossSection isn't working (some index gets out of range), 
-  // so I'll write a bloody kluge for now
-  crsec = 100*(0.16 - expt->event->trackout[0]->GetTheta());// for tests
- 
-  return OK;
-#endif
+  Float_t energy = expt->event->beam->GetEnergy();
+  Float_t theta = expt->event->trackout[0]->GetTheta();
 
 // Compute the cross section for PREX
-   CrossSection(expt->event->beam->GetEnergy(), 
-                expt->event->trackout[0]->GetTheta(), 0);
+  CrossSection(energy, theta, 0);
 
-// Also must compute asymmetry ...
-   Asymmetry(expt->event->beam->GetEnergy(), 
-             expt->event->trackout[0]->GetTheta(), 0);
+// Also must compute asymmetry 
+   Asymmetry(energy, theta,0);
 
    return OK;
 }
@@ -136,6 +131,7 @@ Int_t hamcPhyPREX::CrossSection(Float_t energy, Float_t angle_rad, Int_t stretch
 
   return OK;
 }
+
 
 Int_t hamcPhyPREX::Asymmetry(Float_t energy, Float_t angle_rad, Int_t stretch) {
 
@@ -244,8 +240,6 @@ Float_t hamcPhyPREX::CalculateCrossSection(Float_t energy, Float_t angle) {
   Float_t pi = 3.1415926; //@todo Expt class also defines pi
   Float_t halfangle_rad = (angle/2)*(pi/180);
   
-  //mott = 0.000034893 * (pow(cos(halfangle),2)) / ((pow(energy,2))* pow(sin(halfangle),4));
-  //mott = pow((1/137*82*0.197*1) ,2) / (400*1*pow(sin(halfangle/2),4));
   Float_t sin4 = pow(sin(halfangle_rad),4);
   mott = pow(((82*0.197*cos(halfangle_rad))/137),2)/ (400*pow(energy,2)*sin4);
    
@@ -290,7 +284,6 @@ Float_t hamcPhyPREX::CalculateQsq(Float_t energy, Float_t angle){
   Float_t pi = 3.1415926; 
   Float_t Ebeam = energy;
   Float_t theta_rad = angle*pi/180;
-  Float_t  tgtM = 195.1; //@todo take this data from hamcExpt
   Float_t  Eprime = Ebeam / (1 + (Ebeam/tgtM)*(1-TMath::Cos(theta_rad)) );
   Float_t qsq = 2*Ebeam*Eprime*(1-TMath::Cos(theta_rad));
   return qsq;
