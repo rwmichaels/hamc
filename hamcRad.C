@@ -81,7 +81,7 @@ Int_t hamcRad::Init(Float_t E, Float_t theta, Float_t z, Float_t rl, Float_t tl)
   trlen = rl;
   tlen  = tl;
 
-  Float_t theta_rad = theta*3.1415/180;
+  Float_t theta_rad = theta*pi/180;
   qsq = 2*E0*E0*(1-TMath::Cos(theta_rad));
   Float_t msq = (me/1000)*(me/1000);  // GeV^2
 
