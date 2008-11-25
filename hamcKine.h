@@ -20,9 +20,7 @@ class hamcKine {
      hamcKine();
      virtual ~hamcKine(); 
 
-#ifdef NOT_STANDALONE
      Int_t Init(hamcExpt *expt);
-#endif
 
      Int_t Init(std::string proc, 
           Float_t ebeam, Float_t theta_central, 
@@ -33,9 +31,7 @@ class hamcKine {
 
      void SetDisDef(Float_t xlo, Float_t xhi, Float_t qsqlo, Float_t wsqlo);
 
-#ifdef NOT_STANDALONE
      Int_t Generate(hamcExpt *expt);  // event generator
-#endif
      Int_t Generate(Float_t ebeam, Float_t deafter); 
 
 // Event variables.
@@ -64,6 +60,7 @@ class hamcKine {
      Float_t mass_tgt;  
      Float_t thmin, thmax, phmin, phmax, epmin, epmax;
      Float_t xbjlo, xbjhi, qsqlo, wsqlo;
+     Float_t dP0_iter;
 
 // Parameters for cells of const. solid angle
      static const Int_t MAXCELL=20000;

@@ -1,11 +1,12 @@
-
 //  hamcBeam   -- Incoming beam
-//  R. Michaels  Sept 2007
+//  R. Michaels  Nov 2008
 
 #include "hamcBeam.h"
-#include "hamcInout.h"
 #include "hamcTrack.h"
 #include "hamcExpt.h"
+#include "hamcPhysics.h"
+#include "hamcRad.h"
+#include "hamcInout.h"
 #include "hamcTarget.h"
 #include "TRandom.h"
 #include "Rtypes.h"
@@ -122,14 +123,10 @@ Int_t hamcBeam::Generate(hamcExpt *expt) {
   tvect->PutZ(expt->target->GetZScatt());
 
   energy = E0 + E0sigma*gRandom->Gaus();
+  Radiate(expt);  // modifies the energy
 
-  if (energy > mass) {
-    pmom = TMath::Sqrt(energy*energy - mass*mass);
-  } else {
-    pmom = 0;
-    cout << "hamcBeam::ERROR:  E < m ?? "<<endl;
-    return ERROR;
-  }
+  if (energy < mass) energy = mass;  // extrema of rad tail
+  pmom = TMath::Sqrt(energy*energy - mass*mass);
 
 // Assume the beam is along the Z axis.
 
@@ -140,7 +137,13 @@ Int_t hamcBeam::Generate(hamcExpt *expt) {
   return OK;
 }
 
+Int_t hamcBeam::Radiate(hamcExpt* expt) {
 
+  Float_t dEin = expt->physics->radiation->GetDeExternIn();
+
+  energy = energy - dEin;
+
+}
 
 
 

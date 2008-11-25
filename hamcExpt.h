@@ -48,7 +48,6 @@ class hamcExpt {
      hamcInout   *inout;
      Int_t iteration;    // which iteration we are on.
      std::string name;
-     Float_t beam_energy, beam_energy_sigma;
 
      std::string GetSetupFile() { return setupfile; };
 

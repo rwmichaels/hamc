@@ -21,7 +21,7 @@ using namespace std;
 ClassImp(hamcTrack)
 #endif
 
-hamcTrack::hamcTrack(string pd) : pid(pd),origin(ITARGET),E0(0),P0(0),P0sigma(0),energy(0),theta(0),phi(0),did_init(kFALSE),inaccept(kFALSE)
+hamcTrack::hamcTrack(string pd) : origin(ITARGET),pid(pd),E0(0),P0(0),P0sigma(0),energy(0),theta(0),phi(0),did_init(kFALSE),inaccept(kFALSE)
 {
   trktype="none";
   tvect = new hamcTransVect();
@@ -29,7 +29,7 @@ hamcTrack::hamcTrack(string pd) : pid(pd),origin(ITARGET),E0(0),P0(0),P0sigma(0)
   InitMass();
 }
 
-hamcTrack::hamcTrack(string pd, Float_t ee, Float_t x, Float_t th, Float_t y, Float_t ph, Float_t dp) : pid(pd),origin(ITARGET),E0(ee),P0sigma(0),energy(ee),theta(0),phi(0),inaccept(kFALSE) {
+hamcTrack::hamcTrack(string pd, Float_t ee, Float_t x, Float_t th, Float_t y, Float_t ph, Float_t dp) : origin(ITARGET),pid(pd),E0(ee),P0sigma(0),energy(ee),theta(0),phi(0),inaccept(kFALSE) {
   trktype="none";
   tvect = new hamcTransVect(x, th, y, ph, dp);   // gets modified by transport
   tvect_orig = new hamcTransVect(x, th, y, ph, dp);  // origin of track.
@@ -166,12 +166,6 @@ void hamcTrack::MultScatt(Float_t radlen, Int_t where) {
 
   *tvect_orig = *tvect;
   origin = where;
-
-}
-
-void hamcTrack::Radiate(hamcExpt *expt) {
-
-  // does nothing yet
 
 }
 

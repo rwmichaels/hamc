@@ -1,17 +1,13 @@
 //  hamcRad   -- Internal and external Brehmstrahlung
-//  This will be a member of hamcPhysics.
-
-//  Will get rid of the "NOTSTANDALONE" ifdefs soon.
-//  This illustrates how to develop a new class, first 
-//  isolation, and then coupled to the other classes.
+//  Member of hamcPhysics
 
 //  R. Michaels  Nov 2008
 
 
-#ifdef NOTSTANDALONE
 #include "hamcExpt.h"
-#endif
-
+#include "hamcTarget.h"
+#include "hamcEvent.h"
+#include "hamcBeam.h"
 #include "hamcRad.h"
 #include "TRandom.h"
 #include "Rtypes.h"
@@ -38,7 +34,6 @@ hamcRad::~hamcRad()
 }
 
 
-#ifdef NOT_STANDALONE
 Int_t hamcRad::Init(hamcExpt* expt) {
 // Here you want to grab from "expt" the parameters you need
 // which depends on experiment and is the same for all events,
@@ -47,14 +42,19 @@ Int_t hamcRad::Init(hamcExpt* expt) {
   Float_t tlen   = expt->target->GetLength();
   Float_t trlen  = expt->target->GetRadLength();
   Float_t tgtZ   = expt->target->GetZ();
-  Float_t energy = expt->event->beam->GetEnergy();
+  Float_t energy = 1;
+  if (expt->event->beam) {
+      energy = expt->event->beam->GetE0();
+  } else {
+    cout << "hamcRad::WARNING:  No beam, using default energy = "
+	 <<energy<<"  GeV"<<endl;
+  }
 // The following only works for single-arm.
   Float_t theta  = expt->GetSpectrom(0)->GetScattAngle();
 
   return Init(energy, theta, tgtZ, trlen, tlen);
 
 }
-#endif
 
 Int_t hamcRad::Init(Float_t E, Float_t theta, Float_t z, Float_t rl, Float_t tl) {
 
@@ -64,11 +64,12 @@ Int_t hamcRad::Init(Float_t E, Float_t theta, Float_t z, Float_t rl, Float_t tl)
 // radlen = fractional radiation length, density-weighted
 // len = actual length (meters)
 
-  ldebug = 0;
   Npts = 2000;
   yfact = 1e7;
   nybin = 1000;
   Nslices = 10;  // # slices of target.
+
+  if (ldebug) cout << "hamcRad init "<<E<<"  "<<theta<<"  "<<z<<"  "<<rl<<"  "<<tl<<endl;  
 
   Float_t x1,x2;
 
@@ -198,19 +199,17 @@ Int_t hamcRad::LookupIdx(Float_t tl) {
 }
 
 
-#ifdef NOT_STANDALONE
 Int_t hamcRad::Generate(hamcExpt* expt) {
 // This routine will be called for each event.
 // Main thing you need is the Z location (meters) 
 // in target for the main scattering point, to decide
 // how much length before / after scattering.
 
-  Float_t ztgt = expt->target->GetZloc();
+  Float_t ztgt = expt->target->GetZScatt();
 
   return Generate(ztgt);;  
 
 }
-#endif
 
 Int_t hamcRad::Generate(Float_t ztgt) {
 
@@ -228,6 +227,8 @@ Int_t hamcRad::Generate(Float_t ztgt) {
    
    Float_t x = (Eintern.size()-1)*gRandom->Rndm();
    idx = (Int_t)x;
+
+   if (idx < 0 || idx > Eintern.size()) return -1;
 
    dE_IntBrehm = E0 - Eintern[idx];
 

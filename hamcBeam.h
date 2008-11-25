@@ -10,6 +10,8 @@
 #include <vector>
 #include <map>
 
+class hamcExpt;
+
 class hamcBeam : public hamcTrack {
 
   public:
@@ -23,6 +25,7 @@ class hamcBeam : public hamcTrack {
      Bool_t IsRastered() const { return rastered; };
      Int_t SetRaster(Float_t xmax, Float_t ymax);
      Float_t GetRaster(Int_t ixy);
+     Int_t Radiate(hamcExpt *exp);
      void Print();
 
   protected:

@@ -4,6 +4,8 @@
 #include "hamcTrackOut.h"
 #include "hamcTrack.h"
 #include "hamcBeam.h"
+#include "hamcPhysics.h"
+#include "hamcKine.h"
 #include "hamcEvent.h"
 #include "hamcInout.h"
 #include "hamcSpecHRS.h"
@@ -48,16 +50,8 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
   }
 
   P0 = spec->GetP0();
-  dP0_iter = 0;
-
-  parser.Load(expt->inout->GetStrVect("kick:track"));
-  parser.Print();
-  if (parser.IsFound("P0")) {
-    if (expt->inout->numiter > 1) dP0_iter = parser.GetData();  
-    cout << "Will iterate P0 by "<<100*dP0_iter<<" %"<<endl;
-  }   
-
   P0sigma = spec->GetP0Sigma();
+
   hamcTrack::Init();
 
 // theta_central, converted to radians.
@@ -121,7 +115,7 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
    expt->inout->BookHisto(kFALSE, kFALSE, ITARGET, "ph", 
 		"Phi at target", &phi, nbin, -0.2,1.2*phimax);
    expt->inout->BookHisto(kFALSE, kFALSE, ITARGET, "mom", 
-	        "Momentum in HRS", &pmom, nbin, P0-20*P0sigma,P0+20*P0sigma);
+	        "Momentum in HRS", &pmom, nbin, 0.2*P0,1.2*P0);
 
 
 // Note, th0,ph0, etc are the initial values right after scattering.
@@ -245,23 +239,30 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 
    expt->inout->BookHisto(kFALSE, kFALSE, IFOCAL, "xyfoc1", 
 		      "X-Y at focal plane (even if not accepted)", 
-                            &ytrans, nbin,-0.4,0.4,
-                            &xtrans, nbin,-0.4,0.4); 
+                            &ytrans, nbin,-0.5,0.5,
+                            &xtrans, nbin,-1,1); 
    expt->inout->BookHisto(kFALSE, kTRUE, IFOCAL, "xyfoc2", 
 		      "Accepted X-Y at focal plane", 
-                            &ytrans, nbin,-0.4,0.4,
-                            &xtrans, nbin,-0.4,0.4); 
+                            &ytrans, nbin,-0.1,0.1,
+                            &xtrans, nbin,-0.6,0.2); 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "xyfoc3", 
 		      "Weighted X-Y at focal plane", 
-                            &ytrans, nbin,-0.4,0.4,
-                            &xtrans, nbin,-0.4,0.4);
+                            &ytrans, nbin,-0.1,0.1,
+                            &xtrans, nbin,-0.6,0.2); 
+
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "xyfoc4", 
 		      "Weighted X-Y at focal plane (X on X-axis)", 
-                            &xtrans, nbin,-0.2,0.2,
-                            &ytrans, nbin,-0.2,0.2);
+                            &ytrans, nbin,-0.1,0.1,
+                            &xtrans, nbin,-0.6,0.2); 
+
     expt->inout->BookHisto(kFALSE, kTRUE, IFOCAL, "xyfoc5", 
 		      "Unweighted X-Y at focal plane (X on X-axis)", 
-                            &xtrans, nbin,-0.06,0.1,
+                            &xtrans, nbin,-0.8,0.3,
+                            &ytrans, nbin,-0.1,0.1);
+
+    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "xyfoc6", 
+		      "Weighted X-Y at focal plane (X on X-axis)", 
+                            &xtrans, nbin,-0.8,0.3,
                             &ytrans, nbin,-0.1,0.1);
 
 
@@ -345,40 +346,25 @@ Int_t hamcTrackOut::Generate(hamcExpt *expt) {
     tvect->Clear();
   }
 
-// Generate scattering angle (radians) in lab-frame.
-// It is a flat in phase space, i.e. sin(theta)*dtheta*dphi.
-// Note, thetacell was setup in SetThetaTable.  
-// Later can weight by cross section.
+  expt->physics->kine->Generate(expt);
 
-  if (thetacell.size()>0) {
-    Float_t x = ((Float_t)numtcell)*gRandom->Rndm();
-    Int_t icell = (Int_t) x;
-    Int_t index = tcellnum[icell];
-    theta = thetacell[index];
-  } else {
-    cout << "hamcTrackOut::ERROR in theta generation"<<endl;
-    theta = 0;
-  }
-// Likewise, generate azimuthal angle (radians) in lab-frame
-  phi = phimin + (phimax-phimin)*gRandom->Rndm();   
+  theta = expt->physics->kine->theta;
+  phi = expt->physics->kine->phi;
+  energy = expt->physics->kine->eprime;
+  qsq = expt->physics->kine->qsq;
 
-// Generate momentum
-  pmom = P0 + P0sigma*gRandom->Gaus();
-  if (expt->iteration > 0) {
-       pmom = P0 * (1 + dP0_iter) + P0sigma*gRandom->Gaus();
-  }
-  energy = TMath::Sqrt(pmom*pmom + mass*mass);
+  if (energy < mass) energy = mass;  // extrema of rad tail
+
+  pmom = TMath::Sqrt(energy*energy - mass*mass);
   
   Float_t dpp = 0;
   if (P0 != 0) dpp = (pmom - P0)/P0;
-
 
   tvect->PutDpp(dpp);
 
   LabToTrans();     // Get TRANSPORT angles.
   UpdateTrans();
   ComputePvect();   
-  ComputeQsqToTrack(beam);
 
   return OK;
 
@@ -460,6 +446,9 @@ void hamcTrackOut::ComputePvect() {
 }
 
 void hamcTrackOut::ComputeQsqToTrack(const hamcTrack *trk) {
+
+// Could compute Qsq of *this to *trk, but dont really need
+// this method because hamcKine does it for you.
 
   qsq = -9999;        
   if (!trk) return;

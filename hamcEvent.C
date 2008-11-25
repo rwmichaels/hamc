@@ -1,4 +1,4 @@
-//  hamcEvent   -- One events in hamc
+//  HAMCEVENT   -- One events in hamc
 //  R. Michaels  June 2008
 
 #include "hamcEvent.h"
@@ -33,9 +33,13 @@ hamcEvent::~hamcEvent()
       ith != trackout.end(); ith++) delete *ith;
 }
 
-Int_t hamcEvent::Init(hamcExpt* expt) {
+Int_t hamcEvent::InitBeam(hamcExpt* expt) {
 
   if (beam) beam->Init(expt);
+
+}
+
+Int_t hamcEvent::Init(hamcExpt* expt) {
 
   Int_t nspect = expt->GetNumSpectrom();
   if (nspect == 0) {
@@ -67,11 +71,12 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
 // Weight initially 1 (used by histograms)
    expt->inout->SetWeight(1);  
 
+   expt->physics->Radiate(expt); 
+
    if (beam) beam->Generate(expt);   
  
    expt->target->Zscatt();
 
-   if (beam) beam->Radiate(expt);
    inaccept = 1;
 
 // Loop over spectrometers
@@ -89,7 +94,6 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
 // Weight by cross section (optionally used for some histograms)
      expt->inout->SetWeight(expt->physics->GetCrossSection());
 
-     track->Radiate(expt);
      track->MultScatt(expt, ITARGET);
 
 // Loop over break points in spectrometer

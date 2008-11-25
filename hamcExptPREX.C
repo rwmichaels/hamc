@@ -28,7 +28,7 @@ hamcExptPREX::~hamcExptPREX() {
 Int_t hamcExptPREX::Init(string sfile) {
 
 // Defaults in case the setup file is empty
-  hamcSingles::SetP0(1.05);
+  hamcSingles::SetP0(1.04);
   hamcSingles::SetTheta(5.0);
 
   hamcSingles::Init(sfile);

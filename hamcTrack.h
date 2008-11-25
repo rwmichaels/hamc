@@ -104,6 +104,7 @@ class hamcTrack {
                            
 // Energy and momentum in lab frame (at the target only)
      virtual Float_t GetEnergy() const { return energy; };
+     virtual Float_t GetE0() const { return E0; };
      virtual Float_t GetPmom() const { return pmom; };
      virtual Float_t GetPx() const { return plab_x; };
      virtual Float_t GetPy() const { return plab_y; };
@@ -133,9 +134,6 @@ class hamcTrack {
      virtual void MultScatt(const hamcExpt *expt, Int_t where);
      virtual void MultScatt(const hamcAperture *app, Int_t where);
      virtual void MultScatt(Float_t radlen, Int_t where);
-
-// Radiative loss
-     virtual void Radiate(hamcExpt *expt);
 
 
   protected:

@@ -19,6 +19,7 @@ class hamcEvent {
      virtual ~hamcEvent();
 
      Int_t Init(hamcExpt *ex);
+     Int_t InitBeam(hamcExpt *ex);
      Int_t Process(hamcExpt* ex);
      hamcBeam* beam;
      std::vector<hamcTrackOut*> trackout;

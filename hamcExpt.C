@@ -17,7 +17,6 @@ ClassImp(hamcExpt)
 
 
 hamcExpt::hamcExpt(string sname): name(sname),
-     beam_energy(0), beam_energy_sigma(0),
      numevent(0), numiter(1),
      setupfile("hamcsetup.dat"),
      didinit(kFALSE)
@@ -53,6 +52,8 @@ Int_t hamcExpt::Init() {
   inout->Init(this);  
 
   SetIterate(); 
+
+  if(event) event->InitBeam(this);
 
   if(target) target->Init(this);
 

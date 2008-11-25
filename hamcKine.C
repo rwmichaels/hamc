@@ -1,20 +1,19 @@
 //  hamcKine   -- Kinematics generator.
-//  This will be a member of hamcPhysics.
+//  Member of hamcPhysics
 //  Kinematics are generated uniform in phase space.
 //  Works for elastic and DIS.
-
-//  Will get rid of the "NOTSTANDALONE" ifdefs soon.
-//  This illustrates how to develop a new class, first 
-//  isolation, and then coupled to the other classes.
 
 //  R. Michaels  Nov 2008
 
 
-#ifdef NOTSTANDALONE
-#include "hamcExpt.h"
-#endif
-
 #include "hamcKine.h"
+#include "hamcExpt.h"
+#include "hamcPhysics.h"
+#include "hamcBeam.h"
+#include "hamcRad.h"
+#include "hamcEvent.h"
+#include "hamcTarget.h"
+#include "hamcInout.h"
 #include "TRandom.h"
 #include "Rtypes.h"
 #include <string>
@@ -48,8 +47,6 @@ void hamcKine::Clear() {
 
 }
 
-#ifdef NOT_STANDALONE
-
 Int_t hamcKine::Init(hamcExpt* expt) {
 // Here you want to grab from "expt" the parameters you need
 // which depends on experiment and is the same for all events,
@@ -73,7 +70,8 @@ Int_t hamcKine::Init(hamcExpt* expt) {
    phimax = PI;
 
 // Obtain the ranges from the input file if it exists
-
+   
+   hamcStrParser parser;
    parser.Load(expt->inout->GetStrVect("out_angles"));
    if (parser.IsFound("thetamin")) {
     parser.Print();
@@ -89,12 +87,22 @@ Int_t hamcKine::Init(hamcExpt* expt) {
      phimax = PI*parser.GetData()/180; 
    }
 
+  dP0_iter = 0;
+
+  parser.Load(expt->inout->GetStrVect("kick:track"));
+  parser.Print();
+  if (parser.IsFound("P0")) {
+    if (expt->inout->numiter > 1) dP0_iter = parser.GetData();  
+    cout << "Will iterate P0 by "<<100*dP0_iter<<" %"<<endl;
+  }   
+
+
 // For DIS, obtain the min and max output energies
 // and the cuts on x, qsq, and wsq that define DIS.
    emin = 0;  emax = 0;
    parser.Load(expt->inout->GetStrVect("dis_setup"));
    if (parser.IsFound("emin")) {
-     emin = parser.GetData()
+     emin = parser.GetData();
    }
    if (parser.IsFound("emax")) {
      emax = parser.GetData();
@@ -113,17 +121,15 @@ Int_t hamcKine::Init(hamcExpt* expt) {
    }
 
    cout << "hamcKine:: angles ranges: "<<thetamin<<"  "<<thetamax<<"  "<<phimin<<"  "<<phimax<<endl;
-   if (proc == "dis" || proc = "DIS") {
+   if (process == "dis" || process == "DIS") {
      cout << "eprime range   "<<emin<<"  "<<emax<<endl;
      cout << "DIS cuts   "<<xbjlo<<"  "<<xbjhi<<"   "<<qsqlo<<"   "<<wsqlo<<endl;
    }
 
      
-   return Init(process, ebeam, theta, masst, thmin, thmax, phmin, phmax, emin, emax);
+   return Init(process, ebeam, theta, masst, thetamin, thetamax, phimin, phimax, emin, emax);
 
 }
-
-#endif 
 
 Int_t hamcKine::Init(string proc, Float_t eb, Float_t theta, 
 		Float_t masst,
@@ -213,27 +219,32 @@ Int_t hamcKine::CheckInit() {
    return 1;
 }
 
-#ifdef NOT_STANDALONE
-
 Int_t hamcKine::Generate(hamcExpt *expt) {
+
+// It's assumed the beam was already generated if it exists.
+
   hamcBeam *beam = expt->event->beam;
-  Float_t eb;
+  Float_t eb,E0;
   if (beam) {
-    beam->Generate();      
     eb = beam->GetEnergy();  // beam energy this event
+    E0 = beam->GetE0();
     // includes fluctuations and eloss before scattering.
   } else {
     eb = ebeam_central;
+    E0 = ebeam_central;
   }
   hamcRad *rad = expt->physics->radiation;
   Float_t dE = 0;
   if (rad) dE = rad->GetDeIntern() + rad->GetDeExternOut(); 
-   
+
+// Add kick if we are iterating on energy
+  if (expt->iteration == 1) {
+      dE = dE - dP0_iter*E0;
+  }
+  
   return Generate(eb, dE);
 
 }
-
-#endif
 
 Int_t hamcKine::Generate(Float_t eb, Float_t dE) {
 
@@ -253,14 +264,15 @@ Int_t hamcKine::Generate(Float_t eb, Float_t dE) {
 
 // Generate scattering angle (radians) in lab-frame.
  
-  if (thetacell.size()>0) {
+  theta = 0;
+  if (tcellnum.size()>0 && thetacell.size()>0) {
     Float_t x = ((Float_t)numtcell)*gRandom->Rndm();
     Int_t icell = (Int_t) x;
     Int_t index = tcellnum[icell];
-    theta = thetacell[index];
+    if (icell >= 0 || icell < thetacell.size()) 
+        theta = thetacell[index];
   } else {
     cout << "hamcTrackOut::ERROR in theta generation"<<endl;
-    theta = 0;
   }
 
 // Likewise, generate azimuthal angle (radians) in lab-frame
@@ -290,10 +302,10 @@ Int_t hamcKine::GenerateElastic() {
   pprime = TMath::Sqrt(eprime*eprime - mass_electron*mass_electron);
   erecoil = ebeam + mass_tgt - eprime;
   
+  ComputeKine();
+
 // subtract radiative loss after scattering.
   eprime = eprime - dE_after;  
-
-  ComputeKine();
 
   return 1;
 }
@@ -302,7 +314,7 @@ Int_t hamcKine::GenerateDis() {
 
 // Loop until find an event within the cuts that define DIS
 
-  Int_t maxloop = 1000;
+  Int_t maxloop = 100;
   Int_t iloop = 0;
 
   while (iloop++ < maxloop) {
@@ -324,7 +336,6 @@ Int_t hamcKine::GenerateDis() {
  
 Int_t hamcKine::ComputeKine() {
 
-// qsq and wsq have the radiative tail built in
   qsq = 2*ebeam*eprime*(1 - TMath::Cos(theta));
 
   Float_t mass = mass_tgt;
