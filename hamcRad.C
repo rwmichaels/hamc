@@ -153,7 +153,7 @@ void hamcRad::Setup(Int_t which, Float_t trl) {
     } else {
       for (Int_t j=0; j<ncell; j++) {
 	if (which==0) {
-           de_intern.push_back(E);
+           Eintern.push_back(E);
 	} else {
  	   radtail.push_back(E);
 	}
@@ -163,14 +163,14 @@ void hamcRad::Setup(Int_t which, Float_t trl) {
   }
 
   if (which ==0) {
-    if(ldebug) cout << "de_intern size "<<de_intern.size()<<endl;
+    if(ldebug) cout << "Eintern size "<<Eintern.size()<<endl;
   } else {
-    if(ldebug) cout << "de_straggle["<<which<<"] size "<<radtail.size()<<endl;
+    if(ldebug) cout << "Estraggle["<<which<<"] size "<<radtail.size()<<endl;
   }
 
   if (!which) return;
 
-  de_straggle.push_back(radtail);
+  Estraggle.push_back(radtail);
 
 
 }
@@ -226,27 +226,27 @@ Int_t hamcRad::Generate(Float_t ztgt) {
 
    if (CheckInit() == -1) return -1;
    
-   Float_t x = (de_intern.size()-1)*gRandom->Rndm();
+   Float_t x = (Eintern.size()-1)*gRandom->Rndm();
    idx = (Int_t)x;
 
-   dE_IntBrehm = de_intern[idx];
+   dE_IntBrehm = E0 - Eintern[idx];
 
    idx = LookupIdx(ztgt);  // before scattering
 
    if (idx >= 0 && idx < Nslices) {
-      vector<Float_t> radcor = de_straggle[idx];
-      x = (radcor.size()-1)*gRandom->Rndm();
+      vector<Float_t> radtail = Estraggle[idx];
+      x = (radtail.size()-1)*gRandom->Rndm();
       jj = (Int_t)x; 
-      dE_ExtBrehmIn = radcor[jj];
+      dE_ExtBrehmIn = E0 - radtail[jj];
    }
 
    idx = LookupIdx(tlen-ztgt);  // after scattering
 
    if (idx >= 0 && idx < Nslices) {
-      vector<Float_t> radcor = de_straggle[idx];
-      x = (radcor.size()-1)*gRandom->Rndm();
+      vector<Float_t> radtail = Estraggle[idx];
+      x = (radtail.size()-1)*gRandom->Rndm();
       jj = (Int_t)x; 
-      dE_ExtBrehmOut = radcor[jj];
+      dE_ExtBrehmOut = E0 - radtail[jj];
    }
 
    return 1;

@@ -46,8 +46,8 @@ class hamcRad {
      Float_t me,alpha,pi,yfact,ycell,bval;
      Int_t ldebug;
      Float_t dE_IntBrehm, dE_ExtBrehmIn, dE_ExtBrehmOut, dE_Ionization;
-     std::vector<std::vector<Float_t> > de_straggle;
-     std::vector<Float_t > de_intern;
+     std::vector<std::vector<Float_t> > Estraggle;
+     std::vector<Float_t > Eintern;
 
      hamcRad(const hamcRad& phys);
      hamcRad& operator=(const hamcRad& phys);

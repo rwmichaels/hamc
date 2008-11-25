@@ -30,7 +30,7 @@ ClassImp(hamcKine)
 
 hamcKine::hamcKine(): did_init(kFALSE)
 {
-  xbjlo = 0.01;  // Default cuts
+  xbjlo = 0.01;  // Default cuts for DIS
   xbjhi = 0.99;
   qsqlo = 1;
   wsqlo = 4;
@@ -44,8 +44,7 @@ hamcKine::~hamcKine()
 void hamcKine::Clear() {
 
   energy = 0; theta = 0;  phi = 0;  qsq = 0;  
-  eprime = 0;  y = 0;  x = 0;  mass_tgt = 0;
-  dE_after = 0;
+  eprime = 0;  y = 0;  x = 0;  
 
 }
 
@@ -130,6 +129,8 @@ Int_t hamcKine::Init(string proc, Float_t eb, Float_t theta,
 		Float_t masst,
 		Float_t thmi, Float_t thma, Float_t phmi, Float_t phma,
 		Float_t epmi, Float_t epma) {
+// energy and mass in GeV
+// angles in radians
 
 
     cout << "hamcKine: generated process = ";
@@ -155,6 +156,8 @@ Int_t hamcKine::Init(string proc, Float_t eb, Float_t theta,
     epmax = epma;
 
     SetThetaTable();
+
+    did_init = kTRUE;
 
     return 1;
 }
@@ -234,13 +237,14 @@ Int_t hamcKine::Generate(hamcExpt *expt) {
 
 Int_t hamcKine::Generate(Float_t eb, Float_t dE) {
 
-  ebeam = eb;
-  dE_after = dE;
-
 // To generate a track for an event.
 
   Clear();
   CheckInit();
+
+  ebeam = eb;    energy = ebeam;
+  dE_after = dE;
+  if (iproc == proc_dis && energy*energy < wsqlo) return -1;
 
   if ( did_init == kFALSE ) {
     cout << "hamcKine::ERROR: uninitialized !"<<endl;
@@ -248,7 +252,7 @@ Int_t hamcKine::Generate(Float_t eb, Float_t dE) {
   }
 
 // Generate scattering angle (radians) in lab-frame.
-
+ 
   if (thetacell.size()>0) {
     Float_t x = ((Float_t)numtcell)*gRandom->Rndm();
     Int_t icell = (Int_t) x;
@@ -265,9 +269,11 @@ Int_t hamcKine::Generate(Float_t eb, Float_t dE) {
   if (iproc == proc_elastic) GenerateElastic();
 
   if (iproc == proc_dis) {
-      if (GenerateDis() == -1) return -1;
+      if (GenerateDis() == -1) {
+	//        cout << "hamcKine::WARNING: inf. loop? "<<ebeam<<endl;
+        return -1;
+      }
   }
-
   return 1;
 
 }
@@ -275,6 +281,7 @@ Int_t hamcKine::Generate(Float_t eb, Float_t dE) {
 Int_t hamcKine::GenerateElastic() {
 
   eprime = 0;
+
   if (mass_tgt == 0) return -1;
 
   eprime = ebeam / ( 1 + ((ebeam/mass_tgt) * 
