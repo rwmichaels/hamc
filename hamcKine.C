@@ -264,12 +264,14 @@ Int_t hamcKine::Generate(Float_t eb, Float_t dE) {
 
 // Generate scattering angle (radians) in lab-frame.
  
+  Int_t icell, index;
+  Float_t x;
   theta = 0.0001;
   if (tcellnum.size()>0 && thetacell.size()>0) {
-    Float_t x = ((Float_t)numtcell)*gRandom->Rndm();
-    Int_t icell = (Int_t) x;
-    if (icell >= 0 && icell < thetacell.size()) {
-        Int_t index = tcellnum[icell];
+    x = ((Float_t)numtcell)*gRandom->Rndm();
+    icell = (Int_t) x;
+    if (icell >= 0 && icell < tcellnum.size()) {
+        index = tcellnum[icell];
         if (index >= 0 && index < thetacell.size()) {  
             theta = thetacell[index];
 	}
@@ -277,6 +279,9 @@ Int_t hamcKine::Generate(Float_t eb, Float_t dE) {
   } else {
     cout << "hamcTrackOut::ERROR in theta generation"<<endl;
   }
+
+  //  cout << "Chk theta "<<x<<"  "<<icell<<"  "<<numtcell<<"  "<<tcellnum.size()<<"  "<<index<<"  "<<"  "<<thetacell.size()<<"  "<<theta<<endl;
+
 
 // Likewise, generate azimuthal angle (radians) in lab-frame
   phi = phmin + (phmax-phmin)*gRandom->Rndm();   
