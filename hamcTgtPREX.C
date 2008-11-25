@@ -29,11 +29,11 @@ Int_t hamcTgtPREX::Init(hamcExpt *expt) {
   if (did_init) return OK;
 
   components.push_back(new hamcTgtSlab(
-     "diamond", 0, 0.015, 0.005, 18.8, 12, 6, 11.25, 3.52));
+     "diamond", 0, 0.00015, 0.005, 0.0188, 12, 6, 11.25, 3.52));
   components.push_back(new hamcTgtSlab(
-     "lead",    1, 0.050, 0.017, 0.56, 208, 82, 195, 11.35));
+     "lead",    1, 0.00050, 0.017, 0.0056, 208, 82, 195, 11.35));
   components.push_back(new hamcTgtSlab(
-     "diamond", 0, 0.015, 0.005, 18.8, 12, 6, 11.25, 3.52));
+     "diamond", 0, 0.00015, 0.005, 0.0188, 12, 6, 11.25, 3.52));
 
   expt->inout->AddToNtuple("zscat",&zscatt);
 
