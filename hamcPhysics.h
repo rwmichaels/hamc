@@ -10,8 +10,8 @@
 #include <map>
 
 class hamcExpt;
-// class hamcKine;   // see comments below
-// class hamcRad;    //    "    "
+class hamcRad;   
+class hamcKine;   
 
 class hamcPhysics {
 
@@ -21,35 +21,31 @@ class hamcPhysics {
      virtual ~hamcPhysics()=0;   // abstract class
 
      std::string GetName() const { return phy_name; };
+     std::string GetProcess() const { return scatt_process; };
      virtual Int_t Init(hamcExpt* expt);
+     virtual Int_t Radiate(hamcExpt* expt);     // Radiation at target
      virtual Int_t Generate(hamcExpt* expt);    // Generate crsec and asy.
      virtual Float_t GetCrossSection() const { return crsec; };
      virtual Float_t GetAsymmetry() const { return asymmetry; };
-     virtual Float_t GetdE_IntBrehm() const { return dE_IntBrehm; };
-     virtual Float_t GetdE_ExtBrehm() const { return dE_ExtBrehm; };
-     virtual Float_t GetdE_Ionization()  const { return dE_Ionization; };
+     hamcKine* kine;
+     hamcRad* radiation;
+
 
   protected:
 
      virtual Int_t CrossSection();    
      virtual Int_t Asymmetry();
-     virtual Int_t Radiate();
 
-// You may want to create a separate kinematics class, as
-// a member of hamcPhysics
-//     hamcKine* kine;
+     Float_t tlen,tgtM;  // target length (RL), target mass (GeV)
 
-// You may want to create a separate radiation class, as
-// a member of hamcPhysics
-//     hamcRad* radiation;
-
+     Bool_t do_radiate;
      Bool_t did_init;
      Float_t crsec, asymmetry;
      Float_t energy, theta_rad, theta_deg, phi_rad, phi_deg;
      Float_t dE_IntBrehm, dE_ExtBrehm, dE_Ionization;
 
      std::string phy_name;
-
+     std::string scatt_process;
 
   private: 
 

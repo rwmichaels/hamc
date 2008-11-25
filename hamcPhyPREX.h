@@ -42,17 +42,9 @@ class hamcPhyPREX : public hamcPhysics {
      Float_t CalculateAsymmetry(Float_t energy, Float_t angle);
 
 
-     /*---- Radiative Corrections -----*/
-     Int_t InitInternalRadCor();
-     Int_t InitExternalRadCor();
-     Float_t GenerateDeltaE_internal(); /*Get random deltaE from the elist */
-     Float_t GenerateDeltaE_external();
-     Int_t TestRadiate();
-
   protected:
 
   private: 
-//     hamcExpt* gExpt; 
 
      Int_t LoadFiles();
      Int_t LoadHorowitzTable(vector<vector<Float_t> >&, vector<vector<Float_t> >&,Int_t stretch = 0);
@@ -66,7 +58,6 @@ class hamcPhyPREX : public hamcPhysics {
      Float_t CalculateQsq(Float_t energy, Float_t angle);
 
      Bool_t didinit;
-//     Float_t testvar;   // a test variable
 
      hamcPhyPREX(const hamcPhyPREX& phys);
      hamcPhyPREX& operator=(const hamcPhyPREX& phys);
@@ -78,19 +69,6 @@ class hamcPhyPREX : public hamcPhysics {
      vector<Float_t> angle_row;  //to save the angle values of Horowitch table
      vector<Float_t> energy_row; //to save the energy values 
 
-
-     /* We can probably move some of this to the base class, eventually */ 
-    /*-----Radiative Corrections */
-     Int_t InitRadCor(Float_t*, Int_t, Float_t, TH1F*); /*Divide the function (calculated by CalcualteIe() into cells and saves in elist */
-
-     Float_t tlen,tgtM;  // target length (RL), target mass (GeV)
-     Float_t *elistInternal;
-     Float_t *elistExternal;
-         
-     Int_t ncell1;
-     Int_t ncell2;
-
-     
 
 #ifndef NODICT
 ClassDef (hamcPhyPREX, 0)   // PREX physics

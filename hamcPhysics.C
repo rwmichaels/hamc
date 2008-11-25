@@ -3,8 +3,9 @@
 
 #include "hamcPhysics.h"
 #include "hamcExpt.h"
-//#include "hamcKine.h"   Might want to implement these classes
-//#include "hamcRad.h"
+#include "hamcInout.h"
+#include "hamcKine.h" 
+#include "hamcRad.h"
 #include "Rtypes.h"
 #include <string>
 #include <vector>
@@ -19,18 +20,39 @@ ClassImp(hamcPhysics)
 
 hamcPhysics::hamcPhysics(): did_init(kFALSE),crsec(0),asymmetry(0)
 {
+  radiation = new hamcRad();
+  kine = new hamcKine();
 }
 
 hamcPhysics::~hamcPhysics()
 {
+  delete radiation;
+  delete kine;
 }
 
 Int_t hamcPhysics::Init(hamcExpt* expt) {
 // Here you want to grab from "expt" the parameters you need
 // which depends on experiment and is the same for all events,
 // i.e. definition of target
+
+  expt->inout->AddToNtuple("crsec",&crsec);
+  expt->inout->AddToNtuple("asy",&asymmetry);
+
+  radiation->Init(expt);
+  kine->Init(expt);
+
   did_init = kTRUE;
   return 1;
+}
+
+
+Int_t hamcPhysics::Radiate(hamcExpt* expt) {
+
+  if (do_radiate) {
+    return radiation->Generate(expt);
+  } else {
+    return 1;
+  }
 }
 
 Int_t hamcPhysics::Generate(hamcExpt* expt) {
@@ -42,8 +64,6 @@ Int_t hamcPhysics::Generate(hamcExpt* expt) {
   CrossSection();
 
   Asymmetry();  
-
-  Radiate();  
 
   return 1;
 }
@@ -59,13 +79,5 @@ Int_t hamcPhysics::Asymmetry() {
 // Generates the asymmetry. Called by Generate.
   asymmetry = 0;
   return 1;
-}
-
-Int_t hamcPhysics::Radiate() {
-
-// Generates the radiative corrections.
-
-  return 1;
-
 }
 

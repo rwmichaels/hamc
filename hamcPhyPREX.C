@@ -1,11 +1,6 @@
 //  hamcPhyPREX   -- class for the physics of PREX
 //  D. Jaunzeikare, R. Michaels  May 2008
 
-// Status Nov 7, 2008
-// This is what I got from the summer student Diana.
-// Not bad for an 18 y.o. !  
-// I still need to run some checks and clean it up,
-// but it looks pretty good so far.
 
 #include "hamcPhyPREX.h"
 #include "hamcExpt.h"
@@ -15,6 +10,7 @@
 #include "hamcTrackOut.h"
 #include "hamcTrack.h"
 #include "hamcInout.h"
+#include "hamcKine.h"
 #include "Rtypes.h"
 #include "TMath.h"
 #include "TRandom.h"
@@ -36,6 +32,8 @@ ClassImp(hamcPhyPREX)
 hamcPhyPREX::hamcPhyPREX() : hamcPhysics()
 {
   phy_name = "PREX physics";
+  scatt_process = "elastic";
+  do_radiate = kTRUE;
 }
 
 
@@ -47,40 +45,22 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
   LoadFiles();  // Load the lookup files
   didinit = kTRUE;
 
-  expt->inout->AddToNtuple("crsec",&crsec);
-  expt->inout->AddToNtuple("asy",&asymmetry);
+  hamcPhysics::Init(expt);
 
-  tlen = expt->target->GetRadLength();
-
-  tgtM = expt->target->GetMass();
-
-  /* Initializing Radiative Corrections*/
-  ncell1 = 19065; //initializing constants (number of cells)
-  ncell2 = 9768;  //@todo This number shouldn't be constant, but stop when 20% are reached
-
-  InitInternalRadCor();
-  InitExternalRadCor();
 
   return 1;
 }
 
-Int_t hamcPhyPREX::Radiate(){
-
-  dE_IntBrehm = GenerateDeltaE_internal(); //update hamcPhysics variable. This is happening at each event. 
-  dE_ExtBrehm = GenerateDeltaE_external();
-
-  return 1;
-}
 
 Int_t hamcPhyPREX::Generate(hamcExpt *expt) {
 
-  Float_t energy = expt->event->beam->GetEnergy();
-  Float_t theta = expt->event->trackout[0]->GetTheta();
+   Float_t energy = expt->physics->kine->energy;
+   Float_t theta = expt->physics->kine->theta;
 
 // Compute the cross section for PREX
-  CrossSection(energy, theta, 0);
+   CrossSection(energy, theta, 0);
 
-// Also must compute asymmetry 
+// Compute the PV asymmetry 
    Asymmetry(energy, theta,0);
 
    return OK;
@@ -108,6 +88,8 @@ Int_t hamcPhyPREX::CrossSection(Float_t energy, Float_t angle_rad, Int_t stretch
   Int_t indxEnergy = FindEnergyIndex(energy);
   
   if (debug) cout << "crsec indices "<<energy<<"  "<<angle<<"  "<<indxAngle<<" "<<indxEnergy<<endl;
+
+  if (indxEnergy <= 0) return -1;
 
   Float_t crsc1, crsc2;
 
@@ -148,7 +130,7 @@ Int_t hamcPhyPREX::Asymmetry(Float_t energy, Float_t angle_rad, Int_t stretch) {
   Int_t indxAngle = FindAngleIndex(angle);
   Int_t indxEnergy = FindEnergyIndex(energy);
 
-  if (indxAngle <= 0) return -1;
+  if (indxAngle <= 0 || indxEnergy <= 0) return -1;
 
   Float_t asymmetry1, asymmetry2;
   Float_t angle_upper =angle_row[indxAngle] ;
@@ -243,10 +225,14 @@ Float_t hamcPhyPREX::CalculateCrossSection(Float_t energy, Float_t angle) {
   Float_t sin4 = pow(sin(halfangle_rad),4);
   mott = pow(((82*0.197*cos(halfangle_rad))/137),2)/ (400*pow(energy,2)*sin4);
    
-  Float_t qsq = CalculateQsq(energy, angle); //@todo move to class hamcKine
+  // This comes from hamcKine now
+  //  Float_t qsq = CalculateQsq(energy, angle);
+  Float_t qsq = kine->qsq; 
 
   vector<Float_t>::const_iterator iterQsq = upper_bound(qsq_row.begin(), qsq_row.end(), qsq); //search for the first value of qsq which is larger or equal than actual   
   int indxQsq = iterQsq - qsq_row.begin(); 
+
+  if (indxQsq <= 0) return 0;
 
   Float_t qsq1, qsq2, form_factor1, form_factor2;
   qsq1 =  qsq_row.at(indxQsq);
@@ -393,178 +379,3 @@ Int_t hamcPhyPREX::LoadHorowitzTable(vector<vector<Float_t> >& crsc_table, vecto
 }
 
 
-/*---------------- Radiative Corrections ----------------------*/
-
-//@todo put this in hamcRad
-Float_t CalculateIe(Float_t E, Float_t E0, Float_t t){
-  /*type=0 -> internal Brehmhstralung                                        
-   type=1 -> external Bremhstralung */
-   
-  Float_t b,psi;
-  Float_t x1,x2,x3;
-
-  Float_t z = 82;   // lead  
-  Float_t alpha=(1./137.);
-  Float_t pi=3.1415926;
-
-  x1 = TMath::Exp((-2./3.)*TMath::Log(z));  // This is Z^(-2/3)                   
-  x2 = TMath::Exp((-1./3.)*TMath::Log(z));
-  psi = TMath::Log(1440*x1)/TMath::Log(183*x2);
-  b = (4./3.)*(1 + (1./9.)*(( (z+1)/(z+psi) ) / (TMath::Log(183*x2))));
-
-  Float_t qq,qsq,msq;
-  Float_t qf=0.45; // inverse fermis (Q)                                         
-  Float_t me=0.511;  // mass electron (MeV)                                      
-  qq = qf*0.197;
-  qsq = qq*qq;
-  msq = (me/1000)*(me/1000);
-
-  // cout << "qsq, msq, teq "<<qsq<<"  "<<msq<<"  "<<t<<endl;
-  /*t cant be moved outside of this function, because alpha b are defined here*/ 
-  //  cout<<"tlen" <<t<<endl;
- if(t==0){
-    t = (alpha/(b*pi)) * (TMath::Log(qsq/msq) - 1); //@todo shoud qsq be taken from hamcExpt? 
- }
- // cout <<"tlen new "<<t<<endl;
-  x1 = b*t/(E0-E);
-  x2 = E/E0 + (3./4.)*(((E-E0)/E0)*((E-E0)/E0));
-  x3 = TMath::Exp(b*t*TMath::Log(TMath::Log(E0/E)));
-
-  return x1*x2*x3;
-}
-
-
-Int_t hamcPhyPREX::InitRadCor(Float_t *elist, Int_t ncell1, Float_t t, TH1F *hb){
- 
-
-  Int_t Npt= 2000;
-  Float_t E0 = 1.0; //@todo take it from hamcExpt; 
-
-  //TH1F *hhh = new TH1F("h2b","External Bremhstrahlung Ncell",Npt/10,-0.1,1.04*E0);
-
-  Int_t lout=0;
-  Float_t Ie, Prob, Ptot1, xnorm1;
- 
-  Float_t yfact=1e7;
-  Float_t E, dE;
- 
-  Int_t nybin=1000;
-
-  Float_t ycell = 0.05*yfact/((Float_t)nybin); // 0.05*1e7/1000 = 500           
-  
-  Float_t ncell;
-
-  Int_t idx1;
-
-  // Float_t y1hi=0.1*yfact; //0.1*1e7  //for histograms
-
-
-  dE = E0/((Float_t)Npt);  // interval                                            
-  E=E0;  // Initialize                                                            
-  Ptot1=0; // Total probability?
-  xnorm1 = 0.612015; //?                                                        
- 
-  Int_t nct1=0;
-  idx1=0; 
-
-  for (Int_t i=0; i<Npt; i++) {
-    E = E-dE;
-    if (E<0) continue;
-
-    //For each energy calculate function value divide it by yfact to find out how many cells fit vertically and then for each cell add to elist that energy  
-    // cout<<"t to pass to CalculateIe "<<t<<endl;
-    Ie=CalculateIe(E, E0, t);//calculate Ie for internal Bremshtralung         
-    Prob = Ie*dE / xnorm1; //=Ie*dE/ 0.612015 ?Probability                        
-    if (i==0) cout << "(straggling) Prob0 "<<yfact*Prob<<endl;
-    Ptot1 += Prob; //total probability                                          
-    Prob = yfact*Prob; //1e7*Prob                                                
-    ncell = Prob/ycell; //Nth cell equals Prob/500                               
-    nct1 += ((Int_t)ncell);//ncell count?         
-
-    if (nct1>=ncell1) {
-      //      cout << "ERROR: ncell1 too small !!"<<endl;
-    } else {
-      Int_t nlim=nct1-idx1+1;
-      for (Int_t jj = 0; jj<nlim; jj++) {
-	elist[idx1] = E;
-	//cout << " E "<<E;
-	idx1++;
-      }
-    }
-
-    if(lout==1) cout << "Prob "<<E<<"  "<<Prob<<"   "<<ncell<<endl;
-
-    // h1->Fill(E,Prob);                                                        
-    // h1a->Fill(E,Prob);                                                       
-    hb->Fill(E,ncell);//@todo ?
-    }
-  return 1;
-  //hhh->Write("hhh");
-}
-
-Int_t hamcPhyPREX::InitInternalRadCor(){
-  cout<<"Starting InitInternalRadCor()"<<endl;
-    Float_t Npt = 2000;
-    Float_t E0 = 1.0;
-   elistInternal= new Float_t[ncell1];  
-   // string TitleString = new string("Internal Bremsstrahlung NCell, tlen = ");
-   TH1F *h1b = new TH1F("h1b","Internal Bremsstrahlung NCell, t=0.1",(Int_t)(Npt/10),-0.1,1.04*E0);
-   InitRadCor(elistInternal, ncell1, tlen, h1b); 
-   //   InitRadCor(elistInternal, ncell1, 0.1, h1b); @todo if tlen doesn't seem to fetch the right value, set here manually.
-   //   The current directory (root) is not associated with a file. The object (h1b) has not been written.
- 
-  h1b->Write("h1b");
-   return 1;
-}
-
-Int_t hamcPhyPREX::InitExternalRadCor(){
-  cout<<"Starting InitExternalRadcor()"<<endl;
-  Float_t Npt = 2000;
-    Float_t E0 = 1.0;
-  elistExternal = new Float_t[ncell2];
-  TH1F *h2b = new TH1F("h2b","External Bremsstrahlung Ncell",(Int_t)(Npt/10),-0.1,1.04*E0);
-  InitRadCor(elistExternal, ncell2,0, h2b); //zero means to use teqviv.
-  h2b->Write("h2b"); // The object (h2b) has not been written.
-
-  return 1;
-}
-
-Float_t hamcPhyPREX::GenerateDeltaE_internal(){
- 
-  Int_t idx = (Int_t)(ncell1*gRandom->Rndm(1));
-  return elistInternal[idx];
-
-}
-
-Float_t hamcPhyPREX::GenerateDeltaE_external(){
-
-  Int_t idx = (Int_t)(ncell2*gRandom->Rndm(1));
-  return elistExternal[idx];
-
-}
-
-/*Int_t hamcPhyPREX::TestRadiate(){
-
-  Int_t Npt = 2000;
-  Float_t E0 = 1.0;
-
-  TH1F *hbrem1 = new TH1F("hbrem1","Straggling",Npt/2,-0.1,1.04*E0);
-
-  for (Int_t i = 0; i<50000; i++) {
-
-    int idx1 = (Int_t)(ncell1*gRandom->Rndm(1));
-
-    Float_t num = elistInternal[idx1];
-    // cout <<"num "<<num<<endl;
-    if (idx1<0 || idx1>ncell1) {
-      cout << "ERROR:  idx1 out of range "<<endl;
-    } else {
-      //hbrem.Fill(elist1[idx1]);                                                 
-      hbrem1->Fill(num);
-    }
-  }
-  hbrem1->Write("hbrem1");
-  
-  return 1;
-}
-*/
