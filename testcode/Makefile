@@ -65,7 +65,7 @@ endif
 
 CXXFLAGS += -DNODICT
 
-SRC = hamcRad.C radtest_main.C
+SRC = hamcRad.C hamcKine.C radtest_main.C kinetest_main.C
 
 DEPS = $(SRC:.C=.d)
 DEP  = $(SRC:.C=.d)
@@ -74,11 +74,15 @@ OBJS = $(SRC:.C=.o)
 
 install: all
 
-all: radtest
+all: radtest kinetest
 
-radtest: radtest_main.o $(OBJS) $(SRC) 
+radtest: radtest_main.o hamcRad.o $(SRC) 
 	rm -f $@
-	$(LD) $(CXXFLAGS) -o $@ $(OBJS) $(ALL_LIBS)
+	$(LD) $(CXXFLAGS) -o $@ radtest_main.o hamcRad.o $(ALL_LIBS)
+
+kinetest: kinetest_main.o hamcKine.o hamcRad.o $(SRC) 
+	rm -f $@
+	$(LD) $(CXXFLAGS) -o $@ kinetest_main.o hamcKine.o hamcRad.o $(ALL_LIBS)
 
 clean:
 	rm -f *.o core radtest
