@@ -33,7 +33,7 @@ class hamcRad {
 
      void Setup(Int_t which, Float_t tl);
 
-     static const Int_t MAXCNT=50000;
+     static const Int_t MAXCNT=100000;
      static const Int_t ldebug=0;
 
      Bool_t did_init;

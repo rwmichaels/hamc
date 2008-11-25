@@ -42,14 +42,18 @@ Int_t hamcTarget::Setup() {
   } else {
 
     Float_t weisum=0;
+    Float_t invradsum=0;
+    Float_t invx0;
 
     for (Int_t i=0; i<(Int_t)components.size(); i++) {
 
        hamcTgtSlab *slab = components[i];
        overall_length   += slab->GetLen(); 
-       radiation_length += slab->GetLen()/slab->GetRadLen();
        Float_t weight = slab->GetDensity()*slab->GetLen();
        weisum           += weight;
+       invx0 = 0;
+       if (slab->GetRadLen() != 0) invx0 = slab->GetRadLen()/slab->GetLen();
+       invradsum        += weight*invx0;
        effective_length += weight*slab->GetEffLen();
        weighted_anum    += weight*slab->GetA();
        weighted_znum    += weight*slab->GetZ();
@@ -60,7 +64,8 @@ Int_t hamcTarget::Setup() {
        cout << "hamcTarget::ERROR: zero weights !"<<endl;
     } else {
        effective_length = effective_length/weisum;
-        weighted_anum   = weighted_anum/weisum;
+       radiation_length = weisum/invradsum;
+       weighted_anum   = weighted_anum/weisum;
        weighted_znum    = weighted_znum/weisum;
        weighted_density = weighted_density/weisum;
     }
