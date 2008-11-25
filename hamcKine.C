@@ -264,13 +264,16 @@ Int_t hamcKine::Generate(Float_t eb, Float_t dE) {
 
 // Generate scattering angle (radians) in lab-frame.
  
-  theta = 0;
+  theta = 0.0001;
   if (tcellnum.size()>0 && thetacell.size()>0) {
     Float_t x = ((Float_t)numtcell)*gRandom->Rndm();
     Int_t icell = (Int_t) x;
-    Int_t index = tcellnum[icell];
-    if (icell >= 0 || icell < thetacell.size()) 
-        theta = thetacell[index];
+    if (icell >= 0 && icell < thetacell.size()) {
+        Int_t index = tcellnum[icell];
+        if (index >= 0 && index < thetacell.size()) {  
+            theta = thetacell[index];
+	}
+    }
   } else {
     cout << "hamcTrackOut::ERROR in theta generation"<<endl;
   }
