@@ -74,6 +74,7 @@ SRC = hamcExpt.C hamcSingles.C hamcExptPREX.C \
       hamcTransLerColdSeptum.C \
       hamcTransLerHRS.C \
       hamcTarget.C hamcTgtPREX.C \
+      hamcRad.C hamcKine.C \
       hamcTrack.C hamcBeam.C hamcTrackOut.C \
       hamcInout.C THaString.C
 
