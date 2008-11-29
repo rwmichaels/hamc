@@ -115,6 +115,18 @@ prex_forward.o: prex_forward.f
 	rm -f $@
 	g77 -c prex_forward.f
 
+monte_trans_hrs.o: monte_trans_hrs.f
+	rm -f $@
+	g77 -c monte_trans_hrs.f
+
+ls_6d_forward.o: ls_6d_forward.f
+	rm -f $@
+	g77 -c ls_6d_forward.f
+
+R6_forward.o: R6_forward.f
+	rm -f $@
+	g77 -c R6_forward.f
+
 main.o: main.C
 	$(CXX) -c $(INCLUDES) $(CXXFLAGS) $<	
 

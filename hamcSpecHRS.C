@@ -229,11 +229,13 @@ void hamcSpecHRS::AddBreakPoint(Int_t where) {
       break;
 
     case ISEPTIN:
-      break_point.push_back(new hamcSpecBrk(where, new hamcBox(0.088,0.382,-0.12,0.12)));
+      if (IsWarmSeptum()) break_point.push_back(new hamcSpecBrk(where, new hamcBox(0.088,0.382,-0.12,0.12)));
+      if (IsColdSeptum()) break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.1486,-0.0887,-0.110,0.110)));
       break;
 
     case ISEPTOUT:
-      break_point.push_back(new hamcSpecBrk(where, new hamcBox(0.088,0.382,-0.12,0.12)));
+      if (IsWarmSeptum()) break_point.push_back(new hamcSpecBrk(where, new hamcBox(0.088,0.382,-0.12,0.12)));
+      if (IsColdSeptum()) break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.3485,-0.2156,-0.110,0.110)));
 
       break;
 
