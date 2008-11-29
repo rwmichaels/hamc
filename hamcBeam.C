@@ -139,9 +139,13 @@ Int_t hamcBeam::Generate(hamcExpt *expt) {
 
 Int_t hamcBeam::Radiate(hamcExpt* expt) {
 
-  Float_t dEin = expt->physics->radiation->GetDeExternIn();
+// The internal is for 1/2 t_equivalent, so it's
+// what to subtract before and after scattering.
 
-  energy = energy - dEin;
+  Float_t dE = expt->physics->radiation->GetDeExternIn() + 
+               expt->physics->radiation->GetDeIntern();
+
+  energy = energy - dE;
 
 }
 

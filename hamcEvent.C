@@ -71,7 +71,9 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
 // Weight initially 1 (used by histograms)
    expt->inout->SetWeight(1);  
 
-   expt->physics->Radiate(expt); 
+// FIXME: This isn't quite right yet, need to radiate after 
+// each step (e- may have lost energy in earlier step).
+   if (expt->physics->Radiate(expt) == -1) return 1;
 
    if (beam) beam->Generate(expt);   
  

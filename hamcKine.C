@@ -233,8 +233,13 @@ Int_t hamcKine::Generate(hamcExpt *expt) {
     eb = ebeam_central;
     E0 = ebeam_central;
   }
+
   hamcRad *rad = expt->physics->radiation;
   Float_t dE = 0;
+
+// The internal is for 1/2 t_equivalent, so it's
+// what to subtract before and after scattering.
+
   if (rad) dE = rad->GetDeIntern() + rad->GetDeExternOut(); 
 
 // Add kick if we are iterating on energy
