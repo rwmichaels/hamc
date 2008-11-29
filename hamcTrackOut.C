@@ -140,6 +140,10 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 	  "Theta-Phi at target (accepted, weighted)",
                           &ph0,nbin,-0.3,0.3,
 			  &th0,nbin,-0.3,0.3);
+   expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "thphawz",
+	  "Theta-Phi at target (accepted, weighted, zoom)",
+                          &ph0,nbin,-0.04,0.04,
+			  &th0,nbin,-0.08,0.08);
    expt->inout->BookHisto(kFALSE, kFALSE, IFOCAL, "dpp",
 			  "Dpp generated ",
                           &dpp0,nbin,-0.003,0.006);
@@ -267,6 +271,10 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
                             &xtrans, nbin,-0.8,0.3,
                             &ytrans, nbin,-0.1,0.1);
 
+    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "xdet",
+                         "X (det. frame)",
+			   &xdet, nbin, -1.2, 1.);
+
 
     // Add some variables to the event ntuple
     // These get filled at the focal plane
@@ -276,6 +284,8 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
     expt->inout->AddToNtuple("phi",&phi);
     expt->inout->AddToNtuple("xfoc",&xtrans);
     expt->inout->AddToNtuple("yfoc",&ytrans);
+    expt->inout->AddToNtuple("xdet",&xdet);
+    expt->inout->AddToNtuple("ydet",&ydet);
 
 
     did_init = kTRUE;

@@ -179,4 +179,8 @@ void hamcTrack::UpdateTrans() {
   dpptrans = tvect->GetDpp();
   ztrans   = tvect->GetZ();
 
+  xdet = xtrans/0.707;
+  ydet = ytrans;
+
+
 }
