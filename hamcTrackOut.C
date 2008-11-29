@@ -115,7 +115,9 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
    expt->inout->BookHisto(kFALSE, kFALSE, ITARGET, "ph", 
 		"Phi at target", &phi, nbin, -0.2,1.2*phimax);
    expt->inout->BookHisto(kFALSE, kFALSE, ITARGET, "mom", 
-	        "Momentum in HRS", &pmom, nbin, 0.2*P0,1.2*P0);
+	        "Momentum in HRS", &pmom, nbin, 0.5*P0,1.02*P0);
+   expt->inout->BookHisto(kFALSE, kFALSE, ITARGET, "momz", 
+	   "Momentum in HRS (zoom)", &pmom, nbin, 0.95*P0,1.02*P0);
 
 
 // Note, th0,ph0, etc are the initial values right after scattering.
@@ -251,7 +253,7 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
                             &xtrans, nbin,-0.6,0.2); 
 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "xyfoc4", 
-		      "Weighted X-Y at focal plane (X on X-axis)", 
+		      "Weighted X-Y at focal plane", 
                             &ytrans, nbin,-0.1,0.1,
                             &xtrans, nbin,-0.6,0.2); 
 
