@@ -161,6 +161,9 @@ Int_t hamcKine::Init(string proc, Float_t eb, Float_t theta,
     epmin = epmi;
     epmax = epma;
 
+// FIXME: can generate uniform in d(cos(theta)), same as sin(theta)dtheta
+// See new method in Generate().  Get rid of this eventually.
+
     SetThetaTable();
 
     did_init = kTRUE;
@@ -267,6 +270,20 @@ Int_t hamcKine::Generate(Float_t eb, Float_t dE) {
     return -1;
   }
 
+// Generate scattering angle uniform in cos(theta)
+
+  Float_t ctheta, cthmin, cthmax;
+
+  cthmin = TMath::Cos(thmin);
+  cthmax = TMath::Cos(thmax);
+
+  ctheta = cthmin + (cthmax-cthmin)*gRandom->Rndm();
+
+  theta = TMath::ACos(ctheta);
+
+#ifdef OTHERWAY
+// Soon to be deprecated
+
 // Generate scattering angle (radians) in lab-frame.
  
   Int_t icell, index;
@@ -284,6 +301,7 @@ Int_t hamcKine::Generate(Float_t eb, Float_t dE) {
   } else {
     cout << "hamcTrackOut::ERROR in theta generation"<<endl;
   }
+#endif
 
   //  cout << "Chk theta "<<x<<"  "<<icell<<"  "<<numtcell<<"  "<<tcellnum.size()<<"  "<<index<<"  "<<"  "<<thetacell.size()<<"  "<<theta<<endl;
 
