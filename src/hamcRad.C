@@ -151,6 +151,8 @@ void hamcRad::Setup(Int_t which, Float_t trl) {
   Float_t xncell,x1,x2,x3;
   Int_t ncnt,ncell;
 
+  if (use_genercone) return; // dont need this for genecone version
+
   vector<Float_t> radtail;
 
   E = E0;  // Initialize
