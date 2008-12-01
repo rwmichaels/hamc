@@ -75,10 +75,10 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
 // each step (e- may have lost energy in earlier step).
    if (expt->physics->Radiate(expt) == -1) return 1;
 
-   if (beam) beam->Generate(expt);   
- 
    expt->target->Zscatt();
 
+   if (beam) beam->Generate(expt);   
+ 
    inaccept = 1;
 
 // Loop over spectrometers
