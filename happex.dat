@@ -7,7 +7,7 @@ hrs_setup coldseptum uselerose
 spreader_collim radlen 0.042
 
 # HRS momentum and angle
-HRS_P0 1.1
+HRS_P0 3.11
 HRS_angle 6
 
 # The HRS_acceptoff is normally commented out (or deleted)
@@ -19,7 +19,7 @@ HRS_angle 6
 HRS_acceptoff 0 1 1 0 1 1 1 1 1 1 
 
 # Beam parameters.  Raster is in meters, typ 0.0004 (means +/- this)
-beam  E0 1.1 E0sigma 0.00011   rastered  xraster 0.0004  yraster 0.0004
+beam  E0 3.176 E0sigma 0.0002   rastered  xraster 0.0004  yraster 0.0004
 
 # range of angles (scatt, azimuth) in degrees
 # phi=0 is up.  phi=90 is into HRS,  phi=180 is down.
