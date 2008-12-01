@@ -1,6 +1,6 @@
 # hamc = Hall A Monte Carlo
 # R. Michaels, May 2008
-# this is a test code
+
 
 # Choose the compiler.
 GCC=g++
@@ -53,8 +53,8 @@ MAKEDEPEND    = $(GCC)
 
 ALL_LIBS = $(LIBS) 
 
-DCDIR=../codaclass
-INCLUDES += -I$(DCDIR)
+SRCDIR=./src
+INCLUDES += -I$(SRCDIR)
 
 ifdef PROFILE
    CXXFLAGS += -pg
@@ -66,23 +66,22 @@ else
    CXXFLAGS += -g
 endif
 
-SRC = hamcExpt.C hamcSingles.C hamcExptPREX.C \
-      hamcPhysics.C hamcPhyPREX.C \
-      hamcEvent.C hamcSpecHRS.C \
-      hamcTrans.C hamcTransMat.C \
-      hamcTransLerWarmSeptum.C \
-      hamcTransLerColdSeptum.C \
-      hamcTransLerHRS.C \
-      hamcTarget.C hamcTgtPREX.C \
-      hamcRad.C hamcKine.C \
-      hamcTrack.C hamcBeam.C hamcTrackOut.C \
-      hamcInout.C THaString.C
+SRC = $(SRCDIR)/hamcExpt.C $(SRCDIR)/hamcSingles.C $(SRCDIR)/hamcPhysics.C \
+      $(SRCDIR)/hamcEvent.C $(SRCDIR)/hamcSpecHRS.C \
+      $(SRCDIR)/hamcTrans.C $(SRCDIR)/hamcTransMat.C \
+      $(SRCDIR)/hamcTransLerWarmSeptum.C \
+      $(SRCDIR)/hamcTransLerColdSeptum.C \
+      $(SRCDIR)/hamcTransLerHRS.C \
+      $(SRCDIR)/hamcTarget.C \
+      $(SRCDIR)/hamcRad.C $(SRCDIR)/hamcKine.C \
+      $(SRCDIR)/hamcTrack.C $(SRCDIR)/hamcBeam.C $(SRCDIR)/hamcTrackOut.C \
+      $(SRCDIR)/hamcInout.C $(SRCDIR)/THaString.C
 
 DEPS = $(SRC:.C=.d)
 DEP  = $(SRC:.C=.d)
 HEAD = $(SRC:.C=.h) 
 
-PROGS = hamc
+PROGS = prex happex
 HAMCLIBS = libhamc.a
 HAMCLIBS_NODICT = libhamc_NODICT.a
 
@@ -93,15 +92,40 @@ else
   OBJS = $(SRC:.C=.o)
   OBJS += hamcDict.o
 endif
-OBJS += prex_forward.o monte_trans_hrs.o R6_forward.o ls_6d_forward.o
+OBJS += $(SRCDIR)/prex_forward.o $(SRCDIR)/monte_trans_hrs.o $(SRCDIR)/R6_forward.o $(SRCDIR)/ls_6d_forward.o
+
+# PREX experiment
+PREX_SRC = ./PREX/main_PREX.C ./PREX/hamcExptPREX.C ./PREX/hamcPhyPREX.C ./PREX/hamcTgtPREX.C
+# Make the dictionary
+ifdef MAKENODICTIONARY
+  PREX_OBJS = $(PREX_SRC:.C=_NODICT.o)
+else
+  PREX_OBJS = $(PREX_SRC:.C=.o)
+endif
+
+# HAPPEX experiment
+HAPPEX_SRC = ./HAPPEX/main_HAPPEX.C ./HAPPEX/hamcExptHAPPEX.C ./HAPPEX/hamcPhyHAPPEX.C ./HAPPEX/hamcTgtHAPPEX.C
+# Make the dictionary
+ifdef MAKENODICTIONARY
+  HAPPEX_OBJS = $(HAPPEX_SRC:.C=_NODICT.o)
+else
+  HAPPEX_OBJS = $(HAPPEX_SRC:.C=.o)
+endif
 
 install: all
 
 all: $(PROGS) $(HAMCLIBS) $(HAMCLIBS_NODICT) libhamc.so
 
-$(PROGS): main.o $(OBJS) $(SRC) $(HEAD) 
+prex: $(PREX_OBJS) $(PREX_HEAD) $(OBJS) $(SRC)  $(HEAD) 
 	rm -f $@
-	$(LD) $(CXXFLAGS) -o $@ main.o $(OBJS) $(ALL_LIBS)
+	$(LD) $(CXXFLAGS) -o $@ $(OBJS) $(PREX_OBJS) $(ALL_LIBS)
+
+happex: $(HAPPEX_OBJS) $(HAPPEX_HEAD) $(OBJS) $(SRC)  $(HEAD) 
+	rm -f $@
+	$(LD) $(CXXFLAGS) -o $@ $(OBJS) $(HAPPEX_OBJS) $(ALL_LIBS)
+
+#Add PVDIS here when it exists
+
 
 $(HAMCLIBS_NODICT): $(LOBJS_NODICT) $(LSRC) $(HEAD)
 	rm -f $@
@@ -111,24 +135,21 @@ $(HAMCLIBS): $(LOBJS) $(LSRC) $(HEAD)
 	rm -f $@
 	ar cr $@ $(LOBJS)
 
-prex_forward.o: prex_forward.f
+$(SRCDIR)/prex_forward.o: $(SRCDIR)/prex_forward.f
 	rm -f $@
-	g77 -c prex_forward.f
+	cd $(SRCDIR) ; g77 -c prex_forward.f ; cd ../
 
-monte_trans_hrs.o: monte_trans_hrs.f
+$(SRCDIR)/monte_trans_hrs.o: $(SRCDIR)/monte_trans_hrs.f
 	rm -f $@
-	g77 -c monte_trans_hrs.f
+	cd $(SRCDIR) ; g77 -c monte_trans_hrs.f ; cd ../
 
-ls_6d_forward.o: ls_6d_forward.f
+$(SRCDIR)/ls_6d_forward.o: $(SRCDIR)/ls_6d_forward.f
 	rm -f $@
-	g77 -c ls_6d_forward.f
+	cd $(SRCDIR) ; g77 -c ls_6d_forward.f ; cd ../
 
-R6_forward.o: R6_forward.f
+$(SRCDIR)/R6_forward.o: $(SRCDIR)/R6_forward.f
 	rm -f $@
-	g77 -c R6_forward.f
-
-main.o: main.C
-	$(CXX) -c $(INCLUDES) $(CXXFLAGS) $<	
+	cd $(SRCDIR) ; g77 -c R6_forward.f ; cd ../
 
 libhamc.so: $(OBJS) $(HEAD)
 	$(CXX) $(SOFLAGS) -O -o libhamc.so $(OBJS) $(ALL_LIBS)
@@ -145,10 +166,10 @@ tarfile: clean version
 	tar cvf $(VERS).tar ./$(VERS)
 
 clean:
-	rm -f *.o core hamcDict* $(PROGS) $(HAMCLIBS) $(HAMCLIBS_NODICT) libhamc.so
+	rm -f $(SRCDIR)/*.o core hamcDict* $(PROGS) $(HAMCLIBS) $(HAMCLIBS_NODICT) libhamc.so ./PREX/*.o ./HAPPEX/*.o 
 
 realclean:  clean
-	rm -f *.d *.tar *~
+	rm -f *.d *.tar  *~
 
 
 %.o:	%.C

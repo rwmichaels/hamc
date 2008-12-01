@@ -16,7 +16,9 @@ Compile:
 
 Run
 
-    ./hamc
+    ./prex    
+or 
+    ./happex
    (and don't forget the dot "." and slash "/")
 
 Histogram output
@@ -26,13 +28,16 @@ Histogram output
 
 I/O control of code
 
-    prex.dat
+    prex.dat   to control prex
+    happex.dat to control happex
 
 
-Known issues
+Known issues (Dec 2008)
 
--  Makefile does not have all dependencies correct yet
+-  Makefile might still not have all dependencies correct yet
    (sometimes need to "make clean ; make")
 
--  all the classes are somewhat incomplete, under test
+-  The classes are generally still under rapid development
+
+-  Nothing done for pvdis yet
 
