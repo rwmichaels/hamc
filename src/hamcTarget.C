@@ -38,12 +38,17 @@ Int_t hamcTarget::Setup() {
   if (did_init) return OK;
 
   if (components.size() == 0) {
+
     cout << "hamcTarget::Setup: WARNING: No target components !"<<endl;
+    exit(0);
+
   } else {
 
     Float_t weisum=0;
     Float_t invradsum=0;
     Float_t invx0;
+
+    Print();
 
     for (Int_t i=0; i<(Int_t)components.size(); i++) {
 
@@ -62,6 +67,7 @@ Int_t hamcTarget::Setup() {
 
     if (weisum == 0) {
        cout << "hamcTarget::ERROR: zero weights !"<<endl;
+       exit(0);
     } else {
        effective_length = effective_length/weisum;
        radiation_length = weisum/invradsum;
@@ -103,16 +109,65 @@ Int_t hamcTarget::Zscatt() {
 
 }			      
 
+Float_t hamcTarget::GetRadIn() {
+// material_index = index of material where scattering occured
+// Returns the fractional radiation length going in to scattering point.
+
+  if (material_index == -1) return 0;
+  Float_t rlen = 0;
+  Float_t zloff = 0;
+  Float_t zdist;
+  
+  for (Int_t i=0; i<material_index; i++) {
+      hamcTgtSlab *slab = components[i];
+      rlen += slab->GetFracRadLen();
+  }
+
+  hamcTgtSlab *slab = components[material_index];
+  zloff = slab->GetZloc() - 0.5*slab->GetLen();
+  zdist = zscatt - zloff;
+  rlen += slab->GetFracRadLen() * zdist / slab->GetLen();
+  if (rlen < 0) cout << "hamcRadIn::ERROR: negative rlen ?"<<endl;
+  return rlen;
+
+}   
+
+
+Float_t hamcTarget::GetRadOut() {
+// material_index = index of material where scattering occured
+// Returns the fractional radiation length going out from scattering point.
+
+  if (material_index == -1) return 0;
+  Float_t rlen = 0;
+  Float_t zloff = 0;
+  Float_t zdist = 0;
+  
+  for (Int_t i=(Int_t)components.size(); i>material_index; i--) {
+      hamcTgtSlab *slab = components[i];
+      rlen += slab->GetFracRadLen();
+  }
+
+  hamcTgtSlab *slab = components[material_index];
+  zloff = slab->GetZloc() + 0.5*slab->GetLen(); 
+  zdist = zloff - zscatt;
+  rlen += slab->GetFracRadLen() * zdist / slab->GetLen();
+  if (rlen < 0) cout << "hamcRadOut::ERROR: negative rlen ?"<<endl;
+  return rlen;
+
+}   
+
 
 Int_t hamcTarget::FindMtlIndex(Float_t zloc) {
 // Find the index of the material for this Z location.
 // The index tracks with (A,Z) and is use to lookup cross-section.
-// The 'mass' is also looked up, as it is needed for kinematics.
+// The mass and atomic number are also looked up, as these
+// are needed for kinematics and cross section, etc.
 
     Float_t zdiff;
 
     material_index = -1;
     mass = 0; 
+    ascatt = -1;
 
     for (Int_t i=0; i<(Int_t)components.size(); i++) {
 
@@ -122,15 +177,17 @@ Int_t hamcTarget::FindMtlIndex(Float_t zloc) {
 // within 1/2 of length, the 0.502 is to account for roundoff
        if (zdiff < 0.502*slab->GetLen()) {
          material_index = slab->GetIndex();
+         ascatt = slab->GetA();
          mass = slab->GetMass();
          return OK;
        }
     }
 
+
 // This would be a pretty serious error.  Should fix it if it happens
     cout << "hamcTarget::FindMtlIndex:WARNING: No component found at this Z"<<endl;
  
-    return OK;
+    return ERROR;
 
 }
 

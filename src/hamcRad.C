@@ -237,7 +237,7 @@ void hamcRad::Print() {
 
 Int_t hamcRad::LookupIdx(Float_t tl) {
 
-  Float_t dtgt = tlen/(Float_t(Nslices));
+  Float_t dtgt = trlen/(Float_t(Nslices));
   Float_t t1, t2;
 
   t1=0;
@@ -264,21 +264,18 @@ Int_t hamcRad::Generate(hamcExpt* expt) {
 // in target for the main scattering point, to decide
 // how much length before / after scattering.
 
-  Float_t ztgt = expt->target->GetZScatt();
-
-  return Generate(ztgt);
+  Float_t radin = expt->target->GetRadIn();
+  Float_t radout = expt->target->GetRadOut();
+ 
+  return Generate(radin, radout);
 
 }
 
-Int_t hamcRad::Generate(Float_t ztgt) {
+Int_t hamcRad::Generate(Float_t radin, Float_t radout) {
 
 //  Generate the energy losses in target
-//  ztgt = location in target (meters) of scattering
-//  (0 = front, and it goes up to tlen)
-// Add 1/2 tgt len since generated ztgt normally 
-// starts at -tlen/2 and goes to +tlen/2.
-
-   ztgt = ztgt + tlen/2;
+//  radin = # radiation lengths coming in to scatter point
+//  radout = # rad  "    "  out "  "
 
    dE_IntBrehm = 0;
    dE_ExtBrehmIn = 0;
@@ -287,11 +284,11 @@ Int_t hamcRad::Generate(Float_t ztgt) {
    if (use_genercone) {  // Test using gener_cone version.
 
      dE_IntBrehm = gener_radlossint(E0,0.5*tequiv);
-     dE_ExtBrehmIn = gener_radlossext(E0, ztgt);
-     dE_ExtBrehmOut = gener_radlossext(E0, tlen-ztgt);
+     dE_ExtBrehmIn = gener_radlossext(E0, radin);
+     dE_ExtBrehmOut = gener_radlossext(E0, radout);
      dE_Bsum = dE_IntBrehm + dE_ExtBrehmIn + dE_ExtBrehmOut;
 
-     //     cout << "Using Gener cone "<<E0<<"  "<<tequiv<<"  "<<trlen<<"  "<<ztgt<<"  "<<tlen<<" / "<<endl<<dE_IntBrehm<<"  "<<dE_ExtBrehmIn<<"  "<<dE_ExtBrehmOut<<"  "<<dE_Bsum<<endl;
+     //     cout << "Using Gener cone "<<E0<<"  "<<tequiv<<"  "<<"  "<<"  "<<radin<<"  "<<radout<<" / "<<endl<<dE_IntBrehm<<"  "<<dE_ExtBrehmIn<<"  "<<dE_ExtBrehmOut<<"  "<<dE_Bsum<<endl;
 
 
      return 1;
@@ -306,11 +303,11 @@ Int_t hamcRad::Generate(Float_t ztgt) {
    Float_t x = (Eintern.size()-1)*gRandom->Rndm();
    idx = (Int_t)x;
 
-   if (idx < 0 || idx > Eintern.size()) return -1;
+   if (idx < 0 || idx > (Int_t)Eintern.size()) return -1;
 
    dE_IntBrehm = E0 - Eintern[idx];
 
-   idx = LookupIdx(ztgt);  // before scattering
+   idx = LookupIdx(radin);  // before scattering
 
    vector<Float_t> radtail;  
 
@@ -321,9 +318,7 @@ Int_t hamcRad::Generate(Float_t ztgt) {
       dE_ExtBrehmIn = E0 - radtail[jj];
    }
 
-   //   cout << "\nidx before  "<<ztgt<<"  "<<idx<<"  "<<dE_ExtBrehmIn<<"  "<<radtail.size()<<endl;
-
-   idx = LookupIdx(tlen-ztgt);  // after scattering
+   idx = LookupIdx(radout);  // after scattering
 
    if (idx >= 0 && idx < Nslices) {
       radtail = Estraggle[idx];
@@ -332,7 +327,6 @@ Int_t hamcRad::Generate(Float_t ztgt) {
       dE_ExtBrehmOut = E0 - radtail[jj];
    }
 
-   //   cout << "idx after  "<<tlen-ztgt<<"  "<<idx<<"  "<<dE_ExtBrehmOut<<"  "<<radtail.size()<<endl;
 
    dE_Bsum = dE_IntBrehm + dE_ExtBrehmIn + dE_ExtBrehmOut;
 
@@ -380,7 +374,7 @@ Int_t hamcRad::CheckInit() {
 
 Float_t hamcRad::gener_radlossint(Float_t k, Float_t nu) {
 
-/* Taken from gener_cone MC, modified by R.M. */  
+/* Taken from gener_cone MC, modified by R. Michaels */  
 
 /* L.Van Hoorebeke, University of Gent, e-mail: Luc.VanHoorebeke@UGent.be
    This function generates internal radiation the distribution used
@@ -413,7 +407,7 @@ Float_t hamcRad::gener_radlossint(Float_t k, Float_t nu) {
 }
 
 
-Float_t hamcRad::gener_radlossext(Float_t k, Float_t dist_tgt) {
+Float_t hamcRad::gener_radlossext(Float_t k, Float_t fracrl) {
 
 /* Taken from gener_cone MC, modified by R.M. */
 /* For now we ignore the subtleties of target composition, treat it like
@@ -423,19 +417,17 @@ Float_t hamcRad::gener_radlossext(Float_t k, Float_t dist_tgt) {
   This function generates external bremsstrahlung in the target
   the distribution used contains multiple emission effects
   k: electron momentum
-  dist_tgt:distance travelled through material with rad length rd_tgt (cm)
+  fracrl = fraction of radiation lengths distance, travelled through material.
 
 */
 
-  Float_t cut,Ekin,fracrl,bt,prob,prob_sample;
+  Float_t cut,Ekin,bt,prob,prob_sample;
   Float_t sample,xtry,env,value,ref;
 
 /* Initialisation of lower limit of bremsstrahlung (1 keV) */
   cut=0.000001;
 
   Ekin = k-Me;
-/* Determination of total radiation lenght fraction travelled through */
-  fracrl = trlen*dist_tgt/tlen;
 
   bt=fracrl*4./3.;
 

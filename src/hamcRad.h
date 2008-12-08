@@ -23,7 +23,7 @@ class hamcRad {
      Int_t Init(Float_t E,Float_t theta,Float_t z,Float_t rl,Float_t tl);
 
      Int_t Generate(hamcExpt *expt);  // event generator
-     Int_t Generate(Float_t ztgt); 
+     Int_t Generate(Float_t rlin, Float_t rlout); 
      Float_t GetDeIntern();  
      Float_t GetDeExternIn();  
      Float_t GetDeExternOut();  

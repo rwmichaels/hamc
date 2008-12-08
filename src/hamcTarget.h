@@ -21,13 +21,14 @@ public:
 // effective length 'elen' includes estimated rad tail effect,
 // radiation length 'rlen', atomic number 'a', charge 'z',
 // mass 'm' (GeV), density 'd' (g/cm^3), Zlocation (cm)
-  hamcTgtSlab(std::string mtl, Int_t id, Float_t len, Float_t elen, Float_t rlen, Float_t a, Float_t z, Float_t m, Float_t d): material(mtl),index(id),mtl_len(len), eff_len(elen),rad_len(rlen),anum(a),znum(z),mass(m),density(d),zlocation(0) {};
+  hamcTgtSlab(std::string mtl, Int_t id, Float_t len, Float_t elen, Float_t rlen, Float_t a, Float_t z, Float_t m, Float_t d): material(mtl),index(id),mtl_len(len), eff_len(elen),rad_len(rlen),anum(a),znum(z),mass(m),density(d),zlocation(0) { fracrl=0; if(rad_len!=0) fracrl=len/rad_len; };
   void  PutZloc(Float_t zz) { zlocation=zz; };
   Float_t GetZloc() const { return zlocation; };
   std::string GetName() const { return material; };
   Int_t   GetIndex() const { return index; };   // index, tracks with A,Z 
   Float_t GetLen() const { return mtl_len; };
   Float_t GetEffLen() const { return eff_len; };
+  Float_t GetFracRadLen() const { return fracrl; };
   Float_t GetRadLen() const { return rad_len; };
   Float_t GetA() const { return anum; };
   Float_t GetZ() const { return znum; };
@@ -36,7 +37,7 @@ public:
 private:
   std::string material;
   Int_t index;
-  Float_t mtl_len, eff_len, rad_len, anum, znum, mass, density;
+  Float_t mtl_len, eff_len, fracrl, rad_len, anum, znum, mass, density;
   Float_t zlocation;
 };
 
@@ -74,7 +75,10 @@ class hamcTarget {
      Float_t GetMtlDensity(Int_t iloc);
      Float_t GetMtlA(Int_t iloc);
      Float_t GetMtlZ(Int_t iloc);
-
+// atomic number of nucleus involved in scattering
+     Float_t GetAscatt() { return ascatt; };
+     Float_t GetRadIn();  // radiation length before scatt point
+     Float_t GetRadOut(); // radiation length after scatt point.
 
   protected:
 
@@ -85,6 +89,7 @@ class hamcTarget {
      Float_t weighted_density;
      std::vector<hamcTgtSlab *> components;
      Float_t zscatt, mass;
+     Float_t ascatt;   
      Int_t material_index;
 
      Int_t Setup();
