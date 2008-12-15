@@ -5,7 +5,7 @@
 #include "hamcTrack.h"
 #include "hamcExpt.h"
 #include "hamcPhysics.h"
-#include "hamcRad.h"
+#include "hamcEloss.h"
 #include "hamcInout.h"
 #include "hamcTarget.h"
 #include "TRandom.h"
@@ -142,8 +142,9 @@ Int_t hamcBeam::Radiate(hamcExpt* expt) {
 // The internal is for 1/2 t_equivalent, so it's
 // what to subtract before and after scattering.
 
-  Float_t dE = expt->physics->radiation->GetDeExternIn() + 
-               expt->physics->radiation->GetDeIntern();
+  Float_t dE = expt->physics->eloss->GetDeExternIn() + 
+               expt->physics->eloss->GetDeIntern() +
+               expt->physics->eloss->GetDeIonIn();
 
   energy = energy - dE;
 

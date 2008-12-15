@@ -45,7 +45,6 @@ class hamcKine {
      Int_t GenerateDis();
      Int_t ComputeKine(); 
      void Clear();
-     void SetThetaTable();
      Int_t CheckInit();
 
      Int_t iproc;

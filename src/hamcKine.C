@@ -10,7 +10,7 @@
 #include "hamcExpt.h"
 #include "hamcPhysics.h"
 #include "hamcBeam.h"
-#include "hamcRad.h"
+#include "hamcEloss.h"
 #include "hamcEvent.h"
 #include "hamcTarget.h"
 #include "hamcInout.h"
@@ -161,11 +161,6 @@ Int_t hamcKine::Init(string proc, Float_t eb, Float_t theta,
     epmin = epmi;
     epmax = epma;
 
-// FIXME: can generate uniform in d(cos(theta)), same as sin(theta)dtheta
-// See new method in Generate().  Get rid of this eventually.
-
-    SetThetaTable();
-
     did_init = kTRUE;
 
     return 1;
@@ -176,41 +171,6 @@ void hamcKine::SetDisDef(Float_t xlo, Float_t xhi, Float_t qslo, Float_t wslo) {
   xbjhi = xhi;
   qsqlo = qslo;
   wsqlo = wslo;
-
-}
-
-void hamcKine::SetThetaTable() {
-// Setup table of theta values such that 
-// solid angle sin(theta)*dtheta*dphi
-// is uniformly filled
-
-  Float_t th,x;
-  Int_t i,k,num;
-
-  Float_t cdiv = 200;
-  Int_t MAX = (Int_t)(MAXCELL/cdiv);
-
-  numtcell = 0;
-
-  for (i=0; i<MAX; i++) {
-
-    x = (Float_t)i/((Float_t)MAX);
-    th = thmin + x * (thmax-thmin);
-    thetacell.push_back(th);
-
-    num = ((Int_t)(cdiv * TMath::Sin(th)));
-
-    for (k=0; k<num; k++) tcellnum.push_back(i);
-
-    numtcell += num;
- 
-    if (numtcell > MAXCELL) {
-      // This should never happen.  If it does, ask me.
-      cout << "hamcKine:: ERROR:  trying to create too many cells."<<endl;
-      exit(0);
-    }
-
-  }
 
 }
 
@@ -237,13 +197,15 @@ Int_t hamcKine::Generate(hamcExpt *expt) {
     E0 = ebeam_central;
   }
 
-  hamcRad *rad = expt->physics->radiation;
+  hamcEloss *eloss = expt->physics->eloss;
   Float_t dE = 0;
 
 // The internal is for 1/2 t_equivalent, so it's
 // what to subtract before and after scattering.
 
-  if (rad) dE = rad->GetDeIntern() + rad->GetDeExternOut(); 
+  if (eloss) dE = eloss->GetDeIntern() 
+                + eloss->GetDeExternOut() 
+                + eloss->GetDeIonOut();
 
 // Add kick if we are iterating on energy
   if (expt->iteration == 1) {
@@ -263,6 +225,7 @@ Int_t hamcKine::Generate(Float_t eb, Float_t dE) {
 
   ebeam = eb;    energy = ebeam;
   dE_after = dE;
+
   if (iproc == proc_dis && energy*energy < wsqlo) return -1;
 
   if ( did_init == kFALSE ) {
@@ -281,30 +244,7 @@ Int_t hamcKine::Generate(Float_t eb, Float_t dE) {
 
   theta = TMath::ACos(ctheta);
 
-#ifdef OTHERWAY
-// Soon to be deprecated
-
-// Generate scattering angle (radians) in lab-frame.
- 
-  Int_t icell, index;
-  Float_t x;
-  theta = 0.0001;
-  if (tcellnum.size()>0 && thetacell.size()>0) {
-    x = ((Float_t)numtcell)*gRandom->Rndm();
-    icell = (Int_t) x;
-    if (icell >= 0 && icell < tcellnum.size()) {
-        index = tcellnum[icell];
-        if (index >= 0 && index < thetacell.size()) {  
-            theta = thetacell[index];
-	}
-    }
-  } else {
-    cout << "hamcTrackOut::ERROR in theta generation"<<endl;
-  }
-#endif
-
   //  cout << "Chk theta "<<x<<"  "<<icell<<"  "<<numtcell<<"  "<<tcellnum.size()<<"  "<<index<<"  "<<"  "<<thetacell.size()<<"  "<<theta<<endl;
-
 
 // Likewise, generate azimuthal angle (radians) in lab-frame
   phi = phmin + (phmax-phmin)*gRandom->Rndm();   

@@ -7,6 +7,7 @@
 #include "Rtypes.h"
 #include <vector>
 #include <string>
+#include <iostream>
 #include <map>
 
 class hamcExpt;
@@ -21,10 +22,10 @@ public:
 // effective length 'elen' includes estimated rad tail effect,
 // radiation length 'rlen', atomic number 'a', charge 'z',
 // mass 'm' (GeV), density 'd' (g/cm^3), Zlocation (cm)
-  hamcTgtSlab(std::string mtl, Int_t id, Float_t len, Float_t elen, Float_t rlen, Float_t a, Float_t z, Float_t m, Float_t d): material(mtl),index(id),mtl_len(len), eff_len(elen),rad_len(rlen),anum(a),znum(z),mass(m),density(d),zlocation(0) { fracrl=0; if(rad_len!=0) fracrl=len/rad_len; };
+  hamcTgtSlab(std::string mtl, Int_t id, Float_t len, Float_t elen, Float_t rlen, Float_t a, Float_t z, Float_t m, Float_t d): index(id),mtl_len(len), eff_len(elen),rad_len(rlen),anum(a),znum(z),mass(m),density(d),zlocation(0) { smaterial = mtl; fracrl=0; if(rad_len!=0) fracrl=len/rad_len; };
   void  PutZloc(Float_t zz) { zlocation=zz; };
   Float_t GetZloc() const { return zlocation; };
-  std::string GetName() const { return material; };
+  std::string GetName() const { return smaterial; };
   Int_t   GetIndex() const { return index; };   // index, tracks with A,Z 
   Float_t GetLen() const { return mtl_len; };
   Float_t GetEffLen() const { return eff_len; };
@@ -34,8 +35,13 @@ public:
   Float_t GetZ() const { return znum; };
   Float_t GetMass() const { return mass; };
   Float_t GetDensity() const { return density; };
+  void Print() {
+    std::cout<<"Slab Print: "<<std::endl;
+    std::cout<<"  "<<smaterial<<std::endl;
+    std::cout<<"  "<<mtl_len<<"  "<<rad_len<<std::endl;
+  }
 private:
-  std::string material;
+  std::string smaterial;
   Int_t index;
   Float_t mtl_len, eff_len, fracrl, rad_len, anum, znum, mass, density;
   Float_t zlocation;
@@ -71,6 +77,7 @@ class hamcTarget {
      Float_t GetDensity() const { return weighted_density; };
      Int_t   GetNumMtl() const { return components.size(); }; 
      Float_t GetMtlZloc(Int_t iloc);  // returns Z location of material #iloc
+     Float_t GetMtlLen(Int_t iloc);
      Float_t GetMtlRadLen(Int_t iloc);
      Float_t GetMtlDensity(Int_t iloc);
      Float_t GetMtlA(Int_t iloc);
@@ -78,7 +85,9 @@ class hamcTarget {
 // atomic number of nucleus involved in scattering
      Float_t GetAscatt() { return ascatt; };
      Float_t GetRadIn();  // radiation length before scatt point
-     Float_t GetRadOut(); // radiation length after scatt point.
+     Float_t GetRadOut(); // radiation length after scatt point
+     Float_t GetLenInMtl();   // length from front face of mtl hit
+     Float_t GetLenOutMtl();  // from scatt. pt to exit of mtl hit
 
   protected:
 

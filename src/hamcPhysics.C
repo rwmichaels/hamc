@@ -5,7 +5,7 @@
 #include "hamcExpt.h"
 #include "hamcInout.h"
 #include "hamcKine.h" 
-#include "hamcRad.h"
+#include "hamcEloss.h"
 #include "Rtypes.h"
 #include <string>
 #include <vector>
@@ -20,13 +20,13 @@ ClassImp(hamcPhysics)
 
 hamcPhysics::hamcPhysics(): did_init(kFALSE),crsec(0),asymmetry(0)
 {
-  radiation = new hamcRad();
+  eloss = new hamcEloss();
   kine = new hamcKine();
 }
 
 hamcPhysics::~hamcPhysics()
 {
-  delete radiation;
+  delete eloss;
   delete kine;
 }
 
@@ -38,8 +38,8 @@ Int_t hamcPhysics::Init(hamcExpt* expt) {
   expt->inout->AddToNtuple("crsec",&crsec);
   expt->inout->AddToNtuple("asy",&asymmetry);
 
-  radiation->Init(expt);
-  //  radiation->Print();
+  eloss->Init(expt);
+  //  eloss->Print();
   kine->Init(expt);
 
   did_init = kTRUE;
@@ -50,7 +50,7 @@ Int_t hamcPhysics::Init(hamcExpt* expt) {
 Int_t hamcPhysics::Radiate(hamcExpt* expt) {
 
   if (do_radiate) {
-    return radiation->Generate(expt);
+    return eloss->Generate(expt);
   } else {
     return 1;
   }

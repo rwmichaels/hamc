@@ -10,7 +10,7 @@
 #include <map>
 
 class hamcExpt;
-class hamcRad;   
+class hamcEloss;   
 class hamcKine;   
 
 class hamcPhysics {
@@ -28,7 +28,7 @@ class hamcPhysics {
      virtual Float_t GetCrossSection() const { return crsec; };
      virtual Float_t GetAsymmetry() const { return asymmetry; };
      hamcKine* kine;
-     hamcRad* radiation;
+     hamcEloss* eloss;
 
 
   protected:

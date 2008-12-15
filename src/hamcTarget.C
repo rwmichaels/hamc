@@ -48,8 +48,6 @@ Int_t hamcTarget::Setup() {
     Float_t invradsum=0;
     Float_t invx0;
 
-    Print();
-
     for (Int_t i=0; i<(Int_t)components.size(); i++) {
 
        hamcTgtSlab *slab = components[i];
@@ -59,6 +57,7 @@ Int_t hamcTarget::Setup() {
        invx0 = 0;
        if (slab->GetRadLen() != 0) invx0 = 1./slab->GetRadLen();
        invradsum        += weight*invx0;
+       cout << "Chk1 "<<weight<<"  "<<slab->GetRadLen()<<"  "<<invx0<<"  "<<invradsum<<endl;
        effective_length += weight*slab->GetEffLen();
        weighted_anum    += weight*slab->GetA();
        weighted_znum    += weight*slab->GetZ();
@@ -71,7 +70,9 @@ Int_t hamcTarget::Setup() {
     } else {
        effective_length = effective_length/weisum;
        radiation_length = weisum/invradsum;
+       cout << "Chk2 "<<weisum<<"  "<<overall_length<<"  "<<radiation_length<<endl;
        radiation_length = overall_length/radiation_length;
+       cout << "Chk3 "<<radiation_length<<endl;
        weighted_anum    = weighted_anum/weisum;
        weighted_znum    = weighted_znum/weisum;
        weighted_density = weighted_density/weisum;
@@ -79,6 +80,15 @@ Int_t hamcTarget::Setup() {
 
     Float_t zpos;
     zpos = -1 * overall_length/2;  // z=0 is center of overall target
+
+ // Ok, the weighted radiation_length is not working yet, try this for now:
+    zscatt = 0;
+    Float_t x1 = GetRadIn(); 
+    Float_t x2 = GetRadOut(); 
+    radiation_length = x1 + x2;
+    // fukit
+    //    radiation_length = 0.02;
+    cout << "Chk4 "<<radiation_length<<endl;
 
     for (Int_t i=0; i<(Int_t)components.size(); i++) {
 
@@ -92,6 +102,8 @@ Int_t hamcTarget::Setup() {
     }
 
     did_init = kTRUE;
+
+    Print();
 
   }
 
@@ -142,7 +154,7 @@ Float_t hamcTarget::GetRadOut() {
   Float_t zloff = 0;
   Float_t zdist = 0;
   
-  for (Int_t i=(Int_t)components.size(); i>material_index; i--) {
+  for (Int_t i=((Int_t)components.size()-1); i>material_index; i--) {
       hamcTgtSlab *slab = components[i];
       rlen += slab->GetFracRadLen();
   }
@@ -155,6 +167,33 @@ Float_t hamcTarget::GetRadOut() {
   return rlen;
 
 }   
+
+Float_t hamcTarget::GetLenInMtl() {
+// For the material that got struck, get the length into
+// the material where it was hit
+// "into" means along beam from front face to scatter point
+
+  if (material_index == -1) return 0;
+  hamcTgtSlab *slab = components[material_index];
+  Float_t zloff = slab->GetZloc() - 0.5*slab->GetLen();
+  Float_t zdist = zscatt - zloff;
+  return zdist;
+
+}
+
+
+Float_t hamcTarget::GetLenOutMtl() {
+// For the material that got struck, get the length out
+// of the material where it was hit
+// "out" means along beam from scatter point to exit of material
+
+  if (material_index == -1) return 0;
+  hamcTgtSlab *slab = components[material_index];
+  Float_t zloff = slab->GetZloc() + 0.5*slab->GetLen(); 
+  Float_t zdist = zloff - zscatt;
+  return zdist;
+
+}
 
 
 Int_t hamcTarget::FindMtlIndex(Float_t zloc) {
@@ -226,6 +265,14 @@ Float_t hamcTarget::GetMtlRadLen(Int_t iloc) {
   if (CheckIndex(iloc) == ERROR) return 0;
 
   return components[iloc]->GetRadLen();
+
+}
+
+Float_t hamcTarget::GetMtlLen(Int_t iloc) {
+ 
+  if (CheckIndex(iloc) == ERROR) return 0;
+
+  return components[iloc]->GetLen();
 
 }
 
