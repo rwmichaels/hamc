@@ -6,6 +6,7 @@
 #include "hamcSpecHRS.h"
 #include "hamcPhysics.h"
 #include "hamcBeam.h"
+#include "hamcKine.h"
 #include "hamcTrack.h"
 #include "hamcTrackOut.h"
 #include "hamcInout.h"
@@ -36,6 +37,7 @@ hamcEvent::~hamcEvent()
 Int_t hamcEvent::InitBeam(hamcExpt* expt) {
 
   if (beam) beam->Init(expt);
+  return OK;
 
 }
 
@@ -92,7 +94,9 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
      expt->physics->Generate(expt); 
 
 // Weight by cross section (optionally used for some histograms)
-     expt->inout->SetWeight(expt->physics->GetCrossSection());
+     Float_t weight = expt->physics->GetCrossSection();
+ 
+     expt->inout->SetWeight(weight);
 
      track->MultScatt(expt, ITARGET);
 
@@ -135,7 +139,6 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
        expt->inout->Process(expt);
 
      }  // loop over break points
-
 
    }    // spectrometer loop
 
