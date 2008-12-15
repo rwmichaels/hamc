@@ -93,6 +93,8 @@ Int_t hamcExpt::Run(Int_t maxevent) {
   for (iteration = 0; iteration < numiter; iteration++) {
 
     for (Int_t ievt = 0; ievt < maxevent; ievt++ ) {
+
+      if (ievt > 0 && ((ievt%10000)==1)) cout << "event "<<ievt<<endl;
  
       if (event) event->Process(this);
 
