@@ -123,7 +123,7 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "momb", 
 	   "Momentum in HRS (hamc)", &pmom, 200, 1.050, 1.150);
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "momb2", 
-	   "Momentum in HRS (hamc)", &pmom, 200, 3.0, 3.19);
+	   "Momentum in HRS (hamc)", &pmom, 200, 3.0, 3.17);
 
 
 // Note, th0,ph0, etc are the initial values right after scattering.
@@ -289,6 +289,7 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
     // Add some variables to the event ntuple
     // These get filled at the focal plane
     expt->inout->AddToNtuple("pmom",&pmom);
+    expt->inout->AddToNtuple("dpp",&dpp);
     expt->inout->AddToNtuple("qsq",&qsq);
     expt->inout->AddToNtuple("theta",&theta);
     expt->inout->AddToNtuple("phi",&phi);
@@ -379,7 +380,7 @@ Int_t hamcTrackOut::Generate(hamcExpt *expt) {
 
   pmom = TMath::Sqrt(energy*energy - mass*mass);
   
-  Float_t dpp = 0;
+  dpp = 0;
   if (P0 != 0) dpp = (pmom - P0)/P0;
 
   tvect->PutDpp(dpp);

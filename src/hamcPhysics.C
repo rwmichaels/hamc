@@ -22,6 +22,7 @@ hamcPhysics::hamcPhysics(): did_init(kFALSE),crsec(0),asymmetry(0)
 {
   eloss = new hamcEloss();
   kine = new hamcKine();
+  do_radiate = kTRUE;
 }
 
 hamcPhysics::~hamcPhysics()

@@ -86,8 +86,8 @@ Int_t hamcTarget::Setup() {
     Float_t x1 = GetRadIn(); 
     Float_t x2 = GetRadOut(); 
     radiation_length = x1 + x2;
-    // fukit
-    //    radiation_length = 0.02;
+
+ 
     cout << "Chk4 "<<radiation_length<<endl;
 
     for (Int_t i=0; i<(Int_t)components.size(); i++) {

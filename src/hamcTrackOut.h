@@ -41,7 +41,7 @@ class hamcTrackOut : public hamcTrack {
      Float_t thetamin, thetamax, phimin, phimax;
      Float_t tgt_mass;
      Float_t theta_iteration;
-     Float_t qsq;
+     Float_t dpp,qsq;
 
 // Parameters for cells of const. solid angle
      static const Int_t MAXCELL=20000;
