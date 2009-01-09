@@ -45,11 +45,11 @@ class hamcEloss {
 
      void Setup(Int_t which, Float_t tl);
 
-     static const Int_t MAXCNT=300000;
-     static const Int_t ldebug=0;
+     static const Int_t MAXCNT=4000000;
+     static const Int_t ldebug=2;
      static const Float_t Me=0.0000511;
      static const Float_t Euler=0.5772157;
-     static const Float_t fracresol=1e-4;
+     Float_t fracresol;
 
      Bool_t did_init;
      Bool_t use_genercone, use_ionize;

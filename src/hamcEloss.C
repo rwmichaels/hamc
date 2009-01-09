@@ -33,8 +33,9 @@ hamcEloss::hamcEloss(): did_init(kFALSE)
    dE_Bsum = 0;
    dE_IonizeIn = 0;
    dE_IonizeOut = 0;
-   use_genercone = kTRUE;  // For tests. (might become permanent)
+   use_genercone = kTRUE;  // This is preferred, for now (Jan '09)
    use_ionize = kTRUE;
+   fracresol = 1e-4;
 }
 
 hamcEloss::~hamcEloss()
@@ -103,7 +104,7 @@ Int_t hamcEloss::InitRad(Float_t E, Float_t theta, Float_t z, Float_t rl, Float_
 // len = actual length (meters)
 
   Npts = 50000;
-  yfact = 2e5;
+  yfact = 4e6;
   Nslices = 10;  // # slices of target.
 
   if (ldebug) cout << "hamcEloss init "<<E<<"  "<<theta<<"  "<<z<<"  "<<rl<<"  "<<tl<<endl;  
@@ -115,6 +116,7 @@ Int_t hamcEloss::InitRad(Float_t E, Float_t theta, Float_t z, Float_t rl, Float_
   pi=3.1415926;
 
   E0 = E;
+  cout << "hamcEloss,  E0 = "<<E0<<endl;
   trlen = rl;
   tlen  = tl;
 
@@ -133,15 +135,15 @@ Int_t hamcEloss::InitRad(Float_t E, Float_t theta, Float_t z, Float_t rl, Float_
 
   tequiv = (alpha/(bval*pi)) * (log(qsq/msq) - 1);
 
-  Setup(0,tequiv);
+  Setup(0, tequiv);
 
   Float_t dtgt = trlen/(Float_t(Nslices));
 
-  for (Int_t isl = 0; isl<Nslices; isl++) {
+  for (Int_t isl = 1; isl<=Nslices; isl++) {
 
     Float_t tfrac = dtgt * (isl+1);
 
-    Setup(1,tfrac);
+    Setup(isl,tfrac);
 
   }
 
@@ -168,6 +170,8 @@ void hamcEloss::Setup(Int_t which, Float_t trl) {
   E = E0;  // Initialize
   eresol = fracresol*E0;
   Ptot  = 0; 
+  phi   = 0;
+  plo   = 0;
   ncnt  = 0;
 
   for (Int_t i=0; i<Npts; i++) {
@@ -209,21 +213,37 @@ void hamcEloss::Setup(Int_t which, Float_t trl) {
     
   }
 
+
   phltot = phi+plo;  // This should be ~1, but may fall a bit short.
   pcut = 0;
   if (phltot != 0) pcut = plo/phltot;   
+
+  cout << "slice "<<which<<endl;
+  cout << "Ptot "<<Ptot<<endl;
+  cout << "Probs "<<phi<<"  "<<plo<<"  "<<phltot<<"  "<<pcut<<endl;
 
   if (which ==0) {
     cut_intern = pcut;
     if(ldebug) cout << "Eintern size "<<Eintern.size()<<endl;
   } else {
-    if(ldebug) cout << "Eextern["<<which<<"] size "<<radtail.size()<<endl;
+    if(ldebug) cout << "Eextern["<<which-1<<"] size "<<radtail.size()<<endl;
   }
 
   if (!which) return;
 
   Eextern.push_back(radtail);
   cut_extern.push_back(pcut);
+
+   if (which ==  Nslices) {
+     cout << "Rad pcut "<<endl;
+     cout << "Internal Brehms "<<cut_intern<<endl;
+     cout << "External: ";
+     for (Int_t i=0; i<Nslices; i++) cout << cut_extern[i]<<"  ";
+     cout << endl << "Size of tails ";
+     for (Int_t i=0; i<Nslices; i++) cout << Eextern[i].size()<<"  ";
+     cout << endl;
+   }
+
 
 }
 
@@ -336,7 +356,7 @@ Int_t hamcEloss::GenerateDeDx(hamcExpt *expt) {
   // 0.001 GeV/MeV  -> overall factor of 0.1
 
     dE_IonizeIn += 0.1*dedx_eloss(zmtl)*density*zlen;
-   
+
   }
 
 // Material from which we scattered:
@@ -397,7 +417,6 @@ Int_t hamcEloss::GenerateRad(Float_t zpos) {
    idx = (Int_t)x;
    if (idx < 0 || idx > (Int_t)Eintern.size()) return -1;
 
-
    prob = gRandom->Rndm();
    if (prob > cut_intern) {  // if there was an Brehm. event
      dE_IntBrehm = E0 - Eintern[idx];
@@ -414,6 +433,10 @@ Int_t hamcEloss::GenerateRad(Float_t zpos) {
 
    if (idx >= 0 && idx < Nslices) {
       radtail = Eextern[idx];
+      if (radtail.size() == 0) {
+        cout << "hamcEloss: WARNING: no radtail defined for slice "<<idx<<endl;
+        return 0;
+      }
       x = (radtail.size()-1)*gRandom->Rndm();
       jj = (Int_t)x; 
       prob = gRandom->Rndm();
@@ -431,9 +454,16 @@ Int_t hamcEloss::GenerateRad(Float_t zpos) {
 
    if (idx >= 0 && idx < Nslices) {
       radtail = Eextern[idx];
+      if (radtail.size() == 0) {
+        cout << "hamcEloss: WARNING: no radtail defined for slice "<<idx<<endl;
+        return 0;
+      }
       x = (radtail.size()-1)*gRandom->Rndm();
       jj = (Int_t)x; 
-      dE_ExtBrehmOut = E0 - radtail[jj];
+      prob = gRandom->Rndm();
+      if (prob > cut_extern[idx]) {// if there was an Brehm. event
+        dE_ExtBrehmOut = E0 - radtail[jj];
+      }
    }
 
 
@@ -498,7 +528,7 @@ Float_t hamcEloss::gener_radlossint(Float_t k, Float_t nu) {
   Float_t cut,Ekin,prob,prob_sample,sample;
 
 /* Initialisation of lower limit of bremsstrahlung (1 keV) */
-  cut = 0.000001;
+  cut = 0.000001;  
 
   Ekin = k-Me;
 
@@ -546,6 +576,7 @@ Float_t hamcEloss::gener_radlossext(Float_t k, Float_t fracrl) {
   prob = prob/(1.- bt*Euler + bt*bt/2.*(Euler*Euler+PI*PI/6.)); /* Gamma function */
 
   prob_sample = gRandom->Rndm();
+
   if (prob_sample > prob) return 0.;
 
 /* Bremsstrahlung has taken place! Generate photon energy with sample and reject,
@@ -574,6 +605,11 @@ Float_t hamcEloss::dedx_eloss(Float_t Znuc) {
   // No straggling in this version.
 
   // FIXME: need better treatment of composite target.
+
+  if (Znuc <= 0) {
+    cout << "hamcEloss::ERROR: trying to calc. dE/dx for neutral ?"<<endl;
+    return 0;
+  }
 
   Float_t dedx = 2.35 - 0.28*TMath::Log(Znuc);  // MeV g^-1 cm^2
 
