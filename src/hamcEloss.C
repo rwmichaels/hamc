@@ -24,6 +24,32 @@ using namespace std;
 ClassImp(hamcEloss)
 #endif
 
+double radtail_exact(double *x, double *p) { 
+// Exact radtail with x[0] = Eloss
+// p[0] = trl (radiation length)
+// p[1] = Z (charge)
+// p[2] = E0 (initial energy)
+  double cut = 1e-10;
+  double trl = p[0];
+  double z = p[1];
+  double E0 = p[2]; 
+  double eloss = x[0];
+  if (eloss < 0) return 0;
+  if (eloss < cut) eloss = cut;
+  double E = E0 - eloss;
+  double x1,x2,x3,bval,psi;
+  x1 = exp((-2./3.)*log(z));
+  x2 = exp((-1./3.)*log(z));
+  psi = log(1440*x1)/log(183*x2);
+  bval = (4./3.)*(1 + (1./9.)*(( (z+1)/(z+psi) ) / (log(183*x2))));
+  //  cout << "chk1 "<<z<<"  "<<x1<<"  "<<x2<<"  "<<psi<<"  "<<bval<<endl;
+  x1 = bval*trl/eloss;
+  x2 = E/E0 + (3./4.)*((eloss/E0)*(eloss/E0));
+  x3 = exp(bval*trl*log(log(E0/E)));
+  //  cout << "chk2 "<<x[0]<<"  "<<eloss<<"  "<<trl<<"  "<<x1<<" "<<E0<<"  "<<x2<<"  "<<x3<<endl;
+  return x1*x2*x3;
+}
+
 
 hamcEloss::hamcEloss(): did_init(kFALSE)
 {
@@ -33,8 +59,9 @@ hamcEloss::hamcEloss(): did_init(kFALSE)
    dE_Bsum = 0;
    dE_IonizeIn = 0;
    dE_IonizeOut = 0;
-   use_genercone = kTRUE;  // This is preferred, for now (Jan '09)
+   use_genercone = kFALSE;  // This is preferred, for now (Jan '09)
    use_ionize = kTRUE;
+   use_exact = kTRUE;
    fracresol = 1e-4;
 }
 
@@ -135,7 +162,11 @@ Int_t hamcEloss::InitRad(Float_t E, Float_t theta, Float_t z, Float_t rl, Float_
 
   tequiv = (alpha/(bval*pi)) * (log(qsq/msq) - 1);
 
-  Setup(0, tequiv);
+  if (use_exact) {
+    Setup_Exact(0, tequiv, z, E0);
+  } else {
+    Setup(0, tequiv);
+  }
 
   Float_t dtgt = trlen/(Float_t(Nslices));
 
@@ -143,7 +174,11 @@ Int_t hamcEloss::InitRad(Float_t E, Float_t theta, Float_t z, Float_t rl, Float_
 
     Float_t tfrac = dtgt * (isl+1);
 
-    Setup(isl,tfrac);
+    if (use_exact) {
+      Setup_Exact(isl, tfrac, z, E0);
+    } else {
+      Setup(isl, tfrac);
+    }
 
   }
 
@@ -184,7 +219,7 @@ void hamcEloss::Setup(Int_t which, Float_t trl) {
     x2 = E/E0 + (3./4.)*(((E-E0)/E0)*((E-E0)/E0));
     x3 = exp(bval*trl*log(log(E0/E)));
 
-    if(ldebug==1) cout << "rad. factors "<<i<<"  "<<E<<"  "<<x1<<"  "<<x2<<"  "<<x3<<endl;
+    if(ldebug==1) cout << "rad. factors "<<i<<"  "<<bval<<"  "<<trl<<"  "<<E<<"  "<<x1<<"  "<<x2<<"  "<<x3<<endl;
 
     Ie = x1*x2*x3;
     Prob = Ie*dE;
@@ -247,6 +282,27 @@ void hamcEloss::Setup(Int_t which, Float_t trl) {
 
 }
 
+void hamcEloss::Setup_Exact(Int_t which, Double_t rad, Double_t Ztgt, Double_t Ene) {
+// Setup the exact radiative tail for 
+// which: 0=internal, >0 = slice#.
+// radiation length = rad
+// charge of target material = Ztgt
+// initial electron energy = Ene
+
+   cout << "Exact Set up "<<which<<"  "<<rad<<"  "<<Ztgt<<"  "<<Ene<<endl;
+   char ctf1name[80];
+   sprintf(ctf1name,"distrFunc%d",which);
+   fdistr.push_back(new TF1(ctf1name,radtail_exact,0.,Ene,3));
+   Double_t par[3];
+   par[0] = rad;
+   par[1] = Ztgt;
+   par[2] = Ene;
+   Int_t idx = fdistr.size()-1;
+   fdistr[idx]->SetParameters(par); 
+   cout << "Exact  fdistr["<<idx<<"] =  "<<fdistr[idx]<<endl;
+
+}
+
 void hamcEloss::Print() {
 
   cout << "hamcEloss Print: "<<endl;
@@ -293,7 +349,7 @@ Int_t hamcEloss::LookupIdx(Float_t tl) {
 
     t2 = dtgt * (isl+1);
 
-    if (tl > t1 && tl <= t2) return isl;
+    if (tl > t1 && tl <= t2) return isl+1;
 
     t1 = t2;
 
@@ -316,7 +372,11 @@ Int_t hamcEloss::Generate(hamcExpt* expt) {
   if (use_genercone) {
     GenerateRad(radin, radout);
   } else {
-    GenerateRad(expt->target->GetZScatt());
+    if (use_exact) {
+      GenerateExact(expt->target->GetZScatt());
+    } else {
+      GenerateRad(expt->target->GetZScatt());
+    }
   }
 
   GenerateDeDx(expt);
@@ -402,6 +462,43 @@ Int_t hamcEloss::GenerateRad(Float_t radin, Float_t radout) {
 
 }
 
+Int_t hamcEloss::GenerateExact(Float_t zpos) {
+
+// "Exact" version, under development
+// This version uses radiatiave tails generated in Setup.
+// Input: zpos = position (meters) in target.
+// goes from -tlen/2 to +tlen/2.
+
+   if (fdistr.size() == 0) return -1;
+
+   Int_t idx;
+
+   dE_IntBrehm = fdistr[0]->GetRandom();
+
+   Float_t xin = zpos + tlen/2;
+   Float_t rin = xin*trlen/tlen;
+
+   idx = LookupIdx(rin);  // before scattering
+
+   if (idx > 0 && idx < fdistr.size()) {
+        dE_ExtBrehmIn = fdistr[idx]->GetRandom();
+   }
+
+   Float_t xout = tlen/2 - zpos;
+   Float_t rout = xout*trlen/tlen;
+
+   idx = LookupIdx(rout);  // after scattering
+
+   if (idx > 0 && idx < fdistr.size()) {
+        dE_ExtBrehmOut = fdistr[idx]->GetRandom();
+   }
+
+   dE_Bsum = dE_IntBrehm + dE_ExtBrehmIn + dE_ExtBrehmOut;
+
+   return 1;
+}
+
+
 Int_t hamcEloss::GenerateRad(Float_t zpos) {
 
 // This version uses radiatiave tails generated in Setup.
@@ -473,6 +570,8 @@ Int_t hamcEloss::GenerateRad(Float_t zpos) {
 
 
 }
+
+
 
 
 Float_t hamcEloss::GetDeIntern() {

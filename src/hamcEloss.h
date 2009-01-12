@@ -7,6 +7,7 @@
 //  R. Michaels  Nov 2008
 
 #include "Rtypes.h"
+#include "TF1.h"
 #include <vector>
 #include <string>
 #include <map>
@@ -26,6 +27,7 @@ class hamcEloss {
      Int_t Generate(hamcExpt *expt);  // event generator
      Int_t GenerateRad(Float_t rlin, Float_t rlout); 
      Int_t GenerateRad(Float_t zpos);
+     Int_t GenerateExact(Float_t zpos);
      Int_t GenerateDeDx(hamcExpt *expt);
      Float_t GetDeIntern();  
      Float_t GetDeExternIn();  
@@ -44,15 +46,17 @@ class hamcEloss {
   private:
 
      void Setup(Int_t which, Float_t tl);
+     void Setup_Exact(Int_t which, Double_t rad, Double_t Ztgt, Double_t Ene); 
 
      static const Int_t MAXCNT=4000000;
-     static const Int_t ldebug=2;
+     static const Int_t ldebug=0;
      static const Float_t Me=0.0000511;
      static const Float_t Euler=0.5772157;
      Float_t fracresol;
 
      Bool_t did_init;
      Bool_t use_genercone, use_ionize;
+     Bool_t use_exact;
      Int_t Npts,nybin,Nslices;
      Float_t tequiv,trlen,tlen,tgtZ,tdensity,E0,qsq,dE;
      Float_t me,alpha,pi,yfact,ycell,bval;
@@ -64,6 +68,7 @@ class hamcEloss {
 // Energy resolution cuts
      Float_t cut_intern;
      std::vector<Float_t > cut_extern;
+     std::vector<TF1 *> fdistr;
 
      hamcEloss(const hamcEloss& eloss);
      hamcEloss& operator=(const hamcEloss& eloss);
