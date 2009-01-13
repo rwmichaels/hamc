@@ -73,7 +73,7 @@ SRC = $(SRCDIR)/hamcExpt.C $(SRCDIR)/hamcSingles.C $(SRCDIR)/hamcPhysics.C \
       $(SRCDIR)/hamcTransLerColdSeptum.C \
       $(SRCDIR)/hamcTransLerHRS.C \
       $(SRCDIR)/hamcTarget.C \
-      $(SRCDIR)/hamcRad.C $(SRCDIR)/hamcKine.C \
+      $(SRCDIR)/hamcEloss.C $(SRCDIR)/hamcKine.C \
       $(SRCDIR)/hamcTrack.C $(SRCDIR)/hamcBeam.C $(SRCDIR)/hamcTrackOut.C \
       $(SRCDIR)/hamcInout.C $(SRCDIR)/THaString.C
 
@@ -116,7 +116,7 @@ install: all
 
 all: $(PROGS) $(HAMCLIBS) $(HAMCLIBS_NODICT) libhamc.so
 
-prex: $(PREX_OBJS) $(PREX_HEAD) $(OBJS) $(SRC)  $(HEAD) 
+prex: $(PREX_OBJS) $(PREX_HEAD) $(OBJS) $(SRC) $(HEAD) 
 	rm -f $@
 	$(LD) $(CXXFLAGS) -o $@ $(OBJS) $(PREX_OBJS) $(ALL_LIBS)
 
