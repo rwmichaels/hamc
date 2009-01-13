@@ -46,7 +46,7 @@ double radtail_exact(double *x, double *p) {
   x1 = bval*trl/eloss;
   x2 = E/E0 + (3./4.)*((eloss/E0)*(eloss/E0));
   x3 = exp(bval*trl*log(log(E0/E)));
-  //  cout << "chk2 "<<x[0]<<"  "<<eloss<<"  "<<trl<<"  "<<x1<<" "<<E0<<"  "<<x2<<"  "<<x3<<endl;
+  //  cout << "chk2 "<<x[0]<<"  "<<eloss<<"  "<<trl<<"  "<<x1<<" "<<E0<<"  "<<x2<<"  "<<x3<<"  "<<x1*x2*x3<<endl;
   return x1*x2*x3;
 }
 
@@ -59,9 +59,9 @@ hamcEloss::hamcEloss(): did_init(kFALSE)
    dE_Bsum = 0;
    dE_IonizeIn = 0;
    dE_IonizeOut = 0;
-   use_genercone = kFALSE;  // This is preferred, for now (Jan '09)
+   use_genercone = kTRUE;  // This is preferred, for now (Jan '09)
    use_ionize = kTRUE;
-   use_exact = kTRUE;
+   use_exact = kFALSE;
    fracresol = 1e-4;
 }
 
@@ -77,9 +77,9 @@ Int_t hamcEloss::Init(hamcExpt* expt) {
 
 
    expt->inout->BookHisto(kFALSE, kFALSE, ITARGET, "dE1", 
-	 "dE Brehm in", &dE_ExtBrehmIn, 1000,-0.1,1.2);
+	 "dE Brehm in", &dE_ExtBrehmIn, 2000,-0.1,1.2);
    expt->inout->BookHisto(kFALSE, kFALSE, ITARGET, "dE2", 
-	 "dE Brehm out", &dE_ExtBrehmOut, 1000,-0.1,1.2);
+	 "dE Brehm out", &dE_ExtBrehmOut, 2000,-0.1,1.2);
    expt->inout->BookHisto(kFALSE, kFALSE, ITARGET, "dEi", 
 	 "dE Brehm intern", &dE_IntBrehm, 1000,-0.1,1.2);
    expt->inout->BookHisto(kFALSE, kFALSE, ITARGET, "dEsum", 
