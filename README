@@ -3,11 +3,26 @@
 
      hamc  =  Hall  A  Monte  Carlo
 
-     R. Michaels,  Nov 2008
+     R. Michaels,  Jan 2009
 
 ============================================================================
 
+To checkout hamc from cvs
+
+  cvs -d ":ext:rom@cvs.jlab.org:/group/halla/parity/cvs" checkout hamc
+
+To commit changes, for example
+
+  cvs commit -m 'comment here' hamcEloss.C
+
+Book about cvs:
+
+  www.jlab.org/~rom/cvsbook.ps.gz
+  (must gunzip, then its a postscript file)
+
+
 To proceed do the following
+
 
 Compile:
 
@@ -20,6 +35,10 @@ Run
 or 
     ./happex
    (and don't forget the dot "." and slash "/")
+
+Optional argument is the number of events, like this:
+
+    ./prex 1000000
 
 Histogram output
 
