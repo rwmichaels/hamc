@@ -44,11 +44,18 @@ Histogram output
 
     hamc.root
 
+To show some results, 
+
+   root hamc.root
+   root [7] .x ./macros/show4.C
+   (etc)
+
 
 I/O control of code
 
     prex.dat   to control prex
     happex.dat to control happex
+
 
 
 Known issues (Dec 2008)
