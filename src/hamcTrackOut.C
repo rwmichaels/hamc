@@ -86,7 +86,7 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
    cout << "Track-out angles ranges: "<<thetamin<<"  "<<thetamax<<"  "<<phimin<<"  "<<phimax<<endl;
 
 
-   SetThetaTable();
+   // Note used anymore   SetThetaTable();
    
    Int_t nbin=120;
 
