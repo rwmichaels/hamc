@@ -86,8 +86,6 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
    cout << "Track-out angles ranges: "<<thetamin<<"  "<<thetamax<<"  "<<phimin<<"  "<<phimax<<endl;
 
 
-   // Note used anymore   SetThetaTable();
-   
    Int_t nbin=120;
 
 
@@ -304,38 +302,6 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
     return OK;      
 }
 
-
-void hamcTrackOut::SetThetaTable() {
-
-  Float_t th,x;
-  Int_t i,k,num;
-
-  Float_t cdiv = 200;
-  Int_t MAX = (Int_t)(MAXCELL/cdiv);
-
-  numtcell = 0;
-
-  for (i=0; i<MAX; i++) {
-
-    x = (Float_t)i/((Float_t)MAX);
-    th = thetamin + x * (thetamax-thetamin);
-    thetacell.push_back(th);
-
-    num = ((Int_t)(cdiv * TMath::Sin(th)));
-
-    for (k=0; k<num; k++) tcellnum.push_back(i);
-
-    numtcell += num;
- 
-    if (numtcell > MAXCELL) {
-      // This should never happen.  If it does, ask me.
-      cout << "hamcTrackOut:: ERROR:  trying to create too many cells."<<endl;
-      exit(0);
-    }
-
-  }
-
-}
 
 Int_t hamcTrackOut::Generate(hamcExpt *expt) {
 

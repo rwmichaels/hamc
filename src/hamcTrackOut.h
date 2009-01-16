@@ -30,7 +30,6 @@ class hamcTrackOut : public hamcTrack {
 
   private: 
 
-     void SetThetaTable();
      void ComputePvect();
      Int_t LabToTrans();
  
@@ -42,12 +41,6 @@ class hamcTrackOut : public hamcTrack {
      Float_t tgt_mass;
      Float_t theta_iteration;
      Float_t dpp,qsq;
-
-// Parameters for cells of const. solid angle
-     static const Int_t MAXCELL=20000;
-     Int_t numtcell;
-     std::vector<Int_t> tcellnum;
-     std::vector<Float_t> thetacell;
 
      hamcTrackOut(const hamcTrackOut& phys);
      hamcTrackOut& operator=(const hamcTrackOut& phys);
