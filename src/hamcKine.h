@@ -29,31 +29,36 @@ public:
     xcnt = new Float_t[numcell*numcell];
     for (Int_t i=0; i<numcell*numcell; i++) xcnt[i] = 0;
   };
+ ~hamcAccCell() { delete [] xcnt; };
   void Increment(Float_t th, Float_t ph) {
     Int_t icell,jcell,ncell;
     Float_t cth = TMath::Cos(th);
-    icell = ((Int_t)((cth - cmin)/dcostheta));
+    icell = ((Int_t)((cth-cmin)/dcostheta));
     jcell = ((Int_t)((ph-pmin)/dphi));
     ncell = icell*numcell + jcell;
     if (ncell >= 0 || ncell < numcell*numcell) xcnt[ncell] += 1.0;
   };
-  Float_t GetCosTheta(Int_t icell) {
+  Float_t GetCosTheta(Int_t icell, Int_t debug=0) {
+    if (debug) std::cout << "chk getcostheta "<<icell<<"  "<<cmin + dcostheta*((Float_t)(icell))<<std::endl;
     return cmin + dcostheta*((Float_t)(icell));
   };
-  Float_t GetTheta(Int_t icell) {
+  Float_t GetTheta(Int_t icell, Int_t debug=0) {
     Float_t cth = GetCosTheta(icell);
+    if (debug) std::cout << "chk gettheta "<<icell<<"  "<<cth<<"  "<<TMath::ACos(cth)<<std::endl;
     return TMath::ACos(cth);
   };
-  Float_t GetPhi(Int_t icell) {
+  Float_t GetPhi(Int_t icell, Int_t debug=0) {
+    if (debug) std::cout << "chk getphi "<<icell<<"  "<<pmin + dphi*((Float_t)(icell))<<std::endl;
     return pmin + dphi*((Float_t)(icell));
   };
-  Float_t Num(Int_t icell) { 
+  Float_t Num(Int_t icell, Int_t debug=0) { 
     if (icell < 0 || icell >= numcell*numcell) return 0;
+    if (debug) std::cout << "chk Num "<<icell<<"  "<<numcell*numcell<<"  "<<xcnt[icell]<<std::endl;
     return xcnt[icell];
   };
- ~hamcAccCell() { delete [] xcnt; };
  Float_t cmin, cmax, pmin, pmax, dcostheta, dphi, domega;
- static const Int_t numcell = 100;
+ static const Int_t numcell = 200;  // need roughly 100*numcell^2 events -> typ. >= 4M evts
+                     // need to check for convergence with numcell and num_events.
  Float_t *xcnt;
 };
 

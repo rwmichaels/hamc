@@ -202,7 +202,8 @@ void hamcSingles::RunSummary() {
     asy_err = 1e6 / TMath::Sqrt(xcnt);
     cout << endl << "Overall <A> = "<<avg_asy;
     cout << " +/- "<<asy_err<<"   ppm "<<endl;
-    cout << "Total rate "<<rate<<"  Hz "<<endl;
+    cout << "Total rate "<<sum_rate<<"  Hz "<<endl;
+    cout << "run time "<<run_time<<" hours "<<endl;
   }
 
 // Check acceptance model
@@ -216,9 +217,6 @@ void hamcSingles::RunSummary() {
  
     for (Int_t iy = 0; iy < numcell; iy++) {
 
-      th = physics->kine->acell->GetTheta(ix);
-      ph = (PI/2) - physics->kine->acell->GetPhi(iy);
-
       // Put into histogram if num > cut
 
       Float_t cell_cut = 1;
@@ -227,7 +225,10 @@ void hamcSingles::RunSummary() {
 
       if (xcnt  > cell_cut) {
 
- //        cout << "Xcnt "<<ix<<"  "<<iy<<"  "<<th<<"  "<<ph<<"  "<<xcnt<<endl;
+        th = physics->kine->acell->GetTheta(ix);
+        ph = (PI/2) - physics->kine->acell->GetPhi(iy);
+
+	//        cout << "Xcnt "<<ix<<"  "<<iy<<"  "<<th<<"  "<<ph<<"  "<<xcnt<<endl;
 
 	domega += physics->kine->acell->domega;
 
