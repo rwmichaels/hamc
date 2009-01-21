@@ -7,11 +7,56 @@
 //  R. Michaels  Nov 2008
 
 #include "Rtypes.h"
+#include "TMath.h"
 #include <vector>
 #include <string>
+#include <iostream>
 #include <map>
 
 class hamcExpt;
+
+class hamcAccCell {  
+// Utility class to account for how the acceptance is populated
+public:
+  hamcAccCell(Float_t thmin, Float_t thmax, Float_t phmin, Float_t phmax) {
+    cmax = TMath::Cos(thmin);
+    cmin = TMath::Cos(thmax);
+    dcostheta = (cmax-cmin)/((Float_t)(numcell)); // >= 0
+    pmin = phmin;
+    pmax = phmax;
+    dphi = (pmax-pmin)/((Float_t)(numcell));  // >= 0
+    domega = dcostheta * dphi;
+    xcnt = new Float_t[numcell*numcell];
+    for (Int_t i=0; i<numcell*numcell; i++) xcnt[i] = 0;
+  };
+  void Increment(Float_t th, Float_t ph) {
+    Int_t icell,jcell,ncell;
+    Float_t cth = TMath::Cos(th);
+    icell = ((Int_t)((cth - cmin)/dcostheta));
+    jcell = ((Int_t)((ph-pmin)/dphi));
+    ncell = icell*numcell + jcell;
+    if (ncell >= 0 || ncell < numcell*numcell) xcnt[ncell] += 1.0;
+  };
+  Float_t GetCosTheta(Int_t icell) {
+    return cmin + dcostheta*((Float_t)(icell));
+  };
+  Float_t GetTheta(Int_t icell) {
+    Float_t cth = GetCosTheta(icell);
+    return TMath::ACos(cth);
+  };
+  Float_t GetPhi(Int_t icell) {
+    return pmin + dphi*((Float_t)(icell));
+  };
+  Float_t Num(Int_t icell) { 
+    if (icell < 0 || icell >= numcell*numcell) return 0;
+    return xcnt[icell];
+  };
+ ~hamcAccCell() { delete [] xcnt; };
+ Float_t cmin, cmax, pmin, pmax, dcostheta, dphi, domega;
+ static const Int_t numcell = 100;
+ Float_t *xcnt;
+};
+
 
 class hamcKine {
 
@@ -33,6 +78,10 @@ class hamcKine {
 
      Int_t Generate(hamcExpt *expt);  // event generator
      Int_t Generate(Float_t ebeam, Float_t deafter); 
+     Int_t IncrementAcceptance();
+     void Print();
+
+     hamcAccCell *acell;
 
 // Event variables.
      Float_t energy, theta, phi;
@@ -60,12 +109,6 @@ class hamcKine {
      Float_t thmin, thmax, phmin, phmax, epmin, epmax;
      Float_t xbjlo, xbjhi, qsqlo, wsqlo;
      Float_t dP0_iter;
-
-// Parameters for cells of const. solid angle
-     static const Int_t MAXCELL=20000;
-     Int_t numtcell;
-     std::vector<Int_t> tcellnum;
-     std::vector<Float_t> thetacell;
 
      hamcKine(const hamcKine& kine);
      hamcKine& operator=(const hamcKine& kine);

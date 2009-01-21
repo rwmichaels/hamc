@@ -33,11 +33,13 @@ hamcKine::hamcKine(): did_init(kFALSE)
   xbjhi = 0.99;
   qsqlo = 1;
   wsqlo = 4;
+  acell = 0;
   Clear();
 }
 
 hamcKine::~hamcKine()
 {
+  if (acell) delete acell;
 }
 
 void hamcKine::Clear() {
@@ -161,6 +163,8 @@ Int_t hamcKine::Init(string proc, Float_t eb, Float_t theta,
     epmin = epmi;
     epmax = epma;
 
+    acell = new hamcAccCell(thmin, thmax, phmin, phmax);
+
     did_init = kTRUE;
 
     return 1;
@@ -200,7 +204,7 @@ Int_t hamcKine::Generate(hamcExpt *expt) {
   hamcEloss *eloss = expt->physics->eloss;
   Float_t dE = 0;
 
-// The internal is for 1/2 t_equivalent, so it's
+// The internal is for t_equivalent, so it's
 // what to subtract before and after scattering.
 
   if (eloss) dE = eloss->GetDeIntern() 
@@ -243,8 +247,6 @@ Int_t hamcKine::Generate(Float_t eb, Float_t dE) {
   ctheta = cthmin + (cthmax-cthmin)*gRandom->Rndm();
 
   theta = TMath::ACos(ctheta);
-
-  //  cout << "Chk theta "<<x<<"  "<<icell<<"  "<<numtcell<<"  "<<tcellnum.size()<<"  "<<index<<"  "<<"  "<<thetacell.size()<<"  "<<theta<<endl;
 
 // Likewise, generate azimuthal angle (radians) in lab-frame
   phi = phmin + (phmax-phmin)*gRandom->Rndm();   
@@ -320,6 +322,27 @@ Int_t hamcKine::ComputeKine() {
   return 1;
 
 }
-  
+
+Int_t hamcKine::IncrementAcceptance() {
+
+  if (!acell) {
+    cout << "hamcKine:ERROR: no acceptance cell obj !"<<endl;
+    return -1;
+  }
+
+  acell->Increment(theta, phi);
+
+  return 1;
+
+}
+
+void hamcKine::Print() {
+
+  cout << "hamcKine: Print: "<<endl;
+  cout << "energy "<<energy<<"   theta "<<theta<<"  phi "<<phi<<endl;
+  cout << "qsq  "<<qsq<<"   wsq "<<wsq<<endl;
+
+}
+
 
   
