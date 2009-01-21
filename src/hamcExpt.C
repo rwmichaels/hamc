@@ -25,6 +25,7 @@ hamcExpt::hamcExpt(string sname): name(sname),
   target  = 0;    //  "             "            "
   event   = 0;    //  "             "            " 
   inout   = new hamcInout();
+  run_time = 720;  // hours
 }
 
 hamcExpt::~hamcExpt() {
@@ -62,6 +63,13 @@ Int_t hamcExpt::Init() {
   if(event) event->Init(this);
 
   inout->BookNtuple();
+
+  hamcStrParser parser;
+  parser.Load(inout->GetStrVect("run_time"));
+  if (parser.IsFound("run_time")) {
+     run_time = parser.GetData(); 
+     cout << "Run time (hours) "<<run_time << endl;
+  }   
 
   didinit = kTRUE;
 
@@ -105,6 +113,12 @@ Int_t hamcExpt::Run(Int_t maxevent) {
   
 }
 
+void hamcExpt::RunSummary() {
+
+  inout->Finish();
+
+}
+
 hamcSpecHRS* hamcExpt::GetSpectrom(Int_t i) const {
   if (i < 0 || i > GetNumSpectrom()) {
     // well, this is really bad
@@ -134,12 +148,4 @@ Int_t hamcExpt::ReadSetup() {
 
 }
 
-
-Int_t hamcExpt::Summary() {
-
-  inout->Finish();
-
-  return OK;
-
-}
 

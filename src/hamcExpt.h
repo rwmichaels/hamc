@@ -38,7 +38,8 @@ class hamcExpt {
      virtual Int_t Init(std::string sfile);
      virtual Int_t InitInput(std::string sfile);
      virtual Int_t Run(Int_t maxev=1000000);
-     virtual Int_t Summary();
+     virtual void  EventAnalysis()=0;  // must define in the inheriting class
+     virtual void  RunSummary();  
      Int_t GetNumSpectrom() const { return (Int_t)spectrom.size(); };
      hamcSpecHRS* GetSpectrom(Int_t i) const;
  // Decided to make these public instead of using "get" functions
@@ -48,6 +49,7 @@ class hamcExpt {
      hamcInout   *inout;
      Int_t iteration;    // which iteration we are on.
      std::string name;
+     Float_t run_time;   
 
      std::string GetSetupFile() { return setupfile; };
 
@@ -55,7 +57,6 @@ class hamcExpt {
 
      virtual Int_t ReadSetup();
      virtual Int_t SetIterate();
-     virtual void  Analysis()=0;  // must define in the inheriting class
 
      Int_t ChkSpIndex(Int_t i) const;
 

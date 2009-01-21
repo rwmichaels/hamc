@@ -78,7 +78,7 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
    if (expt->physics->Radiate(expt) == -1) return 1;
 
    if (beam) beam->Generate(expt);   
- 
+
    inaccept = 1;
 
 // Loop over spectrometers
@@ -119,7 +119,7 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
 // (2 points might be at same Z but don't overlap, so the track
 // is in one or the other).  Note, if we MultScatt (it only
 // happens if radlen !=0) we reset the origin of the track.
-     
+
          if ( track->InAccept(spect->Aperture(ibrk))  )  { // Track is in acceptance
 
          track->MultScatt(spect->Aperture(ibrk), brkpoint);
@@ -141,6 +141,8 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
      }  // loop over break points
 
    }    // spectrometer loop
+
+   expt->EventAnalysis();
 
    return OK;
   

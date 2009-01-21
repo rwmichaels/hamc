@@ -5,6 +5,8 @@
 //  R. Michaels  June 2008
 
 #include "hamcExpt.h"
+#include "TH1F.h"
+#include "TH2F.h"
 #include <string>
 
 class hamcSingles : public hamcExpt {
@@ -17,12 +19,18 @@ class hamcSingles : public hamcExpt {
      virtual Int_t SetSpectrom(Int_t which, Float_t pmom, Float_t theta);
      void SetP0(Float_t p) { P0 = p; };
      void SetTheta(Float_t ang) { angle = ang; };
+     virtual void EventAnalysis();
+     virtual void RunSummary();
 
   protected:
 
      Float_t P0, angle;
+     Float_t *sumasy, *sumrate, *xevtcnt;
+     Int_t num_mtl;
 
   private: 
+
+     TH2F *htpa1, *htpa2;
 
      hamcSingles(const hamcSingles& expt);
      hamcSingles& operator=(const hamcSingles& expt);
