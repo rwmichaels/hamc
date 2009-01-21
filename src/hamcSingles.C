@@ -162,6 +162,7 @@ void hamcSingles::RunSummary() {
   Float_t sum_rate, sum_asy;
   Float_t rate, asy, avg_asy;
   Float_t xcnt, asy_err;
+  Float_t phcmin,phcmax,thcmin,thcmax;
 
   sum_rate = 0;
   sum_asy = 0;
@@ -183,7 +184,8 @@ void hamcSingles::RunSummary() {
 	cout << "hamcSingles::RunSum::ERROR: no run time ?"<<endl;
       } else {
         cout << "Material "<<idx<<"  "<<target->GetMtlName(idx)<<endl;
-        cout << "rate "<<rate<<" Hz    num cnts "<<xcnt<<endl;
+    // The rate still needs to be corrected for size of cell division, see below.
+        cout << "Relative rate "<<rate<<" (arb) "<<endl;
         cout << "<A> = "<<asy<<"  ppm "<<endl;
       }
 
@@ -194,24 +196,19 @@ void hamcSingles::RunSummary() {
 
   }
 
-  if (sum_rate == 0) {
-    cout << "hamcSingles::RunSum::ERROR: no summed rate ?"<<endl;
-  } else {
-    avg_asy = sum_asy / sum_rate;
-    xcnt = sum_rate * run_time * 3600;
-    asy_err = 1e6 / TMath::Sqrt(xcnt);
-    cout << endl << "Overall <A> = "<<avg_asy;
-    cout << " +/- "<<asy_err<<"   ppm "<<endl;
-    cout << "Total rate "<<sum_rate<<"  Hz "<<endl;
-    cout << "run time "<<run_time<<" hours "<<endl;
-  }
-
-// Check acceptance model
+// Find correction from size of cell division.
+// To be stable against number of cells and number of events,
+// the number of events should exceed ~100*(numcell)^2.
 
   Int_t numcell = physics->kine->acell->numcell;
 
   Float_t th,ph;
   Float_t domega = 0;
+  Float_t xsumcell = 0;
+  phcmin = 9999; 
+  phcmax = -9999;
+  thcmin = 9999;
+  thcmax = -9999;
 
   for (Int_t ix = 0; ix < numcell; ix++) {
  
@@ -219,14 +216,20 @@ void hamcSingles::RunSummary() {
 
       // Put into histogram if num > cut
 
-      Float_t cell_cut = 1;
+      Float_t cell_cut = 2;  // Need good stats, like 100*(ncell)^2
 
       Float_t xcnt = physics->kine->acell->Num(ix*numcell+iy);
 
       if (xcnt  > cell_cut) {
 
+        xsumcell += 1.0;
         th = physics->kine->acell->GetTheta(ix);
         ph = (PI/2) - physics->kine->acell->GetPhi(iy);
+
+        if (th < thcmin) thcmin = th;
+        if (th > thcmax) thcmax = th;
+        if (ph < phcmin) phcmin = ph;
+        if (ph > phcmax) phcmax = ph;
 
 	//        cout << "Xcnt "<<ix<<"  "<<iy<<"  "<<th<<"  "<<ph<<"  "<<xcnt<<endl;
 
@@ -239,8 +242,24 @@ void hamcSingles::RunSummary() {
     }
   }
 
+  if (sum_rate == 0) {
+    cout << "hamcSingles::RunSum::ERROR: no summed rate ?"<<endl;
+  } else {
+    avg_asy = sum_asy / sum_rate;
+    sum_rate = sum_rate * xsumcell;  // correction for cell divisions
+    xcnt = sum_rate * run_time * 3600;
+    asy_err = 1e6 / TMath::Sqrt(xcnt);
+    cout << endl << "Overall <A> = "<<avg_asy;
+    cout << " +/- "<<asy_err<<"   ppm "<<endl;
+    cout << "Total rate "<<sum_rate<<"  Hz "<<endl;
+    cout << "run time "<<run_time<<" hours "<<endl;
+  }
+
   // problems: no cell cnt (Num=0), mtl_idx .ne.2
 
+  cout << "num cell "<<xsumcell<<endl;
+  cout << "phi min/max "<<phcmin<<"  "<<phcmax<<endl;
+  cout << "th min/max "<<thcmin<<"  "<<thcmax<<endl;
   cout << "Total solid angle "<<domega<<"  str "<<endl;
 
   hamcExpt::RunSummary();
