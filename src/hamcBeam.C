@@ -23,6 +23,7 @@ ClassImp(hamcBeam)
 hamcBeam::hamcBeam() : hamcTrack("electron"),rastered(kTRUE),xrast(0.4),yrast(0.4)
 {
   trktype = "beam";
+  beam_current = 100; // uA
 }
 
 hamcBeam::hamcBeam(Float_t ebeam, Float_t esigma) : hamcTrack("electron"),rastered(kTRUE),xrast(0.4),yrast(0.4)
@@ -30,6 +31,7 @@ hamcBeam::hamcBeam(Float_t ebeam, Float_t esigma) : hamcTrack("electron"),raster
   trktype = "beam";
   E0 = ebeam;
   E0sigma = esigma;
+  beam_current = 100; // uA
 }
 
 hamcBeam::~hamcBeam() {
@@ -60,11 +62,16 @@ Int_t hamcBeam::Init(hamcExpt *expt) {
      if (parser.IsFound("E0sigma")) {
        E0sigma = parser.GetData();
      }   
+     if (parser.IsFound("current")) {
+       beam_current = parser.GetData();
+     }   
 
      cout << "Beam values   E0  = "<<E0<<"   E0sigma "<<E0sigma<<endl;
      if (IsRastered()) {
        cout << "Raster  x "<<xrast<<"  y "<<yrast<<endl;
      }
+
+     cout << "Beam current "<<beam_current<<" uA "<<endl;
 
      if (E0 > mass) P0 = TMath::Sqrt(E0*E0 - mass*mass);
 
@@ -123,6 +130,7 @@ Int_t hamcBeam::Generate(hamcExpt *expt) {
   tvect->PutZ(expt->target->GetZScatt());
 
   energy = E0 + E0sigma*gRandom->Gaus();
+
   Radiate(expt);  // modifies the energy
 
   if (energy < mass) energy = mass;  // extrema of rad tail
@@ -147,6 +155,8 @@ Int_t hamcBeam::Radiate(hamcExpt* expt) {
                expt->physics->eloss->GetDeIonIn();
 
   energy = energy - dE;
+
+  return 0;
 
 }
 
