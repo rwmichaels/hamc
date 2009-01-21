@@ -87,7 +87,6 @@ Int_t hamcTarget::Setup() {
     Float_t x2 = GetRadOut(); 
     radiation_length = x1 + x2;
 
- 
     cout << "Chk4 "<<radiation_length<<endl;
 
     for (Int_t i=0; i<(Int_t)components.size(); i++) {
@@ -215,7 +214,7 @@ Int_t hamcTarget::FindMtlIndex(Float_t zloc) {
        if (zdiff < 0) zdiff = -1.*zdiff;
 // within 1/2 of length, the 0.502 is to account for roundoff
        if (zdiff < 0.502*slab->GetLen()) {
-         material_index = slab->GetIndex();
+         material_index = i;
          ascatt = slab->GetA();
          mass = slab->GetMass();
          return OK;
@@ -297,6 +296,14 @@ Float_t hamcTarget::GetMtlZ(Int_t iloc) {
   if (CheckIndex(iloc) == ERROR) return 0;
 
   return components[iloc]->GetZ();
+
+}
+
+string hamcTarget::GetMtlName(Int_t iloc) {
+ 
+  if (CheckIndex(iloc) == ERROR) return 0;
+
+  return components[iloc]->GetName();
 
 }
 

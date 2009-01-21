@@ -82,6 +82,7 @@ class hamcTarget {
      Float_t GetMtlDensity(Int_t iloc);
      Float_t GetMtlA(Int_t iloc);
      Float_t GetMtlZ(Int_t iloc);
+     std::string GetMtlName(Int_t iloc);
 // atomic number of nucleus involved in scattering
      Float_t GetAscatt() { return ascatt; };
      Float_t GetRadIn();  // radiation length before scatt point
