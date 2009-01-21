@@ -14,7 +14,6 @@ class hamcExptPREX : public hamcSingles {
      hamcExptPREX();
      virtual ~hamcExptPREX();
      Int_t Init(std::string sfile);
-     void Analysis();
 
   private: 
 

@@ -3,6 +3,7 @@
 
 #include "hamcExptPREX.h"
 #include "hamcExpt.h"
+#include "hamcSingles.h"
 #include "hamcSpecHRS.h"
 #include "hamcTgtPREX.h"
 #include "hamcPhyPREX.h"
@@ -42,15 +43,5 @@ Int_t hamcExptPREX::Init(string sfile) {
   spectrom[0]->Print();
 
   return OK;
-}
-
-void hamcExptPREX::Analysis() {
-
-// Fill some histograms for diagnostic purposes.
-
-  Int_t lprint = 1;  // to turn on(1) or off(0) local print
-
-  if (lprint) cout << "Into hamcExptPREX:: Analysis "<<endl;
-
 }
 
