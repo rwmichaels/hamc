@@ -47,15 +47,29 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
 
   hamcPhysics::Init(expt);
 
-
   return 1;
 }
 
 
 Int_t hamcPhyPREX::Generate(hamcExpt *expt) {
 
-   Float_t energy = expt->physics->kine->energy;
-   Float_t theta = expt->physics->kine->theta;
+   Int_t ldebug=0;
+
+   Float_t energy = kine->energy;    // GeV
+   Float_t theta = kine->theta;      // radians
+   qsq = kine->qsq;                  // GeV^2
+
+   Float_t anum = expt->target->GetAscatt();
+
+   if (anum == 12) {
+     crsec = CalculateCrossSection(1, energy, theta*180/PI);
+     asymmetry = CalculateAsymmetry(1);
+     if (ldebug) {
+       cout << endl<< "C12:  energy "<<energy<<"  theta "<<theta<<"  qsq "<<qsq<<endl;
+       cout<< "C12 crsec = "<<crsec<<"   A = "<<asymmetry<<endl<<endl;
+     }
+     return OK;
+   }
 
 // Compute the cross section for PREX
    CrossSection(energy, theta, 0);
@@ -83,7 +97,7 @@ Int_t hamcPhyPREX::CrossSection(Float_t energy, Float_t angle_rad, Int_t stretch
   /*find the index of angle and energy in the class variables angle_row and energy_row respectively */
   Int_t indxAngle = FindAngleIndex(angle); 
 
-  if (indxAngle <= 0) return -1;
+  if (indxAngle <= 0) return -1; 
 
   Int_t indxEnergy = FindEnergyIndex(energy);
   
@@ -103,13 +117,13 @@ Int_t hamcPhyPREX::CrossSection(Float_t energy, Float_t angle_rad, Int_t stretch
   crsec = Interpolate(angle_lower, angle_upper, angle, crsc1, crsc2)/1000;  
 
   if (debug) {
-     cout << "\n Cross section : "<<endl;
+     cout << "\n LEAD Cross section : "<<endl;
      cout << "energy " << energy << " GeV " << "angle " << angle << endl;
-     cout <<"Interpolation of crsec"<<crsc1/1000 <<" "<<crsc2/1000<<" "<<crsec<<endl;
+     cout <<"Interpolation of crsec "<<crsc1/1000 <<" "<<crsc2/1000<<" "<<crsec<<endl;
   }
 
-  Float_t calccrsec = CalculateCrossSection(energy, angle);
-  if (debug) cout <<"calculated cross section " << calccrsec <<endl;
+  Float_t calccrsec = CalculateCrossSection(0, energy, angle);
+  if (debug) cout <<"calculated lead cross section " << calccrsec <<endl;
 
   return OK;
 }
@@ -143,8 +157,11 @@ Int_t hamcPhyPREX::Asymmetry(Float_t energy, Float_t angle_rad, Int_t stretch) {
   int debug=0;
 
   if (debug) {
-    cout<<"angle"<<angle<<endl;
-    cout << "Asymmetries"<<asymmetry1 << " "<<asymmetry2 <<" " <<asymmetry<<endl;   }
+    cout<<"angle  "<<angle<<endl;
+    cout << "Lead Asymmetries"<<asymmetry1 << " "<<asymmetry2 <<" " <<asymmetry<<endl;   
+    Float_t calcasy = CalculateAsymmetry(0);
+    cout << "Calculated lead asy "<<calcasy<<endl;
+  }
 
   return 1;
 }
@@ -205,6 +222,8 @@ Int_t hamcPhyPREX::LoadFiles() {
   asymmetry_tables.push_back(asymmetry_table_temp);
 
   LoadFormFactorTable();
+
+  LoadC12FormFactorTable();
   
   cout<< "hamcPhyPREX:  Tables loaded" <<endl;
 
@@ -212,68 +231,112 @@ Int_t hamcPhyPREX::LoadFiles() {
 }
 
 
-Float_t hamcPhyPREX::CalculateCrossSection(Float_t energy, Float_t angle) {
+Float_t hamcPhyPREX::CalculateCrossSection(Int_t nuc, Float_t energy, Float_t angle) {
+
+  // nuc = 0  --> lead
+  // nuc = 1  --> C12
+  // no other choices !
+
+  // energy in GeV,  angle in radians.
+
+  if (nuc != 0 && nuc != 1) {
+    cout << "hamcPhyPREX::ERROR: invalid nucleus choice "<<endl;
+    return 0;
+  }
  
   Float_t calcrsec, mott, form_factor;
 
   /*Mott cross section for point-like scattering = 
     (alpha*Z* (hc/2pi)*cos(theta/2))^2 / 400E^2(sin(theta/2))^4 */
   
-  Float_t pi = 3.1415926; //@todo Expt class also defines pi
+  Float_t pi = 3.1415926; 
   Float_t halfangle_rad = (angle/2)*(pi/180);
   
   Float_t sin4 = pow(sin(halfangle_rad),4);
-  mott = pow(((82*0.197*cos(halfangle_rad))/137),2)/ (400*pow(energy,2)*sin4);
+  Float_t znuc;
+  if (nuc == 0) {
+    znuc = 82;
+  } else {
+    znuc = 6;
+  }
+
+  mott = pow(((znuc*0.197*cos(halfangle_rad))/137),2)/ (400*pow(energy,2)*sin4);
    
-  // This comes from hamcKine now
-  //  Float_t qsq = CalculateQsq(energy, angle);
-  Float_t qsq = kine->qsq; 
+  // qsq comes from hamcKine 
 
-  vector<Float_t>::const_iterator iterQsq = upper_bound(qsq_row.begin(), qsq_row.end(), qsq); //search for the first value of qsq which is larger or equal than actual   
-  int indxQsq = iterQsq - qsq_row.begin(); 
+  if (nuc == 0) {  // lead
 
-  if (indxQsq <= 0) return 0;
+    vector<Float_t>::const_iterator iterQsq = upper_bound(qsq_row.begin(), qsq_row.end(), qsq); //search for the first value of qsq which is larger or equal than actual   
+    int indxQsq = iterQsq - qsq_row.begin(); 
 
-  Float_t qsq1, qsq2, form_factor1, form_factor2;
-  qsq1 =  qsq_row.at(indxQsq);
-  qsq2 = qsq_row.at(indxQsq-1);
+    if (indxQsq <= 0) return 0;
 
-  form_factor1 = ffsq_row.at(indxQsq);
-  form_factor2 = ffsq_row.at(indxQsq-1);
-  form_factor = Interpolate(qsq1, qsq2, qsq, form_factor1, form_factor2);
+    Float_t qsq1, qsq2, form_factor1, form_factor2;
+    qsq1 =  qsq_row.at(indxQsq);
+    qsq2 = qsq_row.at(indxQsq-1);
+
+    form_factor1 = ffsq_row.at(indxQsq);
+    form_factor2 = ffsq_row.at(indxQsq-1);
+    form_factor = Interpolate(qsq1, qsq2, qsq, form_factor1, form_factor2);
+
+  } else { // carbon
+
+    vector<Float_t>::const_iterator iterQsq = upper_bound(c12qsq_row.begin(), c12qsq_row.end(), qsq); //search for the first value of qsq which is larger or equal than actual   
+    int indxQsq = iterQsq - c12qsq_row.begin(); 
+
+    if (indxQsq <= 0) return 0;
+
+    Float_t qsq1, qsq2, form_factor1, form_factor2;
+    qsq1 =  c12qsq_row.at(indxQsq);
+    qsq2 = c12qsq_row.at(indxQsq-1);
+
+    form_factor1 = c12ffsq_row.at(indxQsq);
+    form_factor2 = c12ffsq_row.at(indxQsq-1);
+    form_factor = Interpolate(qsq1, qsq2, qsq, form_factor1, form_factor2);
+
+  }
 
   calcrsec = mott*form_factor; //result is in barn/seradians multiply by 1000 to compare with the value from Horowitchs table where it is milibars/stereadians 
   
   return calcrsec;
 }
 
-Float_t hamcPhyPREX::CalculateAsymmetry(Float_t energy, Float_t angle){
+Float_t hamcPhyPREX::CalculateAsymmetry(Int_t nuc) {
+
+// nuc = 0 --> lead
+// nuc = 1 --> C12
+// no other choice
+
   /*A(LR) = (G * Q^2 )/ (4pi*alpha*Sqrt(2))* [1-4sin(theta w)^2 - NeutronFF/ProtonFF ]
   GF = 1.6637 * 10^-5 GeV^-2 Fermi constant
   alpha = 1/137
   sin(theta w)^2 = 0.227 Weinberg Angle
 
-  4*sin^2(theta_W) - N/Z = -1.44
-  G / (4 pi alpha sqrt(2)) = 89.4 ppm / GeV^2  
-  Asymmetry = - 89.4 * -1.44 * Q^2 = +128.8 Q^2 ppm
+  1 - 4*sin^2(theta_W) - N/Z = -1.44
+  G / (4 pi alpha sqrt(2)) = 128.3 ppm / GeV^2  
+  Asymmetry = - 128.3 * -1.44 * Q^2 = +184.74 Q^2 ppm
+  But if N=Z, then Asymmetry = -128.3 * Q^2 ppm
+  If lead, we'll use N=208, Z=82 and if C12, N=Z.
   
   */
-  //@todo get N and Z from hamcGlobals? or hamcKine?
-  Float_t  qsq = CalculateQsq(energy, angle); 
-  
-  return 128.8*qsq*pow(10.0,-6);
+
+  // qsq comes from hamcKine
+
+  if (nuc != 0 && nuc != 1) {
+    cout << "hamcPhyPREX::ERROR: incorrect nuc choice (0 or 1)"<<endl;
+    return 0;
+  }
+
+  Float_t A0;
+  if (nuc == 0) {  
+    A0 = 184.74;  // lead
+  } else {
+    A0 = 128.3;   // C12
+  }
+
+  return A0*qsq*pow(10.0,-6);
 }
 
-
-Float_t hamcPhyPREX::CalculateQsq(Float_t energy, Float_t angle){
-//@todo make this part of hamcKine
-  Float_t pi = 3.1415926; 
-  Float_t Ebeam = energy;
-  Float_t theta_rad = angle*pi/180;
-  Float_t  Eprime = Ebeam / (1 + (Ebeam/tgtM)*(1-TMath::Cos(theta_rad)) );
-  Float_t qsq = 2*Ebeam*Eprime*(1-TMath::Cos(theta_rad));
-  return qsq;
-}
 
 Int_t hamcPhyPREX::LoadFormFactorTable(){
 
@@ -285,8 +348,8 @@ Int_t hamcPhyPREX::LoadFormFactorTable(){
   */
   
   FILE *fd;
-  char strin[200]; //@todo how large should be? 
-  char* filename = "mefcal.pb208_1_25deg_fine.out"; //@todo move to header
+  char strin[200]; 
+  char* filename = "mefcal.pb208_1_25deg_fine.out"; 
 
   float q, ffsq, qsq;
   float ignore0, ignore1, ignore2, ignore3, ignore4, ignore5, ignore6, ignore7;
@@ -298,7 +361,7 @@ Int_t hamcPhyPREX::LoadFormFactorTable(){
     exit(0);
   }
 
-  while(fgets(strin,1000,fd)!=NULL) {//@todo how large should be 1000? 
+  while(fgets(strin,1000,fd)!=NULL) {
     sscanf(strin, "%f %f %f %f %f %f %f %f %f %f", &ignore0, &q, &ignore1, &ignore2, &ffsq, &ignore3, &ignore4, &ignore5, &ignore6, &ignore7);
 
     q = 0.197*q; 
@@ -378,4 +441,39 @@ Int_t hamcPhyPREX::LoadHorowitzTable(vector<vector<Float_t> >& crsc_table, vecto
   return 1;
 }
 
+Int_t hamcPhyPREX::LoadC12FormFactorTable(){
 
+  /*Load C12 form factor, needed for diamond foils.
+   first number is q, fifth is form factor squared 
+   vector<Float_t> qsq_row, ffsq_row;  
+   q = 0.197 * q;
+   qsq = q*q;
+  */
+  
+  FILE *fd;
+  char strin[200]; 
+  char* filename = "mefcal.c12_1_25deg_fine.out"; 
+
+  float q, ffsq, qsq;
+  float ignore0, ignore1, ignore2, ignore3, ignore4, ignore5, ignore6, ignore7;
+  
+  fd = fopen(filename, "r");
+  if (fd==NULL) {
+    printf("ERROR: file %s does not exist \n", filename);
+    printf("Bye Bye. \n");
+    exit(0);
+  }
+
+  while(fgets(strin,1000,fd)!=NULL) {
+    sscanf(strin, "%f %f %f %f %f %f %f %f %f %f", &ignore0, &q, &ignore1, &ignore2, &ffsq, &ignore3, &ignore4, &ignore5, &ignore6, &ignore7);
+
+    q = 0.197*q; 
+    qsq = pow(q, 2);
+    c12qsq_row.push_back(qsq);
+    c12ffsq_row.push_back(ffsq);
+  }
+
+  fclose(fd);
+
+  return 1;
+}

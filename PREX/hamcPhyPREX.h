@@ -30,8 +30,8 @@ class hamcPhyPREX : public hamcPhysics {
      Int_t Asymmetry(Float_t energy, Float_t angle, Int_t stretch=0);
 
     /*Calculates CrossSection and Asymmetry using formulas*/
-     Float_t CalculateCrossSection(Float_t energy, Float_t angle);
-     Float_t CalculateAsymmetry(Float_t energy, Float_t angle);
+     Float_t CalculateCrossSection(Int_t nuc, Float_t energy, Float_t angle);
+     Float_t CalculateAsymmetry(Int_t nuc);  // Born asymmetry.
 
 
   protected:
@@ -43,11 +43,15 @@ class hamcPhyPREX : public hamcPhysics {
      Int_t LoadFormFactorTable(); // qsq row, ffsq row
      vector<Float_t> qsq_row, ffsq_row;
 
+     Int_t LoadC12FormFactorTable(); // qsq row, ffsq row
+     vector<Float_t> c12qsq_row, c12ffsq_row;  // same for C12
+
      /*Helper methods*/
      Int_t FindAngleIndex(Float_t);
      Int_t FindEnergyIndex(Float_t);
      Float_t Interpolate(Float_t min, Float_t max, Float_t mid, Float_t val1, Float_t val2);
-     Float_t CalculateQsq(Float_t energy, Float_t angle);
+
+     Float_t qsq;
 
      Bool_t didinit;
 
