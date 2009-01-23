@@ -28,11 +28,12 @@ public:
       }
     }
     virtual Float_t GetRadLen(Int_t idx) const { 
-      if (idx < (Int_t)radlen.size()) return radlen[idx];
+      if (idx >= 0 && 
+          idx < (Int_t)radlen.size()) return radlen[idx];
       return 0;
     }
     virtual Float_t GetRadLen(Float_t x, Float_t y) const {
- // default (virtual) method.  normally defined by inheritig class.
+ // default (virtual) method.  normally defined by inheriting class.
       if (radlen.size()>0) return radlen[0];
       return 0;
     }
@@ -116,6 +117,7 @@ ClassDef (hamcTrapezoid, 0)   // Trapezoid shaped aperture
 
 class hamcPaulBox : public hamcAperture {  
 // This is Paul's idea to have two boxes with different RL
+// The first one has a RL defined, the 2nd is vacuum normally.
 public:
   hamcPaulBox(Float_t x1l, Float_t x1h, Float_t y1l, Float_t y1h, Float_t x2l, Float_t x2h, Float_t y2l, Float_t y2h) : hamcAperture() {
     xlo1 = x1l; xhi1 = x1h, ylo1 = y1l; yhi1 = y1h;

@@ -163,6 +163,17 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 			  &ytrans, nbin, -0.5, 0.5,
                           &xtrans, nbin, -0.5, 0.5);
 
+// For designing the collimator2
+   expt->inout->BookHisto(kFALSE, kFALSE, ICOLLIM2, "xycoll2",
+			  "X-Y at collimator2",
+			  &ytrans, nbin, -0.5, 0.5,
+                          &xtrans, nbin, -0.5, 0.5);
+
+   expt->inout->BookHisto(kFALSE, kTRUE, ICOLLIM2, "xycoll2a",
+			  "X-Y at collimator2 in acceptance",
+			  &ytrans, nbin, -0.5, 0.5,
+                          &xtrans, nbin, -0.5, 0.5);
+
 
 
    htp = new TH2F("htp","Generated Theta-Phi",
@@ -295,7 +306,7 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
     expt->inout->AddToNtuple("yfoc",&ytrans);
     expt->inout->AddToNtuple("xdet",&xdet);
     expt->inout->AddToNtuple("ydet",&ydet);
-
+    expt->inout->AddToNtuple("mscol",&ms_collim);
 
     did_init = kTRUE;
 
@@ -311,6 +322,8 @@ Int_t hamcTrackOut::Generate(hamcExpt *expt) {
     cout << "hamcTrackOut::ERROR: uninitialized !"<<endl;
     return ERROR;
   }
+
+  ms_collim = 0;  // reset
 
   hamcBeam *beam = expt->event->beam;
 
