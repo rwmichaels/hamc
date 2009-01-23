@@ -122,41 +122,51 @@ void hamcSingles::EventAnalysis() {
     return;
   }
 
-  Float_t domega = physics->kine->acell->domega;
+  Float_t dtheta = physics->kine->acell->dtheta;
+
+  if (ldebug) physics->kine->acell->Print();
+
   physics->kine->IncrementAcceptance();
 
   Float_t tdens = target->GetMtlDensity(mtl_idx);  // tgt density (g/cm^3)
 
   Float_t tlen = target->GetMtlLen(mtl_idx);  // tgt len (m)
-  tlen = tlen*100;  // cm
+  tlen = tlen*100;                        // need cm
 
-  Float_t current = event->beam->beam_current;  
-  current = current * 6.25e12;  // 100 uA = 6.25e14 e- / sec
+  Float_t current = event->beam->beam_current;  // microAmps (uA)
+  current = current * 6.25e12;    // 100 uA = 6.25e14 e- / sec
 
   Float_t crsec = physics->GetCrossSection();  // barns/str
   Float_t asy = 1e6 * physics->GetAsymmetry();
 
-  Float_t rate = 
-       current * crsec * 0.602 * domega * tlen * tdens / anum;
+  Float_t theta = physics->kine->theta;
+  Float_t theta_central = (PI/180)*GetSpectrom(0)->GetScattAngle();
+  Float_t tfact = TMath::Sin(theta)/TMath::Sin(theta_central);
+
+  Float_t rel_rate = 
+       current * crsec * 0.602 * tlen * tdens * tfact / anum;
 
   if (ldebug) {
-    cout << "Singles event analysis "<<endl;
+    cout << "\n\nSingles event analysis "<<endl;
+    cout << "energy "<<physics->kine->energy<<"   angle "<<physics->kine->theta;
+    cout << "   qsq "<<physics->kine->qsq<<endl;
     cout << "mtl_idx "<<mtl_idx<<"  num mtl "<<num_mtl<<"   anum "<<anum<<endl;
     cout << "tgt len "<<tlen<<"   density "<<tdens<<endl;
-    cout << "solid angle "<<domega<<"   beam "<<current<<endl;
+    cout << "beam "<<current<<endl;
     cout << "crsec "<<crsec<<"  barns/str "<<endl;
-    cout << "asymmetry "<<asy<<"  ppm "<<endl;
-    cout << "rate  "<<rate<<endl;
+    cout << "physics asymmetry (not mult. by polar.)  "<<asy<<"  ppm "<<endl;
+    cout << "theta "<<theta<<"  "<<theta_central<<"  "<<tfact<<endl;
+    cout << "Relative rate  "<<rel_rate<<endl;
   }
 
   if (mtl_idx >= 0 && mtl_idx < num_mtl) {
     xevtcnt[mtl_idx] += 1;
-    sumasy[mtl_idx]  += rate*asy;
-    sumrate[mtl_idx] += rate;
+    sumasy[mtl_idx]  += rel_rate*asy;
+    sumrate[mtl_idx] += rel_rate;
   }
 
 }
-
+ 
 void hamcSingles::RunSummary() {
 
   Float_t sum_rate, sum_asy;
@@ -185,8 +195,8 @@ void hamcSingles::RunSummary() {
       } else {
         cout << "Material "<<idx<<"  "<<target->GetMtlName(idx)<<endl;
     // The rate still needs to be corrected for size of cell division, see below.
-        cout << "Relative rate "<<rate<<" (arb) "<<endl;
-        cout << "<A> = "<<asy<<"  ppm "<<endl;
+        cout << "Relative rate "<<rate<<" (arb units) "<<endl;
+        cout << "<A> = "<<asy<<"  ppm  (not mult. by polar. yet)"<<endl;
       }
 
       sum_asy += rate * asy;
@@ -204,7 +214,6 @@ void hamcSingles::RunSummary() {
 
   Float_t th,ph;
   Float_t domega = 0;
-  Float_t xsumcell = 0;
   phcmin = 9999; 
   phcmax = -9999;
   thcmin = 9999;
@@ -222,7 +231,6 @@ void hamcSingles::RunSummary() {
 
       if (xcnt  > cell_cut) {
 
-        xsumcell += 1.0;
         th = physics->kine->acell->GetTheta(ix);
         ph = (PI/2) - physics->kine->acell->GetPhi(iy);
 
@@ -232,8 +240,8 @@ void hamcSingles::RunSummary() {
         if (ph > phcmax) phcmax = ph;
 
 	//        cout << "Xcnt "<<ix<<"  "<<iy<<"  "<<th<<"  "<<ph<<"  "<<xcnt<<endl;
-
-	domega += physics->kine->acell->domega;
+        domega += TMath::Sin(th) * 
+            physics->kine->acell->dtheta * physics->kine->acell->dphi;
 
         htpa1->Fill(th,ph,xcnt);
         htpa2->Fill(th,ph,xcnt);
@@ -242,22 +250,28 @@ void hamcSingles::RunSummary() {
     }
   }
 
+  Float_t pol = event->beam->polarization;
+
+
   if (sum_rate == 0) {
     cout << "hamcSingles::RunSum::ERROR: no summed rate ?"<<endl;
   } else {
-    avg_asy = sum_asy / sum_rate;
-    sum_rate = sum_rate * xsumcell;  // correction for cell divisions
+    avg_asy = sum_asy / sum_rate;  // physics asymmetry
+    avg_asy = avg_asy * pol;       // raw asymmetry
+    sum_rate = sum_rate * domega;  // mult by solid angle
     xcnt = sum_rate * run_time * 3600;
-    asy_err = 1e6 / TMath::Sqrt(xcnt);
-    cout << endl << "Overall <A> = "<<avg_asy;
+    asy_err = 0;   
+    if (xcnt != 0) asy_err = 1e6 / TMath::Sqrt(xcnt);
+    Float_t daa = asy_err / avg_asy;
+    cout << endl << "Raw measured <A> = "<<avg_asy;
     cout << " +/- "<<asy_err<<"   ppm "<<endl;
+    cout << "Stat precision "<<daa<<endl;
+    cout << "using polarization = "<<pol<<endl;
     cout << "Total rate "<<sum_rate<<"  Hz "<<endl;
     cout << "run time "<<run_time<<" hours "<<endl;
+    cout << "beam current "<<event->beam->beam_current<<" uA"<<endl; 
   }
 
-  // problems: no cell cnt (Num=0), mtl_idx .ne.2
-
-  cout << "num cell "<<xsumcell<<endl;
   cout << "phi min/max "<<phcmin<<"  "<<phcmax<<endl;
   cout << "th min/max "<<thcmin<<"  "<<thcmax<<endl;
   cout << "Total solid angle "<<domega<<"  str "<<endl;

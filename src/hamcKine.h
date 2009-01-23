@@ -18,48 +18,44 @@ class hamcExpt;
 class hamcAccCell {  
 // Utility class to account for how the acceptance is populated
 public:
-  hamcAccCell(Float_t thmin, Float_t thmax, Float_t phmin, Float_t phmax) {
-    cmax = TMath::Cos(thmin);
-    cmin = TMath::Cos(thmax);
-    dcostheta = (cmax-cmin)/((Float_t)(numcell)); // >= 0
-    pmin = phmin;
-    pmax = phmax;
-    dphi = (pmax-pmin)/((Float_t)(numcell));  // >= 0
-    domega = dcostheta * dphi;
+  hamcAccCell(Float_t th1, Float_t th2, Float_t ph1, Float_t ph2): thmin(th1),thmax(th2),phmin(ph1),phmax(ph2) {
+    dtheta = (thmax-thmin)/((Float_t)(numcell));
+    dphi = (phmax-phmin)/((Float_t)(numcell));  // >= 0
+    xnorm = ((Float_t)(numcell*numcell))/((thmax-thmin)*(phmax-phmin));
     xcnt = new Float_t[numcell*numcell];
     for (Int_t i=0; i<numcell*numcell; i++) xcnt[i] = 0;
   };
  ~hamcAccCell() { delete [] xcnt; };
   void Increment(Float_t th, Float_t ph) {
-    Int_t icell,jcell,ncell;
-    Float_t cth = TMath::Cos(th);
-    icell = ((Int_t)((cth-cmin)/dcostheta));
-    jcell = ((Int_t)((ph-pmin)/dphi));
+    Int_t icell, jcell, ncell;
+    icell = ((Int_t)((th-thmin)/dtheta));
+    jcell = ((Int_t)((ph-phmin)/dphi));
     ncell = icell*numcell + jcell;
     if (ncell >= 0 || ncell < numcell*numcell) xcnt[ncell] += 1.0;
   };
-  Float_t GetCosTheta(Int_t icell, Int_t debug=0) {
-    if (debug) std::cout << "chk getcostheta "<<icell<<"  "<<cmin + dcostheta*((Float_t)(icell))<<std::endl;
-    return cmin + dcostheta*((Float_t)(icell));
-  };
+  void Print() {
+    std::cout<<"\nhamcAccCell parameters"<<std::endl;
+    std::cout<<"phi limits "<<phmin<<" "<<phmax<<std::endl;
+    std::cout<<"theta limits "<<thmin<<" "<<thmax<<std::endl;
+    std::cout<<"dtheta "<<dtheta<<"  dphi "<<dphi<<std::endl;
+    std::cout<<"num cells "<<numcell<<std::endl;
+  }
   Float_t GetTheta(Int_t icell, Int_t debug=0) {
-    Float_t cth = GetCosTheta(icell);
-    if (debug) std::cout << "chk gettheta "<<icell<<"  "<<cth<<"  "<<TMath::ACos(cth)<<std::endl;
-    return TMath::ACos(cth);
+    if (debug) std::cout << "chk gettheta "<<icell<<"  "<<thmin + dtheta*((Float_t)(icell))<<std::endl;
+    return thmin + dtheta*((Float_t)(icell));
   };
   Float_t GetPhi(Int_t icell, Int_t debug=0) {
-    if (debug) std::cout << "chk getphi "<<icell<<"  "<<pmin + dphi*((Float_t)(icell))<<std::endl;
-    return pmin + dphi*((Float_t)(icell));
+    if (debug) std::cout << "chk getphi "<<icell<<"  "<<phmin + dphi*((Float_t)(icell))<<std::endl;
+    return phmin + dphi*((Float_t)(icell));
   };
   Float_t Num(Int_t icell, Int_t debug=0) { 
     if (icell < 0 || icell >= numcell*numcell) return 0;
     if (debug) std::cout << "chk Num "<<icell<<"  "<<numcell*numcell<<"  "<<xcnt[icell]<<std::endl;
     return xcnt[icell];
   };
- Float_t cmin, cmax, pmin, pmax, dcostheta, dphi, domega;
- static const Int_t numcell = 200;  // need roughly 100*numcell^2 events -> typ. >= 4M evts
-                     // need to check for convergence with numcell and num_events.
+ Float_t phmin, phmax, thmin, thmax, dtheta, dphi, xnorm;
  Float_t *xcnt;
+ static const Int_t numcell = 200;  
 };
 
 
