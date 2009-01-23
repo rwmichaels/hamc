@@ -115,7 +115,7 @@ Int_t hamcSpecHRS::Init(hamcExpt *expt) {
      collim2_radlen = parser.GetData(); 
      cout << "hamcSpecHRS: Using spreader collimator, RL = "<<
            collim2_radlen<<endl;
-   }   
+   }      
 
    BuildSpectrom();
 
@@ -217,15 +217,28 @@ void hamcSpecHRS::AddBreakPoint(Int_t where) {
       break;
 
     case ICOLLIM:
-      break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.12,0.12,-0.12,0.12)));
+      if (IsWarmSeptum() || IsColdSeptum()) {
+        if (IsWarmSeptum()) {
+         break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.088,0.382,-0.12,0.12)));
+	} else {
+	  break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.3485,-0.2156,-0.11,0.11)));  // cold septum
+	}
+      } else { // HRS alone
+	 break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.12,0.12,-0.12,0.12)));  
+      }
       idx = break_point.size()-1;
       break_point[idx]->aperture->SetCenter(0,0);
       break;
 
     case ICOLLIM2:
-      break_point.push_back(new hamcSpecBrk(where, new hamcPaulBox(-4,1,-8,6,1.5,5,6.5,8)));
+      if (IsWarmSeptum()) {
+        break_point.push_back(new hamcSpecBrk(where, new hamcPaulBox(0.372,0.382,-0.04,0.04,-0.088,0.365,-0.12,0.12)));
+      }
       idx = break_point.size()-1;
       break_point[idx]->aperture->DefineRadLen(1,collim2_radlen);
+      Float_t r1 = break_point[idx]->aperture->GetRadLen(0.375,0);
+      Float_t r2 = break_point[idx]->aperture->GetRadLen(0.25,-0.08);
+      cout << "Paul Box: Check of rad len "<<r1<<"  "<<r2<<endl; 
       break;
 
     case ISEPTIN:
