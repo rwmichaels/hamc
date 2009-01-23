@@ -27,7 +27,7 @@ class hamcBeam : public hamcTrack {
      Float_t GetRaster(Int_t ixy);
      Int_t Radiate(hamcExpt *exp);
      void Print();
-     Float_t beam_current;
+     Float_t beam_current, polarization;
 
   protected:
 

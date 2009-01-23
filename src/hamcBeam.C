@@ -24,6 +24,7 @@ hamcBeam::hamcBeam() : hamcTrack("electron"),rastered(kTRUE),xrast(0.4),yrast(0.
 {
   trktype = "beam";
   beam_current = 100; // uA
+  polarization = 0.8;
 }
 
 hamcBeam::hamcBeam(Float_t ebeam, Float_t esigma) : hamcTrack("electron"),rastered(kTRUE),xrast(0.4),yrast(0.4)
@@ -32,6 +33,7 @@ hamcBeam::hamcBeam(Float_t ebeam, Float_t esigma) : hamcTrack("electron"),raster
   E0 = ebeam;
   E0sigma = esigma;
   beam_current = 100; // uA
+  polarization = 0.8;
 }
 
 hamcBeam::~hamcBeam() {
@@ -64,6 +66,9 @@ Int_t hamcBeam::Init(hamcExpt *expt) {
      }   
      if (parser.IsFound("current")) {
        beam_current = parser.GetData();
+     }   
+     if (parser.IsFound("polarization")) {
+       polarization = parser.GetData();
      }   
 
      cout << "Beam values   E0  = "<<E0<<"   E0sigma "<<E0sigma<<endl;
