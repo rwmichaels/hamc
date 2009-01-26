@@ -41,11 +41,11 @@ ifeq ($(OSNAME),Linux)
    LD            = $(GLD)
    LDFLAGS       = 
    SOFLAGS       = -shared 
-   GLIBS         = $(ROOTGLIBS) -L/usr/X11R6/lib -lXpm -lX11
+   GLIBS         = $(ROOTGLIBS) -L/usr/X11R6/lib -lXpm -lX11 
    ET_AC_FLAGS = -D_REENTRANT -D_POSIX_PTHREAD_SEMANTICS
    ET_CFLAGS = -02 -fPIC -I. $(ET_AC_FLAGS) -DLINUXVERS
-   ONLIBS = -lieee -lpthread -ldl -lresolv
-   LIBS = $(GLIBS) $(ROOTLIBS) $(ROOTGLIBS)
+   ONLIBS = -lieee -lpthread -ldl -lresolv 
+   LIBS = $(GLIBS) $(ROOTLIBS) $(ROOTGLIBS) -lg2c
 
 endif
 
@@ -114,7 +114,7 @@ endif
 
 install: all
 
-all: $(PROGS) $(HAMCLIBS) $(HAMCLIBS_NODICT) libhamc.so
+all: $(PROGS) $(HAMCLIBS) $(HAMCLIBS_NODICT) libhamc.so 
 
 prex: $(PREX_OBJS) $(PREX_HEAD) $(OBJS) $(SRC) $(HEAD) 
 	rm -f $@
