@@ -60,6 +60,7 @@ Int_t hamcTransLerWarmSeptum::TransForm(hamcTrack *trk, Int_t where) const {
 
   Int_t origin = trk->origin;
   Int_t xbig = -9999;
+  Int_t debug_trans = 0; // to get do some debugging here.
 
   long dimen=5;
   float xtrans[5], xout[5];
@@ -72,6 +73,33 @@ Int_t hamcTransLerWarmSeptum::TransForm(hamcTrack *trk, Int_t where) const {
 
   for (Int_t i=0; i<4; i++) xout[i]=xbig;
   xout[4] = xtrans[4];
+
+  if (debug_trans &&  (origin == ITARGET && xtrans[1] > -0.04 && xtrans[1] < 0.04 && xtrans[3] > -0.04 && xtrans[3] < 0.04) && xtrans[4] > -0.02 && xtrans[4] < 0.02) {
+// Test: compare (tgt -> fp) to (tgt -> col -> fp) 
+// idiot test:     xtrans[0] = 0.;
+//     xtrans[1] = 0.02;
+//     xtrans[2] = 0.;
+//     xtrans[3] = 0.02;
+//     xtrans[4] = 0.001;
+     Float_t xtof=x_sp_fp__(xtrans,&dimen);    // tgt -> fp
+     Float_t ttof=t_sp_fp__(xtrans,&dimen);
+     Float_t ytof=y_sp_fp__(xtrans,&dimen);
+     Float_t ptof=p_sp_fp__(xtrans,&dimen);     
+     xout[0]=x_sp_col__(xtrans,&dimen);// tgt -> col
+     xout[1]=t_sp_col__(xtrans,&dimen);
+     xout[2]=y_sp_col__(xtrans,&dimen);
+     xout[3]=p_sp_col__(xtrans,&dimen);
+     xout[4]=xtrans[4];
+     Float_t xcolf=x_sp_cfp__(xout,&dimen);    // col -> fp
+     Float_t tcolf=t_sp_cfp__(xout,&dimen);
+     Float_t ycolf=y_sp_cfp__(xout,&dimen);
+     Float_t pcolf=p_sp_cfp__(xout,&dimen);
+     cout << endl << endl;
+     cout <<"orig flag "<<origin<<endl;
+     cout <<"orig "<<xtrans[0]<<" "<<xtrans[1]<<" "<<xtrans[2]<<" "<<xtrans[3]<<" "<<xtrans[4]<<endl;
+     cout <<"T->F "<<xtof<<"  "<<ttof<<"  "<<ytof<<"  "<<ptof<<endl;
+     cout <<"T->C "<<xcolf<<"  "<<tcolf<<"  "<<ycolf<<"  "<<pcolf<<endl;
+  }
 
   if (origin == ITARGET) {
 
