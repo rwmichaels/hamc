@@ -41,6 +41,7 @@ class hamcTrackOut : public hamcTrack {
      Float_t tgt_mass;
      Float_t theta_iteration;
      Float_t dpp,qsq;
+     Int_t which_hrs;
 
      hamcTrackOut(const hamcTrackOut& phys);
      hamcTrackOut& operator=(const hamcTrackOut& phys);

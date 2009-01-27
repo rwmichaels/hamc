@@ -22,7 +22,7 @@ ClassImp(hamcTrackOut)
 #endif
 
 
-hamcTrackOut::hamcTrackOut() : hamcTrack("electron"),thetamin(0),thetamax(0),phimin(0),phimax(0)
+hamcTrackOut::hamcTrackOut() : hamcTrack("electron"),thetamin(0),thetamax(0),phimin(0),phimax(0),which_hrs(0)
 {
   did_init = kFALSE;
   trktype = "out";
@@ -33,6 +33,7 @@ hamcTrackOut::hamcTrackOut(string pid, Float_t ee, Float_t x, Float_t th, Float_
 {
   did_init = kFALSE;
   trktype = "out";
+  which_hrs = 0;
 }
 
 hamcTrackOut::~hamcTrackOut() {
@@ -51,6 +52,7 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 
   P0 = spec->GetP0();
   P0sigma = spec->GetP0Sigma();
+  which_hrs = spec->which_spectrom;  // affects angle convention
 
   hamcTrack::Init();
 
@@ -307,6 +309,8 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
     expt->inout->AddToNtuple("xdet",&xdet);
     expt->inout->AddToNtuple("ydet",&ydet);
     expt->inout->AddToNtuple("mscol",&ms_collim);
+    expt->inout->AddToNtuple("th0",&th0);
+    expt->inout->AddToNtuple("ph0",&ph0);
 
     did_init = kTRUE;
 
@@ -404,7 +408,9 @@ Int_t hamcTrackOut::LabToTrans() {
   Float_t tp_prime = sps*sts / uparam;
  
 // Need to subtract the central scattering angle:
-  Float_t tanphi_t = (tp_prime - ttc) / (1 + tp_prime*ttc);
+  Float_t xsign = 1.0;
+  if (which_hrs == RIGHTHRS) xsign = -1.0;  // sign convention
+  Float_t tanphi_t = xsign*(tp_prime - ttc) / (1 + tp_prime*ttc);
 
   tvect->PutTheta(tantheta_t);
   tvect->PutPhi(tanphi_t);      
