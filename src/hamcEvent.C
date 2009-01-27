@@ -54,6 +54,8 @@ Int_t hamcEvent::Init(hamcExpt* expt) {
   }
 
   expt->inout->AddToNtuple("inaccept",&inaccept);
+  expt->inout->AddToNtuple("xcol",&xcol);
+  expt->inout->AddToNtuple("ycol",&ycol);
 
   did_init = kTRUE;
 
@@ -80,6 +82,7 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
    if (beam) beam->Generate(expt);   
 
    inaccept = 1;
+   xcol = -999;  ycol = -999;
 
 // Loop over spectrometers
 
@@ -122,16 +125,21 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
 
          if ( track->InAccept(spect->Aperture(ibrk))  )  { // Track is in acceptance
 
-         track->MultScatt(spect->Aperture(ibrk), brkpoint);
+           track->MultScatt(spect->Aperture(ibrk), brkpoint);
 
-       } else {  
+         }  else {  
 
-         if (spect->break_point[ibrk]->IsCut()) {   // If we care about acceptance
+           if (spect->break_point[ibrk]->IsCut()) {   // If we care about acceptance
                    inaccept = 0;
+	   }
 	 }
-       }
 
-     }
+         if (brkpoint == ICOLLIM || brkpoint == ICOLLIM2) {
+	   xcol = track->GetTransX();
+	   ycol = track->GetTransY();
+	 }
+
+       }
 	     
 // The following line fills histograms, and will fill
 // the ntuple at the focal plane when brkpoint=IFOCAL.
