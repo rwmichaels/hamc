@@ -385,8 +385,12 @@ Int_t hamcTrackOut::LabToTrans() {
 // and azimuthal angle in the lab frame.
 // theta_central is the HRS optic axis angle with respect to Z.
 // We need the transport vector (t) angles, actually need
-// tan(theta_t), tan(phi_t) where theta_t is vertical.
-
+// tan(theta_t), tan(phi_t) where 
+// positive theta_t is vertical down
+// phi_t sign depends on which spectrometer.
+// for R-HRS positive phi_t is towards beam, and 
+// for L-HRS positive phi_t is away from beam
+ 
   Float_t stc, ctc, ttc, sts, cts, sps, cps;
   stc = TMath::Sin(theta_central);
   ctc = TMath::Cos(theta_central);
@@ -404,12 +408,14 @@ Int_t hamcTrackOut::LabToTrans() {
     return ERROR;
   }
 
-  Float_t tantheta_t = cps*sts / uparam;
+// The -1.0 is to obey sign convention, see above.
+  Float_t tantheta_t = -1.0*cps*sts / uparam;
+
   Float_t tp_prime = sps*sts / uparam;
- 
+
 // Need to subtract the central scattering angle:
   Float_t xsign = 1.0;
-  if (which_hrs == RIGHTHRS) xsign = -1.0;  // sign convention
+  if (which_hrs == RIGHTHRS) xsign = -1.0;  // sign convention, see above
   Float_t tanphi_t = xsign*(tp_prime - ttc) / (1 + tp_prime*ttc);
 
   tvect->PutTheta(tantheta_t);
