@@ -76,10 +76,10 @@ Int_t hamcSingles::Init(string sfile) {
 
   cout << "hamcSingles::Number of physics models "<<num_phyt<<endl;
 
-  Float_t thmin = event->trackout[0]->thetamin;
-  Float_t thmax = event->trackout[0]->thetamax;
-  Float_t phmin = event->trackout[0]->phimin;
-  Float_t phmax = event->trackout[0]->phimax;
+  Float_t thmin = event->trackout[0]->Getthetamin();
+  Float_t thmax = event->trackout[0]->Getthetamax();
+  Float_t phmin = event->trackout[0]->Getphimin();
+  Float_t phmax = event->trackout[0]->Getphimax();
 
   for (Int_t imodel = 0; imodel<num_phyt; imodel++) {
     for (Int_t imtl = 0; imtl<num_mtl; imtl++) {

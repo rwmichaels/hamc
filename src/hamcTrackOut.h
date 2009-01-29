@@ -25,7 +25,11 @@ class hamcTrackOut : public hamcTrack {
      Int_t Init(Int_t ispect, hamcExpt *expt);
      Int_t Generate(hamcExpt *expt);
      Float_t GetQsq() { return qsq; };
-     
+     Float_t Getthetamin() const {return thetamin;};
+     Float_t Getthetamax() const {return thetamax;};
+     Float_t Getphimin() const {return phimin;};
+     Float_t Getphimax() const {return phimax;};
+
   protected:
 
   private: 
