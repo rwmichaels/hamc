@@ -33,13 +33,11 @@ hamcKine::hamcKine(): did_init(kFALSE)
   xbjhi = 0.99;
   qsqlo = 1;
   wsqlo = 4;
-  acell = 0;
   Clear();
 }
 
 hamcKine::~hamcKine()
 {
-  if (acell) delete acell;
 }
 
 void hamcKine::Clear() {
@@ -162,8 +160,6 @@ Int_t hamcKine::Init(string proc, Float_t eb, Float_t theta,
     phmax = phma;
     epmin = epmi;
     epmax = epma;
-
-    acell = new hamcAccCell(thmin, thmax, phmin, phmax);
 
     did_init = kTRUE;
 
@@ -323,18 +319,6 @@ Int_t hamcKine::ComputeKine() {
 
 }
 
-Int_t hamcKine::IncrementAcceptance() {
-
-  if (!acell) {
-    cout << "hamcKine:ERROR: no acceptance cell obj !"<<endl;
-    return -1;
-  }
-
-  acell->Increment(theta, phi);
-
-  return 1;
-
-}
 
 void hamcKine::Print() {
 
