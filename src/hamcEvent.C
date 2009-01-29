@@ -79,7 +79,17 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
 
    if (expt->physics->Radiate(expt) == -1) return 1;
 
-   if (beam) beam->Generate(expt);   
+   if (beam) 
+     
+     {
+       beam->Generate(expt);
+       while(expt->physics->kine->Generate(expt) == -1) //DIS event not good, try again
+	 {
+	   expt->target->Zscatt();
+	   if (expt->physics->Radiate(expt) == -1) return 1;
+	   beam->Generate(expt);
+	 }
+     }
 
    inaccept = 1;
    xcol = -999;  ycol = -999;
@@ -92,8 +102,8 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
      hamcTrackOut *track = trackout[ispect]; // Assumes 1 track per spectrom.
      if (!track) continue;
 
-     track->Generate(expt);  
- 
+     track->Generate(expt);
+
      expt->physics->Generate(expt); 
 
 // Weight by cross section (optionally used for some histograms)

@@ -212,7 +212,14 @@ Int_t hamcKine::Generate(hamcExpt *expt) {
       dE = dE - dP0_iter*E0;
   }
   
-  return Generate(eb, dE);
+  if(Generate(eb, dE) == -1)  //no dis event found.
+    return -1;
+  if(energy <= eprime)      //physicslly not acceptable.
+    return -1;
+
+    return 1;
+
+ 
 
 }
 
@@ -251,7 +258,7 @@ Int_t hamcKine::Generate(Float_t eb, Float_t dE) {
 
   if (iproc == proc_dis) {
       if (GenerateDis() == -1) {
-	//        cout << "hamcKine::WARNING: inf. loop? "<<ebeam<<endl;
+	//     cout << "hamcKine::WARNING: inf. loop? "<<ebeam<<endl;
         return -1;
       }
   }
@@ -295,7 +302,6 @@ Int_t hamcKine::GenerateDis() {
  // Impose cuts that define DIS here
     if (x > xbjlo && x < xbjhi && qsq > qsqlo 
 	&& wsq > wsqlo) return 1;     // Found a DIS event
-
   }
 
   return -1;
