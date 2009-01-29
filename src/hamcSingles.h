@@ -8,6 +8,9 @@
 #include "TH1F.h"
 #include "TH2F.h"
 #include <string>
+#include <vector>
+
+class hamcAccAvg;
 
 class hamcSingles : public hamcExpt {
 
@@ -25,12 +28,10 @@ class hamcSingles : public hamcExpt {
   protected:
 
      Float_t P0, angle;
-     Float_t *sumasy, *sumrate, *xevtcnt;
-     Int_t num_mtl;
+     std::vector<hamcAccAvg* > acc;
+     Int_t num_mtl, num_phyt;
 
   private: 
-
-     TH2F *htpa1, *htpa2;
 
      hamcSingles(const hamcSingles& expt);
      hamcSingles& operator=(const hamcSingles& expt);

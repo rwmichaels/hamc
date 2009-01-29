@@ -4,8 +4,10 @@
 #include "hamcSingles.h"
 #include "hamcEvent.h"
 #include "hamcSpecHRS.h"
+#include "hamcAccAvg.h"
 #include "hamcTarget.h"
 #include "hamcBeam.h"
+#include "hamcTrackOut.h"
 #include "hamcPhysics.h"
 #include "hamcKine.h"
 #include "hamcInout.h"
@@ -70,23 +72,23 @@ Int_t hamcSingles::Init(string sfile) {
 
   cout << "hamcSingles::Number of target materials "<<num_mtl<<endl; 
 
-  sumasy  = new Float_t[num_mtl];
-  sumrate = new Float_t[num_mtl];
-  xevtcnt = new Float_t[num_mtl];
+  num_phyt = physics->NumberModels();
 
-  for (Int_t i=0; i<num_mtl; i++) {
-    sumasy[i] = 0;
-    sumrate[i] = 0;
-    xevtcnt[i] = 0;
+  cout << "hamcSingles::Number of physics models "<<num_phyt<<endl;
+
+  Float_t thmin = event->trackout[0]->thetamin;
+  Float_t thmax = event->trackout[0]->thetamax;
+  Float_t phmin = event->trackout[0]->phimin;
+  Float_t phmax = event->trackout[0]->phimax;
+
+  for (Int_t imodel = 0; imodel<num_phyt; imodel++) {
+    for (Int_t imtl = 0; imtl<num_mtl; imtl++) {
+      Float_t xangle = angle*PI/180.;
+      acc.push_back(new hamcAccAvg(xangle, thmin, thmax, phmin, phmax));
+      Int_t idx=((Int_t)acc.size())-1;
+      acc[idx]->InitHisto(imodel*num_mtl+imtl);
+    }
   }
-
-  htpa1 = new TH2F("htpa1","Theta-Phi accepted",
-              100,-1,1,100,-1,1);
-
-  htpa2 = new TH2F("htpa2","Theta-Phi accepted",
-              100,0,0.2,100,-0.62,0.62);
-
-
 
   return OK;
 
@@ -116,17 +118,15 @@ void hamcSingles::EventAnalysis() {
     return;
   }
  
+
   Float_t anum = target->GetAscatt();    // atomic num.
   if (anum == 0) {
     cout << "hamcSingles::EventAna:ERROR:  A = 0 ?"<<endl;
     return;
   }
 
-  Float_t dtheta = physics->kine->acell->dtheta;
-
-  if (ldebug) physics->kine->acell->Print();
-
-  physics->kine->IncrementAcceptance();
+  Float_t theta = physics->kine->theta;   // scattering angle
+  Float_t phi = physics->kine->phi;       // azimuthal angle
 
   Float_t tdens = target->GetMtlDensity(mtl_idx);  // tgt density (g/cm^3)
 
@@ -136,33 +136,34 @@ void hamcSingles::EventAnalysis() {
   Float_t current = event->beam->beam_current;  // microAmps (uA)
   current = current * 6.25e12;    // 100 uA = 6.25e14 e- / sec
 
-  Float_t crsec = physics->GetCrossSection();  // barns/str
-  Float_t asy = 1e6 * physics->GetAsymmetry();
+// Loop over physics models or parameter sets
 
-  Float_t theta = physics->kine->theta;
-  Float_t theta_central = (PI/180)*GetSpectrom(0)->GetScattAngle();
-  Float_t tfact = TMath::Sin(theta)/TMath::Sin(theta_central);
+  for (Int_t imodel = 0; imodel < num_phyt; imodel++) {
 
-  Float_t rel_rate = 
-       current * crsec * 0.602 * tlen * tdens * tfact / anum;
+    Float_t crsec = physics->GetCrossSection(imodel);  // barns/str
+    Float_t asy = 1e6 * physics->GetAsymmetry(imodel); // ppm
 
-  if (ldebug) {
-    cout << "\n\nSingles event analysis "<<endl;
-    cout << "energy "<<physics->kine->energy<<"   angle "<<physics->kine->theta;
-    cout << "   qsq "<<physics->kine->qsq<<endl;
-    cout << "mtl_idx "<<mtl_idx<<"  num mtl "<<num_mtl<<"   anum "<<anum<<endl;
-    cout << "tgt len "<<tlen<<"   density "<<tdens<<endl;
-    cout << "beam "<<current<<endl;
-    cout << "crsec "<<crsec<<"  barns/str "<<endl;
-    cout << "physics asymmetry (not mult. by polar.)  "<<asy<<"  ppm "<<endl;
-    cout << "theta "<<theta<<"  "<<theta_central<<"  "<<tfact<<endl;
-    cout << "Relative rate  "<<rel_rate<<endl;
-  }
+    Float_t rel_rate = 
+        current * crsec * 0.602 * tlen * tdens / anum;
 
-  if (mtl_idx >= 0 && mtl_idx < num_mtl) {
-    xevtcnt[mtl_idx] += 1;
-    sumasy[mtl_idx]  += rel_rate*asy;
-    sumrate[mtl_idx] += rel_rate;
+    Int_t idx = imodel*num_mtl + mtl_idx;
+    if (idx >= 0 && idx < acc.size()) {
+       acc[idx]->Increment(theta, phi, rel_rate, asy);
+    }
+
+    if (ldebug) {
+      cout << "\n\nSingles event analysis "<<endl;
+      cout << "physics model "<<imodel<<"  mtl_idx "<<mtl_idx<<endl;
+      cout << "energy "<<physics->kine->energy<<"   angle "<<physics->kine->theta;
+      cout << "   qsq "<<physics->kine->qsq<<endl;
+      cout << "tgt len "<<tlen<<"   density "<<tdens<<"  "<<anum<<endl;
+      cout << "beam "<<current<<endl;
+      cout << "crsec "<<crsec<<"  barns/str "<<endl;
+      cout << "physics asymmetry (not mult. by polar.)  "<<asy<<"  ppm "<<endl;
+      cout << "theta "<<theta<<"  phi  "<<phi<<"   rad "<<endl;
+      cout << "Relative rate  "<<rel_rate<<endl;
+    }
+
   }
 
 }
@@ -172,31 +173,36 @@ void hamcSingles::RunSummary() {
   Float_t sum_rate, sum_asy;
   Float_t rate, asy, avg_asy;
   Float_t xcnt, asy_err;
-  Float_t phcmin,phcmax,thcmin,thcmax;
+  Float_t omega;
+  Float_t pol = event->beam->polarization;
 
-  sum_rate = 0;
-  sum_asy = 0;
+  cout << "hamcSingles::RunSummary "<<endl;
+ 
+  for (Int_t imodel=0; imodel<num_phyt; imodel++) {
 
-  for (Int_t idx = 0; idx < num_mtl; idx++) {
+    cout << endl << "model  "<<imodel<<"  ----------- "<<endl;
 
-    if (xevtcnt[idx] == 0 || sumrate[idx] == 0) {
+    sum_rate = 0;
+    sum_asy = 0;
 
-      cout << "hamcSingles::RunSum::ERROR: no counts ?"<<endl;
-      cout << idx <<"  "<<xevtcnt[idx]<<"  "<<sumrate[idx]<<endl;
+    for (Int_t idx = 0; idx < num_mtl; idx++) {
 
-    } else {
+      acc[imodel*num_mtl + idx]->RunSummary();
 
-      rate = sumrate[idx] / xevtcnt[idx];
-      asy = sumasy[idx] / sumrate[idx];
-      xcnt = rate * run_time * 3600;  // run_time in hours
+      rate = acc[imodel*num_mtl + idx]->GetRate();
+      asy  = acc[imodel*num_mtl + idx]->GetAsy();
+      omega = acc[imodel*num_mtl + idx]->GetOmega();
+
+      xcnt = rate * run_time * 3600;  // run_time was in hours
 
       if (xcnt == 0) {
-	cout << "hamcSingles::RunSum::ERROR: no run time ?"<<endl;
+	 cout << "hamcSingles::RunSum::ERROR: no run time ?"<<endl;
       } else {
-        cout << "Material "<<idx<<"  "<<target->GetMtlName(idx)<<endl;
-    // The rate still needs to be corrected for size of cell division, see below.
-        cout << "Relative rate "<<rate<<" (arb units) "<<endl;
-        cout << "<A> = "<<asy<<"  ppm  (not mult. by polar. yet)"<<endl;
+          cout << "\nMaterial "<<idx<<"  "<<target->GetMtlName(idx)<<endl;
+          cout << "Rate "<<rate<<" Hz "<<endl;
+          cout << "<A>_phys = "<<asy<<endl;
+          cout << "<A>_raw = "<<asy*pol<<endl;
+          cout << "omega "<<omega<<"  str "<<endl;
       }
 
       sum_asy += rate * asy;
@@ -204,77 +210,27 @@ void hamcSingles::RunSummary() {
 
     }
 
-  }
-
-// Find correction from size of cell division.
-// To be stable against number of cells and number of events,
-// the number of events should exceed ~100*(numcell)^2.
-
-  Int_t numcell = physics->kine->acell->numcell;
-
-  Float_t th,ph;
-  Float_t domega = 0;
-  phcmin = 9999; 
-  phcmax = -9999;
-  thcmin = 9999;
-  thcmax = -9999;
-
-  for (Int_t ix = 0; ix < numcell; ix++) {
- 
-    for (Int_t iy = 0; iy < numcell; iy++) {
-
-      // Put into histogram if num > cut
-
-      Float_t cell_cut = 2;  // Need good stats, like 100*(ncell)^2
-
-      Float_t xcnt = physics->kine->acell->Num(ix*numcell+iy);
-
-      if (xcnt  > cell_cut) {
-
-        th = physics->kine->acell->GetTheta(ix);
-        ph = (PI/2) - physics->kine->acell->GetPhi(iy);
-
-        if (th < thcmin) thcmin = th;
-        if (th > thcmax) thcmax = th;
-        if (ph < phcmin) phcmin = ph;
-        if (ph > phcmax) phcmax = ph;
-
-	//        cout << "Xcnt "<<ix<<"  "<<iy<<"  "<<th<<"  "<<ph<<"  "<<xcnt<<endl;
-        domega += TMath::Sin(th) * 
-            physics->kine->acell->dtheta * physics->kine->acell->dphi;
-
-        htpa1->Fill(th,ph,xcnt);
-        htpa2->Fill(th,ph,xcnt);
-
-      }
+    if (sum_rate == 0) {
+      cout << "hamcSingles::RunSum::ERROR: no summed rate ?"<<endl;
+    } else {
+      avg_asy = sum_asy / sum_rate;  // physics asymmetry
+      avg_asy = avg_asy * pol;       // raw asymmetry
+      xcnt = sum_rate * run_time * 3600;
+      asy_err = 0;   
+      if (xcnt != 0) asy_err = 1e6 / TMath::Sqrt(xcnt);
+      Float_t daa = asy_err / avg_asy;
+      if (num_phyt > 1) cout << "Physics model "<<imodel<<endl;
+      cout << endl << "Raw measured <A>_raw = "<<avg_asy;
+      cout << " +/- "<<asy_err<<"   ppm "<<endl;
+      cout << "Num of counts "<<xcnt<<endl;
+      cout << "Stat precision "<<daa<<endl;
+      cout << "using polarization = "<<pol<<endl;
+      cout << "Total rate "<<sum_rate<<"  Hz "<<endl;
+      cout << "run time "<<run_time<<" hours "<<endl;
+      cout << "beam current "<<event->beam->beam_current<<" uA"<<endl; 
     }
+
   }
-
-  Float_t pol = event->beam->polarization;
-
-
-  if (sum_rate == 0) {
-    cout << "hamcSingles::RunSum::ERROR: no summed rate ?"<<endl;
-  } else {
-    avg_asy = sum_asy / sum_rate;  // physics asymmetry
-    avg_asy = avg_asy * pol;       // raw asymmetry
-    sum_rate = sum_rate * domega;  // mult by solid angle
-    xcnt = sum_rate * run_time * 3600;
-    asy_err = 0;   
-    if (xcnt != 0) asy_err = 1e6 / TMath::Sqrt(xcnt);
-    Float_t daa = asy_err / avg_asy;
-    cout << endl << "Raw measured <A> = "<<avg_asy;
-    cout << " +/- "<<asy_err<<"   ppm "<<endl;
-    cout << "Stat precision "<<daa<<endl;
-    cout << "using polarization = "<<pol<<endl;
-    cout << "Total rate "<<sum_rate<<"  Hz "<<endl;
-    cout << "run time "<<run_time<<" hours "<<endl;
-    cout << "beam current "<<event->beam->beam_current<<" uA"<<endl; 
-  }
-
-  cout << "phi min/max "<<phcmin<<"  "<<phcmax<<endl;
-  cout << "th min/max "<<thcmin<<"  "<<thcmax<<endl;
-  cout << "Total solid angle "<<domega<<"  str "<<endl;
 
   hamcExpt::RunSummary();
 
