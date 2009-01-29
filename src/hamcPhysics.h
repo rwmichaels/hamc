@@ -25,8 +25,10 @@ class hamcPhysics {
      virtual Int_t Init(hamcExpt* expt);
      virtual Int_t Radiate(hamcExpt* expt);     // Radiation at target
      virtual Int_t Generate(hamcExpt* expt);    // Generate crsec and asy.
-     virtual Float_t GetCrossSection() const { return crsec; };
-     virtual Float_t GetAsymmetry() const { return asymmetry; };
+ // The index "i" may point to a model or parameter set.
+     virtual Float_t GetCrossSection(Int_t i=0) const { return crsec; };
+     virtual Float_t GetAsymmetry(Int_t i=0) const { return asymmetry; };
+     virtual Int_t NumberModels() const { return num_models; };
      hamcKine* kine;
      hamcEloss* eloss;
 
@@ -43,6 +45,7 @@ class hamcPhysics {
      Float_t crsec, asymmetry;
      Float_t energy, theta_rad, theta_deg, phi_rad, phi_deg;
      Float_t dE_IntBrehm, dE_ExtBrehm, dE_Ionization;
+     Int_t num_models;
 
      std::string phy_name;
      std::string scatt_process;

@@ -18,7 +18,7 @@ ClassImp(hamcPhysics)
 #endif
 
 
-hamcPhysics::hamcPhysics(): did_init(kFALSE),crsec(0),asymmetry(0)
+hamcPhysics::hamcPhysics(): did_init(kFALSE),crsec(0),asymmetry(0),num_models(1)
 {
   eloss = new hamcEloss();
   kine = new hamcKine();
