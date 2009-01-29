@@ -232,15 +232,10 @@ void hamcSpecHRS::AddBreakPoint(Int_t where) {
 
 // Collim2 is in the Q1 coordinate system (center = 0,0).
     case ICOLLIM2:
-      {
       if (IsWarmSeptum()) { 
-        break_point.push_back(new hamcSpecBrk(where, new hamcPaulBox(0.06,0.07,-0.055,-0.045,-0.1,0.1,-0.04,0.04)));
-      }
-      idx = break_point.size()-1;
-      break_point[idx]->aperture->DefineRadLen(1,collim2_radlen);
-      Float_t r1 = break_point[idx]->aperture->GetRadLen(0.65,0);
-      Float_t r2 = break_point[idx]->aperture->GetRadLen(0.08,-0.08);
-      cout << "Paul Box: Check of rad len "<<r1<<"  "<<r2<<endl; 
+        break_point.push_back(new hamcSpecBrk(where, new hamcPaulBox(0.076,0.104,0.01,0.034,-0.11,0.11,-0.12,0.0)));
+        idx = break_point.size()-1;
+        break_point[idx]->aperture->DefineRadLen(1,collim2_radlen);
       }
       break;
 
