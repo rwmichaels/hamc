@@ -209,7 +209,7 @@ tarfile: clean version
 	tar cvf $(VERS).tar ./$(VERS)
 
 clean:
-	rm -f $(SRCDIR)/*.o core hamcDict* $(PROGS) $(HAMCLIBS) $(HAMCLIBS_NODICT) libhamc.so ./PREX/*.o ./HAPPEX/*.o 
+	rm -f $(SRCDIR)/*.o core hamcDict* $(PROGS) $(HAMCLIBS) $(HAMCLIBS_NODICT) libhamc.so ./PREX/*.o ./HAPPEX/*.o ./PVDIS/*.o
 
 realclean:  clean
 	rm -f *.d *.tar  *~
