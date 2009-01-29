@@ -1,0 +1,42 @@
+Jan. 26 2009   Maintained by D. Wang
+
+
+PVDIS part is added to hamc
+
+classes hamcExptPVDIS hamcPhyPVDIS hamcTgtPVDIS are almost copies from HAPPEX (or PREX)
+except that fortran subroutines are linked in hamcPhyPVDIS
+
+
+
+All fortran subroutines are from Xiaochao's package.
+------------------------------------------------------
+xsec.f is the function for calculating cross section, in which r1998.f is called.
+
+getpdf_mrst2003.f is the main subroutine for asymmetry, in which the all the other fortran files are used.
+
+directories ./pdffiles_11gev/ and ./pdffiles_6gev/ are needed to reduce running time sometimes.
+
+
+
+
+Makefile
+---------------------------------
+
+PVDIS part is added
+
+/usr/lib/libg2c.so.0 added to CXXFLAGS in order to link fortran to C++ 
+
+
+
+
+
+Input File:  pvdis.dat. I copied most of the parameters from happex and chose some parameters by guessing:), so definitely need to check and adjust them!!!!
+
+
+
+
+Presently pvdis seems to be working on technical level (can pass compilation and can be excuted), but not on the physical level. Will get Error messages such as "hamcSingles::ERROR:no counts ?" while excuted.
+
+
+
+NOT DONE YET! JUST A STRUCTURE TO START WITH.
