@@ -37,7 +37,7 @@ ifeq ($(OSNAME),Linux)
    ROOTGLIBS     = $(shell root-config --glibs)
    INCLUDES      = -I$(ROOTSYS)/include
    CXX           = $(GCC)
-   CXXFLAGS      = -Wall -fno-exceptions -fPIC $(INCLUDES) 
+   CXXFLAGS      = -Wall -fno-exceptions -fPIC $(INCLUDES)
    LD            = $(GLD)
    LDFLAGS       = 
    SOFLAGS       = -shared 
@@ -45,7 +45,7 @@ ifeq ($(OSNAME),Linux)
    ET_AC_FLAGS = -D_REENTRANT -D_POSIX_PTHREAD_SEMANTICS
    ET_CFLAGS = -02 -fPIC -I. $(ET_AC_FLAGS) -DLINUXVERS
    ONLIBS = -lieee -lpthread -ldl -lresolv 
-   LIBS = $(GLIBS) $(ROOTLIBS) $(ROOTGLIBS) -lg2c
+   LIBS = $(GLIBS) $(ROOTLIBS) $(ROOTGLIBS) /usr/lib/libg2c.so.0
 
 endif
 
@@ -82,7 +82,7 @@ DEPS = $(SRC:.C=.d)
 DEP  = $(SRC:.C=.d)
 HEAD = $(SRC:.C=.h) 
 
-PROGS = prex happex
+PROGS = prex happex pvdis
 HAMCLIBS = libhamc.a
 HAMCLIBS_NODICT = libhamc_NODICT.a
 
@@ -113,6 +113,16 @@ else
   HAPPEX_OBJS = $(HAPPEX_SRC:.C=.o)
 endif
 
+# PVDIS experiment
+PVDIS_SRC = ./PVDIS/main_PVDIS.C ./PVDIS/hamcExptPVDIS.C ./PVDIS/hamcPhyPVDIS.C ./PVDIS/hamcTgtPVDIS.C 
+ifdef MAKENODICTIONARY
+  PVDIS_OBJS = $(PVDIS_SRC:.C=_NODICT.o)
+else
+  PVDIS_OBJS = $(PVDIS_SRC:.C=.o)
+endif
+
+  PVDIS_OBJS += ./PVDIS/getpdf_mrst2003c.o ./PVDIS/mrst2003c.o ./PVDIS/NextUn.o ./PVDIS/r1998.o ./PVDIS/readpdf_single.o ./PVDIS/xsec.o
+
 install: all
 
 all: $(PROGS) $(HAMCLIBS) $(HAMCLIBS_NODICT) libhamc.so 
@@ -127,6 +137,10 @@ happex: $(HAPPEX_OBJS) $(HAPPEX_HEAD) $(OBJS) $(SRC)  $(HEAD)
 
 #Add PVDIS here when it exists
 
+pvdis: $(PVDIS_OBJS) $(PVDIS_HEAD) $(OBJS) $(SRC) $(HEAD)
+	rm -f $@
+	$(LD) $(CXXFLAGS) -o $@ $(OBJS) $(PVDIS_OBJS) $(ALL_LIBS)
+#IT EXISTS NOW!
 
 $(HAMCLIBS_NODICT): $(LOBJS_NODICT) $(LSRC) $(HEAD)
 	rm -f $@
@@ -151,6 +165,34 @@ $(SRCDIR)/ls_6d_forward.o: $(SRCDIR)/ls_6d_forward.f
 $(SRCDIR)/R6_forward.o: $(SRCDIR)/R6_forward.f
 	rm -f $@
 	cd $(SRCDIR) ; g77 -c R6_forward.f ; cd ../
+
+#############################   PVDIS OBJS   ###############
+
+./PVDIS/getpdf_mrst2003c.o: ./PVDIS/getpdf_mrst2003c.f ./PVDIS/mrst2003c.o ./PVDIS/NextUn.o ./PVDIS/r1998.o ./PVDIS/readpdf_single.o
+	rm -f $@
+	cd ./PVDIS/; g77 -c getpdf_mrst2003c.f mrst2003c.o NextUn.o r1998.o readpdf_single.o; cd ../
+
+./PVDIS/mrst2003c.o: ./PVDIS/mrst2003c.f
+	rm -f $@
+	cd ./PVDIS/; g77 -c mrst2003c.f; cd ../
+
+./PVDIS/NextUn.o: ./PVDIS/NextUn.f
+	rm -f $@
+	cd ./PVDIS/; g77 -c NextUn.f; cd ../
+
+./PVDIS/r1998.o: ./PVDIS/r1998.f
+	rm -f $@
+	cd ./PVDIS/; g77 -c r1998.f; cd ../
+
+./PVDIS/readpdf_single.o: ./PVDIS/readpdf_single.f
+	rm -f $@
+	cd ./PVDIS/; g77 -c readpdf_single.f; cd ../
+
+./PVDIS/xsec.o: ./PVDIS/xsec.f
+	rm -f $@
+	cd ./PVDIS/; g77 -c xsec.f; cd ../
+
+################################################################
 
 libhamc.so: $(OBJS) $(HEAD)
 	$(CXX) $(SOFLAGS) -O -o libhamc.so $(OBJS) $(ALL_LIBS)
