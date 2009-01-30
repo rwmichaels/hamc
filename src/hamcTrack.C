@@ -169,7 +169,7 @@ void hamcTrack::MultScatt(Float_t radlen, Int_t where) {
 
   if (where == ICOLLIM2) {
     ms_collim=1;
-    //    cout << "Mult scatt "<<where<<"  "<<radlen<<"  "<<endl;
+    //    cout << "Mult scatt "<<where<<"  "<<radlen<<"  "<<ms_collim<<endl;
     //    tvect->Print();
   }
 
