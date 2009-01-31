@@ -197,23 +197,24 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
                             &ytrans, nbin,-xbox,xbox,
                             &xtrans, nbin,-ybox,ybox);
 
+   // But inside septum, X,Y are rotated 90, so put them back ...
    expt->inout->BookHisto(kFALSE, kFALSE, ISEPTIN, "xysepi", 
 		      "Transport X-Y at Septum entrance", 
-                            &ytrans, nbin,-xbox,xbox,
-                            &xtrans, nbin,-ybox,ybox);
+                            &xtrans, nbin,-xbox,xbox,
+                            &ytrans, nbin,-ybox,ybox);
    expt->inout->BookHisto(kFALSE, kTRUE, ISEPTIN, "xysepia", 
 		   "Transport X-Y inside Sept-in acceptance", 
-                            &ytrans, nbin,-xbox,xbox,
-                            &xtrans, nbin,-ybox,ybox);
+                            &xtrans, nbin,-xbox,xbox,
+                            &ytrans, nbin,-ybox,ybox);
 
    expt->inout->BookHisto(kFALSE, kFALSE, ISEPTOUT, "xysepo", 
 		      "Transport X-Y at Septum exit", 
-                            &ytrans, nbin,-xbox,xbox,
-                            &xtrans, nbin,-ybox,ybox);
+                            &xtrans, nbin,-xbox,xbox,
+                            &ytrans, nbin,-ybox,ybox);
    expt->inout->BookHisto(kFALSE, kTRUE, ISEPTOUT, "xysepoa", 
 		   "Transport X-Y inside Sept-exit acceptance", 
-                            &ytrans, nbin,-xbox,xbox,
-                            &xtrans, nbin,-ybox,ybox);
+                            &xtrans, nbin,-xbox,xbox,
+                            &ytrans, nbin,-ybox,ybox);
 
    expt->inout->BookHisto(kFALSE, kFALSE, IQ1EXIT, "xyq1", 
 		      "Transport X-Y at Q1 exit", 
