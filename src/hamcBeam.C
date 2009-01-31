@@ -25,6 +25,7 @@ hamcBeam::hamcBeam() : hamcTrack("electron"),rastered(kTRUE),xrast(0.4),yrast(0.
   trktype = "beam";
   beam_current = 100; // uA
   polarization = 0.8;
+  polerr = 0.01;  // fractional error (0.01 = 1%).
 }
 
 hamcBeam::hamcBeam(Float_t ebeam, Float_t esigma) : hamcTrack("electron"),rastered(kTRUE),xrast(0.4),yrast(0.4)
