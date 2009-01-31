@@ -30,6 +30,7 @@ class hamcSingles : public hamcExpt {
      Float_t P0, angle;
      std::vector<hamcAccAvg* > acc;
      Int_t num_mtl, num_phyt;
+     Float_t dpp_cut;
 
   private: 
 

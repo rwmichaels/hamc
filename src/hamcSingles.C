@@ -24,7 +24,7 @@ ClassImp(hamcSingles)
 #endif
 
 
-hamcSingles::hamcSingles(string sname) : hamcExpt(sname),num_mtl(0)
+  hamcSingles::hamcSingles(string sname) : hamcExpt(sname),num_mtl(0),dpp_cut(-1)
 {
   event = new hamcEvent();  // should perhaps be a SinglesEvent ?
 }
@@ -111,6 +111,14 @@ void hamcSingles::EventAnalysis() {
   }
 
   if ( !event->inaccept ) return;  // not in acceptance.
+
+  if (dpp_cut > 0) {  // if dpp_cut < 0, there is no dpp cut.
+ 
+    Float_t dpp = event->trackout[0]->dpptrans;
+    if (dpp < 0) dpp = -1.0*dpp;
+    if (dpp > dpp_cut) return;   // must be in detector
+
+  }   
 
   Int_t mtl_idx = target->GetMtlIndex();
   if (mtl_idx < 0 || mtl_idx >= target->GetNumMtl()) {
