@@ -25,6 +25,9 @@ class hamcPhyPREX : public hamcPhysics {
      Int_t Init(hamcExpt* expt);
      Int_t Generate(hamcExpt* expt);    // Generate crsec and asy.
 
+// The index "i" may point to a model or parameter set.
+     Float_t GetCrossSection(Int_t i=0) const;
+     Float_t GetAsymmetry(Int_t i=0) const;
      /* Reads CrossSection and Asymmetry from Horowitz tables and saves in class variables*/
      Int_t CrossSection(Float_t energy, Float_t angle, Int_t stretch=0);    
      Int_t Asymmetry(Float_t energy, Float_t angle, Int_t stretch=0);
@@ -52,6 +55,7 @@ class hamcPhyPREX : public hamcPhysics {
      Float_t Interpolate(Float_t min, Float_t max, Float_t mid, Float_t val1, Float_t val2);
 
      Float_t qsq;
+     Float_t asy0, asy1;  // unstretched and streteched R_N asymmetries 
 
      Bool_t didinit;
 

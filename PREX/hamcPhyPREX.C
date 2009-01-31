@@ -34,6 +34,7 @@ hamcPhyPREX::hamcPhyPREX() : hamcPhysics()
   phy_name = "PREX physics";
   scatt_process = "elastic";
   do_radiate = kTRUE;
+  num_models = 2;  // number of physics models for asymmetry.
 }
 
 
@@ -75,10 +76,28 @@ Int_t hamcPhyPREX::Generate(hamcExpt *expt) {
    CrossSection(energy, theta, 0);
 
 // Compute the PV asymmetry 
-   Asymmetry(energy, theta,0);
+   Asymmetry(energy, theta,1);  // stretched
+   Asymmetry(energy, theta,0);  // unstretched (call this last)
 
    return OK;
 }
+
+Float_t hamcPhyPREX::GetCrossSection(Int_t imodel) const {
+// No model dependence yet (Jan 2009)
+
+  return crsec;
+
+}
+
+
+Float_t hamcPhyPREX::GetAsymmetry(Int_t imodel) const {
+
+  if (imodel == 1) return asy1;
+  return asy0;
+
+}
+
+
 
 Int_t hamcPhyPREX::CrossSection(Float_t energy, Float_t angle_rad, Int_t stretch) {
 
@@ -153,6 +172,9 @@ Int_t hamcPhyPREX::Asymmetry(Float_t energy, Float_t angle_rad, Int_t stretch) {
   asymmetry1 = asymmetry_tables[stretch][indxEnergy][indxAngle+1];
   asymmetry2 = asymmetry_tables[stretch][indxEnergy][indxAngle+2];
   asymmetry = Interpolate(angle_lower, angle_upper, angle, asymmetry1, asymmetry2);
+
+  if (stretch == 0) asy0 = asymmetry;
+  if (stretch == 1) asy1 = asymmetry;
 
   int debug=0;
 
@@ -334,7 +356,11 @@ Float_t hamcPhyPREX::CalculateAsymmetry(Int_t nuc) {
     A0 = 128.3;   // C12
   }
 
-  return A0*qsq*pow(10.0,-6);
+  Float_t xasy = A0*qsq*pow(10.0,-6);
+  asy0 = xasy;
+  asy1 = xasy;  // no model dependence here.
+
+  return xasy;
 }
 
 
