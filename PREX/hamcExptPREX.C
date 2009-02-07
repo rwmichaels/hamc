@@ -22,9 +22,13 @@ ClassImp(hamcExptPREX)
 
 using namespace std;
 
-hamcExptPREX::hamcExptPREX() : hamcSingles("PREX")
+ hamcExptPREX::hamcExptPREX() : hamcSingles("PREX")
 {
   dpp_cut = 0.003;
+  // solid_athole = 6.1e-6;  // strategy 1
+  // solid_athole = 1.3e-6;  // strategy 2
+  // solid_athole = 1.4e-6;  // strategy 3
+   solid_athole = 2.1e-5;  // strategy 4
   physics = new hamcPhyPREX();
   target  = new hamcTgtPREX();
 }
@@ -82,7 +86,7 @@ void hamcExptPREX::EventAnalysis() {
       prex_xy2->Fill(x-dedxX,y,z);
       prex_x2->Fill(x-dedxX,z);
 
-      if (x-dedxX > -0.27 && x-dedxX < -0.23 && y > -0.02 && y < 0.003) {
+      if (x-dedxX > -0.30 && x-dedxX < -0.22 && y > -0.04 && y < -0.005) {
 
         prex_xy3->Fill(x-dedxX,y,z);
 
@@ -105,7 +109,7 @@ void hamcExptPREX::EventAnalysis() {
          current = current * 6.25e12;    // 100 uA = 6.25e14 e- / sec
 
          Float_t crsec = physics->GetCrossSection();  // barns/str
-         Float_t omega = 1.6e-4;   // steradians (approximate !).
+         Float_t omega = solid_athole;   // steradians 
          Float_t rate = current * crsec * 0.602 * tlen * tdens * omega / anum;
          sumr_pc += rate;
          xcnt_pc += 1.0;
@@ -119,6 +123,7 @@ void hamcExptPREX::RunSummary() {
   cout << "hamcExptPREX:: summary "<<endl;
   cout << "Rate in A_t detector "<<
       sumr_pc/xcnt_pc<<"  Hz, for "<<xcnt_pc<<"  hits"<<endl;
+  cout << "Solid angle of A_t hole "<<solid_athole<<" str "<<endl;
 
 
   Float_t sum_rate, sum_asy;
@@ -184,6 +189,7 @@ void hamcExptPREX::RunSummary() {
         cout << "Total rate "<<sum_rate<<"  Hz "<<endl;
         cout << "run time "<<run_time<<" hours "<<endl;
         cout << "beam current "<<event->beam->beam_current<<" uA"<<endl; 
+        cout << "dpp cut "<<dpp_cut<<endl;
       }
       if (imodel==0) asy0 = avg_asy;
       if (imodel==1) {

@@ -31,6 +31,7 @@ class hamcExptPREX : public hamcSingles {
      TH1F *prex_x1, *prex_x2;
 
      Float_t sumr_pc, xcnt_pc;
+     Float_t solid_athole;
 
 
 #ifndef NODICT
