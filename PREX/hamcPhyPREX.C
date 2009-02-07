@@ -291,8 +291,8 @@ Float_t hamcPhyPREX::CalculateCrossSection(Int_t nuc, Float_t energy, Float_t an
     vector<Float_t>::const_iterator iterQsq = upper_bound(qsq_row.begin(), qsq_row.end(), qsq); //search for the first value of qsq which is larger or equal than actual   
     int indxQsq = iterQsq - qsq_row.begin(); 
 
-    if (indxQsq <= 0) return 0;
-
+    if (indxQsq <= 0 || indxQsq >= qsq_row.size()) return 0;
+    
     Float_t qsq1, qsq2, form_factor1, form_factor2;
     qsq1 =  qsq_row.at(indxQsq);
     qsq2 = qsq_row.at(indxQsq-1);
@@ -306,7 +306,7 @@ Float_t hamcPhyPREX::CalculateCrossSection(Int_t nuc, Float_t energy, Float_t an
     vector<Float_t>::const_iterator iterQsq = upper_bound(c12qsq_row.begin(), c12qsq_row.end(), qsq); //search for the first value of qsq which is larger or equal than actual   
     int indxQsq = iterQsq - c12qsq_row.begin(); 
 
-    if (indxQsq <= 0) return 0;
+    if (indxQsq <= 0 || indxQsq >= qsq_row.size()) return 0;
 
     Float_t qsq1, qsq2, form_factor1, form_factor2;
     qsq1 =  c12qsq_row.at(indxQsq);
