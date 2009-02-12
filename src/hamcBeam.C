@@ -12,6 +12,7 @@
 #include "Rtypes.h"
 #include <string>
 #include <vector>
+#include "TH1F.h"
 
 using namespace std;
 
@@ -79,6 +80,20 @@ Int_t hamcBeam::Init(hamcExpt *expt) {
 
      cout << "Beam current "<<beam_current<<" uA "<<endl;
 
+     dx_iter = 0;
+     dy_iter = 0;
+
+     parser.Load(expt->inout->GetStrVect("kick:track"));
+     parser.Print();
+     if (parser.IsFound("x")){
+       if (expt->inout->numiter > 1) dx_iter = parser.GetData();
+       cout << "Will iterate x by "<<100*dx_iter<<" % of xraster"<<endl;
+     }
+     if (parser.IsFound("y")){
+       if (expt->inout->numiter > 1) dy_iter = parser.GetData();
+       cout << "Will iterate y by "<<100*dy_iter<<" % of yraster"<<endl;
+     }
+
      if (E0 > mass) P0 = TMath::Sqrt(E0*E0 - mass*mass);
 
      did_init = kTRUE;
@@ -126,13 +141,25 @@ Int_t hamcBeam::Generate(hamcExpt *expt) {
 // Not that it matters much, but X is vertical in
 // Transport coordinates.
 
-  if (IsRastered()) {
-    tvect->PutX(-0.5*xrast + xrast*gRandom->Rndm(1));
-    tvect->PutY(-0.5*yrast + yrast*gRandom->Rndm(1));
+  Float_t x_position, y_position;
+
+  if (IsRastered()) { 
+    x_position = -0.5*xrast + xrast*gRandom->Rndm(1);
+    y_position = -0.5*yrast + yrast*gRandom->Rndm(1);
+
+    if (expt->iteration == 1){
+      x_position += dx_iter*xrast;
+      y_position += dy_iter*yrast;
+    }
+
+    tvect->PutX(x_position);
+    tvect->PutY(y_position);
+
+
   } else {
     tvect->Clear();
   }
-
+  
   tvect->PutZ(expt->target->GetZScatt());
 
   energy = E0 + E0sigma*gRandom->Gaus();
@@ -140,6 +167,7 @@ Int_t hamcBeam::Generate(hamcExpt *expt) {
   Radiate(expt);  // modifies the energy
 
   if (energy < mass) energy = mass;  // extrema of rad tail
+
   pmom = TMath::Sqrt(energy*energy - mass*mass);
 
 // Assume the beam is along the Z axis.

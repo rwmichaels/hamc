@@ -9,6 +9,7 @@
 #include "TLorentzVector.h"
 #include <vector>
 #include <map>
+#include "TH1F.h"
 
 class hamcExpt;
 
@@ -35,6 +36,7 @@ class hamcBeam : public hamcTrack {
 
      Bool_t rastered;
      Float_t xrast,yrast;
+     Float_t dx_iter, dy_iter;
 
      hamcBeam(const hamcBeam& phys);
      hamcBeam& operator=(const hamcBeam& phys);
