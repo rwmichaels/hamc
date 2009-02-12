@@ -88,6 +88,8 @@ Int_t hamcKine::Init(hamcExpt* expt) {
    }
 
   dP0_iter = 0;
+  dtheta_iter = 0;
+  dphi_iter = 0;
 
   parser.Load(expt->inout->GetStrVect("kick:track"));
   parser.Print();
@@ -95,6 +97,14 @@ Int_t hamcKine::Init(hamcExpt* expt) {
     if (expt->inout->numiter > 1) dP0_iter = parser.GetData();  
     cout << "Will iterate P0 by "<<100*dP0_iter<<" %"<<endl;
   }   
+  if (parser.IsFound("theta")){
+    if (expt->inout->numiter > 1) dtheta_iter = parser.GetData();
+    cout << "Will iterate theta by "<<100*dtheta_iter<<" % of its range"<<endl;
+  }
+  if (parser.IsFound("phi")){
+    if (expt->inout->numiter > 1) dphi_iter = parser.GetData();
+    cout << "Will iterate phi by "<<100*phi<<" % of its range"<<endl;
+  }
 
 
 // For DIS, obtain the min and max output energies
@@ -208,13 +218,14 @@ Int_t hamcKine::Generate(hamcExpt *expt) {
                 + eloss->GetDeIonOut();
 
 // Add kick if we are iterating on energy
-  if (expt->iteration == 1) {
+  iteration = expt->iteration;
+  if (iteration == 1) {
       dE = dE - dP0_iter*E0;
   }
   
   if(Generate(eb, dE) == -1)  //no dis event found.
     return -1;
-  if(energy <= eprime)      //physicslly not acceptable.
+  if(energy <= (eprime+dE_after))      //physicslly not acceptable.
     return -1;
 
     return 1;
@@ -250,9 +261,11 @@ Int_t hamcKine::Generate(Float_t eb, Float_t dE) {
   ctheta = cthmin + (cthmax-cthmin)*gRandom->Rndm();
 
   theta = TMath::ACos(ctheta);
+  if (iteration == 1) theta += dtheta_iter*(thmax-thmin);
 
 // Likewise, generate azimuthal angle (radians) in lab-frame
   phi = phmin + (phmax-phmin)*gRandom->Rndm();   
+  if (iteration == 1) phi += dphi_iter*(phmax-phmin);
 
   if (iproc == proc_elastic) GenerateElastic();
 
@@ -298,6 +311,8 @@ Int_t hamcKine::GenerateDis() {
     eprime = epmin + (epmax - epmin)*gRandom->Rndm();
 
     ComputeKine();
+
+    eprime = eprime - dE_after;
 
  // Impose cuts that define DIS here
     if (x > xbjlo && x < xbjhi && qsq > qsqlo 

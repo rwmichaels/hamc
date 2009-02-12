@@ -62,7 +62,7 @@ class hamcKine {
      Float_t mass_tgt;  
      Float_t thmin, thmax, phmin, phmax, epmin, epmax;
      Float_t xbjlo, xbjhi, qsqlo, wsqlo;
-     Float_t dP0_iter;
+     Float_t iteration, dP0_iter, dtheta_iter, dphi_iter;
 
      hamcKine(const hamcKine& kine);
      hamcKine& operator=(const hamcKine& kine);
