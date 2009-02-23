@@ -1,0 +1,20 @@
+
+# (optional) Setup parameters for hamc for HAPPEX
+# this is for HAPPEX-I (1999)
+
+# Setup choices for HRS
+hrs_setup noseptum uselerose
+
+# HRS momentum and angle
+HRS_P0 3.058
+HRS_angle 12.54
+
+# Beam parameters.  Raster is in meters, typ 0.0004 (means +/- this)
+beam  E0 3.316 E0sigma 0.0002   rastered  xraster 0.0004  yraster 0.0004 current 100
+
+# range of angles (scatt, azimuth) in degrees
+# phi=0 is up.  phi=90 is into HRS,  phi=180 is down.
+out_angles thetamin 0.2 thetamax 24  phimin 0 phimax 180
+
+
+
