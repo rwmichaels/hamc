@@ -1,5 +1,6 @@
 //  hamcPhyHAPPEX   -- class for the physics of HAPPEX
-//  D. Jaunzeikare, R. Michaels  May 2008
+//  R. Michaels  Nov 2008
+//  Was extracted from gener_cone and modified a bit -- needs some checking.
 
 
 #include "hamcPhyHAPPEX.h"
@@ -68,8 +69,11 @@ Int_t hamcPhyHAPPEX::Generate(hamcExpt *expt) {
 
 
 
-/* Returns the e-p elastic cross section in mubarn/sr. 
-   E_beam in GeV, theta in deg, Q_sqr in GeV^2 */
+/* Returns the e-p elastic cross section in barn/sr. 
+   E_beam in GeV, theta in deg, Q_sqr in GeV^2 
+
+ (changed to barn/sr by R. Michaels, to be consistent with other generators) */
+
 Float_t hamcPhyHAPPEX::sig_elas_H(Float_t E_beam, Float_t theta, Float_t Q_sqr)
 {
   Float_t d_sig, tau, sin2, cos2, G_E2, G_M2;
@@ -85,7 +89,9 @@ Float_t hamcPhyHAPPEX::sig_elas_H(Float_t E_beam, Float_t theta, Float_t Q_sqr)
   d_sig = pow(Alpha,2)/4./pow(E_beam,2)/pow(sin2,2)/(1.+2.*E_beam/Mp*sin2)
          *((G_E2+tau*G_M2)/(1.+tau)*cos2 + 2.*tau*G_M2*sin2);
 
-  return d_sig*hbc2;
+  d_sig = d_sig * hbc2 * 1e-6;   // converts to barns/sr
+
+  return d_sig;
 }
 
 
@@ -154,9 +160,11 @@ Float_t hamcPhyHAPPEX::GAp_dipol(Float_t Q_sqr)
 
 /***********************************************************************************/
 Float_t hamcPhyHAPPEX::asym_H(Float_t theta, Float_t Q2)
-/* Returns the parity violating asymetry in e-p elastic scattering (ppm).
+/* Returns the parity violating asymetry in e-p elastic scattering (raw).
    rho and kappa factors account for electroweak corrections.
    No strange quark contribution.*/
+/* R. Michaels.  The units are fraction, NOT ppm, to be compatible
+   with other generators */
 {
   Float_t tau, eps, epsp, GEp, GMp, GEn, GMn, GA3, GA8, asym;
 
@@ -177,5 +185,5 @@ Float_t hamcPhyHAPPEX::asym_H(Float_t theta, Float_t Q2)
 	        *( (rho*(1.-4.*kappa*sw2)-lambda2u+lambda2d)*(-2.)*GA3+(lambda2u+lambda2d)*2.*sqrt(3)*GA8 )
 	  );
 
-  return asym*1.E06;
+  return asym;
 }
