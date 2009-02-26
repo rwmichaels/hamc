@@ -9,7 +9,6 @@
 #include "hamcKine.h"
 #include "hamcExpt.h"
 #include "hamcPhysics.h"
-#include "hamcBeam.h"
 #include "hamcEloss.h"
 #include "hamcEvent.h"
 #include "hamcTarget.h"
@@ -87,24 +86,24 @@ Int_t hamcKine::Init(hamcExpt* expt) {
      phimax = PI*parser.GetData()/180; 
    }
 
-  dP0_iter = 0;
-  dtheta_iter = 0;
-  dphi_iter = 0;
+//   dP0_iter = 0;
+//   dtheta_iter = 0;
+//   dphi_iter = 0;
 
-  parser.Load(expt->inout->GetStrVect("kick:track"));
-  parser.Print();
-  if (parser.IsFound("P0")) {
-    if (expt->inout->numiter > 1) dP0_iter = parser.GetData();  
-    cout << "Will iterate P0 by "<<100*dP0_iter<<" %"<<endl;
-  }   
-  if (parser.IsFound("theta")){
-    if (expt->inout->numiter > 1) dtheta_iter = parser.GetData();
-    cout << "Will iterate theta by "<<100*dtheta_iter<<" % of its range"<<endl;
-  }
-  if (parser.IsFound("phi")){
-    if (expt->inout->numiter > 1) dphi_iter = parser.GetData();
-    cout << "Will iterate phi by "<<100*phi<<" % of its range"<<endl;
-  }
+//   parser.Load(expt->inout->GetStrVect("kick:track"));
+//   parser.Print();
+//   if (parser.IsFound("P0")) {
+//     if (expt->inout->numiter > 1) dP0_iter = parser.GetData();  
+//     cout << "Will iterate P0 by "<<100*dP0_iter<<" %"<<endl;
+//   }   
+//   if (parser.IsFound("theta")){
+//     if (expt->inout->numiter > 1) dtheta_iter = parser.GetData();
+//     cout << "Will iterate theta by "<<100*dtheta_iter<<" % of its range"<<endl;
+//   }
+//   if (parser.IsFound("phi")){
+//     if (expt->inout->numiter > 1) dphi_iter = parser.GetData();
+//     cout << "Will iterate phi by "<<100*phi<<" % of its range"<<endl;
+//   }
 
 
 // For DIS, obtain the min and max output energies
@@ -196,7 +195,7 @@ Int_t hamcKine::Generate(hamcExpt *expt) {
 
 // It's assumed the beam was already generated if it exists.
 
-  hamcBeam *beam = expt->event->beam;
+  beam = expt->event->beam;
   Float_t eb,E0;
   if (beam) {
     eb = beam->GetEnergy();  // beam energy this event
@@ -218,10 +217,10 @@ Int_t hamcKine::Generate(hamcExpt *expt) {
                 + eloss->GetDeIonOut();
 
 // Add kick if we are iterating on energy
-  iteration = expt->iteration;
-  if (iteration == 1) {
-      dE = dE - dP0_iter*E0;
-  }
+//   iteration = expt->iteration;
+//   if (iteration == 1) {
+//       dE = dE - dP0_iter*E0;
+//   }
   
   if(Generate(eb, dE) == -1)  //no dis event found.
     return -1;
@@ -261,11 +260,9 @@ Int_t hamcKine::Generate(Float_t eb, Float_t dE) {
   ctheta = cthmin + (cthmax-cthmin)*gRandom->Rndm();
 
   theta = TMath::ACos(ctheta);
-  if (iteration == 1) theta += dtheta_iter*(thmax-thmin);
 
 // Likewise, generate azimuthal angle (radians) in lab-frame
   phi = phmin + (phmax-phmin)*gRandom->Rndm();   
-  if (iteration == 1) phi += dphi_iter*(phmax-phmin);
 
   if (iproc == proc_elastic) GenerateElastic();
 
@@ -285,8 +282,32 @@ Int_t hamcKine::GenerateElastic() {
 
   if (mass_tgt == 0) return -1;
 
+  // When iterating over incident angles, scattering angle is not simply theta, but the 
+  //relative angle between incoming angle and outgoing angle;
+
+  Float_t theta1, phi1, costheta;
+  Float_t sts1, sps1, cts1,cps1, sts2, sps2, cts2, cps2;
+
+  costheta = TMath::Cos(theta);
+  theta1 = beam->dtheta_iter;
+  phi1 = beam->dphi_iter;
+
+  sts1 = TMath::Sin(theta1);
+  sps1 = TMath::Sin(phi1);
+  cts1 = TMath::Cos(theta1);
+  cps1 = TMath::Cos(phi1);
+  sts2 = TMath::Sin(theta);
+  sps2 = TMath::Sin(phi);
+  cts2 = TMath::Cos(theta);
+  cps2 = TMath::Cos(phi);
+
+  if ((theta1 ==0)&&(phi1 == 0))
   eprime = ebeam / ( 1 + ((ebeam/mass_tgt) * 
 		         (1 - TMath::Cos(theta))) );
+  else {
+    costheta = 1-((sts1*cps1 - sts2*cps2)*(sts1*cps1 - sts2*cps2)+(sts1*sps1-sts2*sps2)*(sts1*sps1-sts2*sps2)+(cts1-cts2)*(cts1-cts2))/2.;
+    eprime = ebeam / (1+((ebeam/mass_tgt)*(1-costheta)));
+  }
 
   pprime = TMath::Sqrt(eprime*eprime - mass_electron*mass_electron);
   erecoil = ebeam + mass_tgt - eprime;
@@ -326,12 +347,31 @@ Int_t hamcKine::GenerateDis() {
  
 Int_t hamcKine::ComputeKine() {
 
-  qsq = 2*ebeam*eprime*(1 - TMath::Cos(theta));
+
+  //  qsq = 2*ebeam*eprime*(1 - TMath::Cos(theta));
+
+  Float_t px1,py1,pz1,px2,py2,pz2;
+  Float_t sts, cts, sps, cps;
+
+  px1 = beam->GetPx();
+  py1 = beam->GetPy();
+  pz1 = beam->GetPz();
+
+  sts = TMath::Sin(theta);
+  cts = TMath::Cos(theta);
+  sps = TMath::Sin(phi);
+  cps = TMath::Cos(phi);
+
+  px2 = pprime*sps*sts;
+  py2 = pprime*cps*sts;
+  pz2 = pprime*cts;
+
+  qsq = -1.0*((ebeam-eprime)*(ebeam-eprime)-((px1-px2)*(px1-px2)+(py1-py2)*(py1-py2)+(pz1-pz2)*(pz1-pz2)));
 
   Float_t mass = mass_tgt;
   if (iproc == proc_dis) mass = mass_proton;
   
-  wsq = 2*mass*(ebeam-eprime) - qsq;
+  wsq = mass*mass + 2*mass*(ebeam-eprime) - qsq;
   x = qsq/2/mass/(ebeam-eprime);
   y = (ebeam - eprime) / ebeam;
   bigy = ( 1 - (1-y)*(1-y) ) / ( 1 + (1-y)*(1-y) );

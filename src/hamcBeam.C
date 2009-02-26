@@ -80,18 +80,34 @@ Int_t hamcBeam::Init(hamcExpt *expt) {
 
      cout << "Beam current "<<beam_current<<" uA "<<endl;
 
+
      dx_iter = 0;
      dy_iter = 0;
+     dE_iter = 0;
+     dtheta_iter = 0;
+     dphi_iter = 0;
 
      parser.Load(expt->inout->GetStrVect("kick:track"));
      parser.Print();
      if (parser.IsFound("x")){
        if (expt->inout->numiter > 1) dx_iter = parser.GetData();
-       cout << "Will iterate x by "<<100*dx_iter<<" % of xraster"<<endl;
+       cout << "Will iterate x by "<<dx_iter<<" meters"<<endl;
      }
      if (parser.IsFound("y")){
        if (expt->inout->numiter > 1) dy_iter = parser.GetData();
-       cout << "Will iterate y by "<<100*dy_iter<<" % of yraster"<<endl;
+       cout << "Will iterate y by "<<dy_iter<<" meters"<<endl;
+     }
+     if (parser.IsFound("E")){
+       if (expt->inout->numiter > 1) dE_iter = parser.GetData();
+       cout << "Will iterate E by "<<dE_iter<<endl;
+     }
+     if (parser.IsFound("theta")){
+       if (expt->inout->numiter > 1) dtheta_iter = parser.GetData();
+       cout<< "Will iterate the beam incident angle theta by "<<dtheta_iter<<" radians"<<endl;
+     }
+     if (parser.IsFound("phi")){
+       if (expt->inout->numiter > 1) dphi_iter = parser.GetData();
+       cout<< "Will iterate the beam incident angle phi by "<<dphi_iter<<" radians"<<endl;
      }
 
      if (E0 > mass) P0 = TMath::Sqrt(E0*E0 - mass*mass);
@@ -142,14 +158,15 @@ Int_t hamcBeam::Generate(hamcExpt *expt) {
 // Transport coordinates.
 
   Float_t x_position, y_position;
+  Float_t sts, cts, sps, cps;
 
   if (IsRastered()) { 
     x_position = -0.5*xrast + xrast*gRandom->Rndm(1);
     y_position = -0.5*yrast + yrast*gRandom->Rndm(1);
 
     if (expt->iteration == 1){
-      x_position += dx_iter*xrast;
-      y_position += dy_iter*yrast;
+      x_position += dx_iter;
+      y_position += dy_iter;
     }
 
     tvect->PutX(x_position);
@@ -163,6 +180,8 @@ Int_t hamcBeam::Generate(hamcExpt *expt) {
   tvect->PutZ(expt->target->GetZScatt());
 
   energy = E0 + E0sigma*gRandom->Gaus();
+  if (expt->iteration == 1)
+    energy += dE_iter;
 
   Radiate(expt);  // modifies the energy
 
@@ -170,12 +189,26 @@ Int_t hamcBeam::Generate(hamcExpt *expt) {
 
   pmom = TMath::Sqrt(energy*energy - mass*mass);
 
-// Assume the beam is along the Z axis.
 
-  plab_x = 0;
-  plab_y = 0;
-  plab_z = pmom;
+  if (expt->iteration == 1){
 
+    sts = TMath::Sin(dtheta_iter);
+    cts = TMath::Cos(dtheta_iter);
+    sps = TMath::Sin(dphi_iter);
+    cps = TMath::Cos(dphi_iter);
+    
+    plab_x = sps*sts * pmom;
+    plab_y = cps*sts * pmom;
+    plab_z = cts * pmom;
+  }
+  
+  else{
+    // Assume the beam is along the Z axis.
+    
+    plab_x = 0;
+    plab_y = 0;
+    plab_z = pmom;
+  }
   return OK;
 }
 

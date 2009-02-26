@@ -12,6 +12,7 @@
 #include <string>
 #include <iostream>
 #include <map>
+#include "hamcBeam.h"
 
 class hamcExpt;
 
@@ -41,6 +42,7 @@ class hamcKine {
      Float_t energy, theta, phi;
      Float_t eprime, qsq, wsq, y, x, bigy;
      Float_t pprime, erecoil, dE_after;
+     hamcBeam *beam;
 
   private:
 
@@ -62,7 +64,7 @@ class hamcKine {
      Float_t mass_tgt;  
      Float_t thmin, thmax, phmin, phmax, epmin, epmax;
      Float_t xbjlo, xbjhi, qsqlo, wsqlo;
-     Float_t iteration, dP0_iter, dtheta_iter, dphi_iter;
+     //     Float_t iteration, dP0_iter, dtheta_iter, dphi_iter;
 
      hamcKine(const hamcKine& kine);
      hamcKine& operator=(const hamcKine& kine);
