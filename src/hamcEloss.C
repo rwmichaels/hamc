@@ -24,8 +24,8 @@ using namespace std;
 ClassImp(hamcEloss)
 #endif
 
-double radtail_exact(double *x, double *p) { 
-// Exact radtail with x[0] = Eloss
+double radtail_tf1(double *x, double *p) { 
+// TF1 radtail with x[0] = Eloss
 // p[0] = trl (radiation length)
 // p[1] = Z (charge)
 // p[2] = E0 (initial energy)
@@ -42,11 +42,9 @@ double radtail_exact(double *x, double *p) {
   x2 = exp((-1./3.)*log(z));
   psi = log(1440*x1)/log(183*x2);
   bval = (4./3.)*(1 + (1./9.)*(( (z+1)/(z+psi) ) / (log(183*x2))));
-  //  cout << "chk1 "<<z<<"  "<<x1<<"  "<<x2<<"  "<<psi<<"  "<<bval<<endl;
   x1 = bval*trl/eloss;
   x2 = E/E0 + (3./4.)*((eloss/E0)*(eloss/E0));
   x3 = exp(bval*trl*log(log(E0/E)));
-  //  cout << "chk2 "<<x[0]<<"  "<<eloss<<"  "<<trl<<"  "<<x1<<" "<<E0<<"  "<<x2<<"  "<<x3<<"  "<<x1*x2*x3<<endl;
   return x1*x2*x3;
 }
 
@@ -59,9 +57,18 @@ hamcEloss::hamcEloss(): did_init(kFALSE)
    dE_Bsum = 0;
    dE_IonizeIn = 0;
    dE_IonizeOut = 0;
+
+// Possible states, one (and only one) is kTRUE:
+//     use_genercone       use_tf1    use_numer
+//   (pref. by HAPPEX)   (function)   (numerical)
+//
+// if use_numer, use_ionize = kFALSE (because its folded in)
+// else use_ionize = kTRUE
+
    use_genercone = kTRUE;  // This is preferred, for now (Jan '09)
    use_ionize = kTRUE;
-   use_exact = kFALSE;
+   use_tf1 = kFALSE;
+   use_numer = kFALSE;
    fracresol = 1e-4;
 }
 
@@ -75,6 +82,35 @@ Int_t hamcEloss::Init(hamcExpt* expt) {
 // which depends on experiment and is the same for all events,
 // i.e. definition of target
 
+   hamcStrParser parser;
+   
+   psi_scale = 0.17;  // default for PREX
+   parser.Load(expt->inout->GetStrVect("radcor"));
+   if (parser.IsFound("genercone")) {
+      cout << "hamcEloss: Using genercone radiative tail "<<endl;
+      use_genercone = kTRUE;  
+      use_ionize = kTRUE;
+      use_tf1 = kFALSE;
+      use_numer = kFALSE;
+   }   
+   if (parser.IsFound("tf1")) {
+      cout << "hamcEloss: Using TF1 radiative tail "<<endl;
+      use_genercone = kFALSE;  
+      use_ionize = kTRUE;
+      use_tf1 = kTRUE;
+      use_numer = kFALSE;
+   }   
+   if (parser.IsFound("numer")) {
+      cout << "hamcEloss: Using mumerical radiative tail "<<endl;
+      use_genercone = kFALSE;  
+      use_ionize = kFALSE;  // ionization folded in already
+      use_tf1 = kFALSE;
+      use_numer = kTRUE;
+   }   
+   if (parser.IsFound("psi")) {
+      psi_scale = parser.GetData(); 
+      cout << "hamcEloss:: psi_scale factor = "<<psi_scale<<endl;
+   }      
 
    expt->inout->BookHisto(kFALSE, kFALSE, ITARGET, "dE1", 
 	 "dE Brehm in", &dE_ExtBrehmIn, 2000,-0.1,1.2);
@@ -103,70 +139,46 @@ Int_t hamcEloss::Init(hamcExpt* expt) {
    expt->inout->AddToNtuple("dIin",&dE_IonizeIn);
    expt->inout->AddToNtuple("dIout",&dE_IonizeOut);
 
-
-   tlen   = expt->target->GetLength();
-   trlen  = expt->target->GetRadLength();
-   tgtZ   = expt->target->GetZ();
+// variables belonging to this class
+   tlen   = expt->target->GetLength();  // Length (m)
+   trlen  = expt->target->GetRadLength();  // Rad len (frac)
+   tgtA   = expt->target->GetA();   //  <A> of tgt 
+   tgtZ   = expt->target->GetZ();   //  <Z> of tgt 
    tdensity = expt->target->GetDensity();
-   Float_t energy = 1;
+   E0 = 1;
    if (expt->event->beam) {
-      energy = expt->event->beam->GetE0();
+      E0 = expt->event->beam->GetE0();
    } else {
       cout << "hamcEloss::WARNING:  No beam, using default energy = "
-	  <<energy<<"  GeV"<<endl;
+	  <<E0<<"  GeV"<<endl;
    }
 // The following only works for single-arm.
-   Float_t theta  = expt->GetSpectrom(0)->GetScattAngle();
+   theta_central = (3.14159/180.0)*
+           expt->GetSpectrom(0)->GetScattAngle();
 
-   return InitRad(energy, theta, tgtZ, trlen, tlen);
+
+   did_init = kTRUE;
+
+   return InitRad();
 
 }
 
-Int_t hamcEloss::InitRad(Float_t E, Float_t theta, Float_t z, Float_t rl, Float_t tl) {
+Int_t hamcEloss::InitRad() {
 
-// E = beam energy (GeV)
-// theta = central angle (degrees)
-// Z = density-weighted Z of target
-// radlen = fractional radiation length, density-weighted
-// len = actual length (meters)
+  if (use_genercone) return OK;  // does not use this
 
-  Npts = 50000;
-  yfact = 4e6;
-  Nslices = 10;  // # slices of target.
-
-  if (ldebug) cout << "hamcEloss init "<<E<<"  "<<theta<<"  "<<z<<"  "<<rl<<"  "<<tl<<endl;  
-
-  Float_t x1,x2;
-
-  me=0.511;     // mass electron (MeV)
-  alpha=(1./137.);
-  pi=3.1415926;
-
-  E0 = E;
-  cout << "hamcEloss,  E0 = "<<E0<<endl;
-  trlen = rl;
-  tlen  = tl;
-
-  Float_t theta_rad = theta*pi/180;
-  qsq = 2*E0*E0*(1-TMath::Cos(theta_rad));
-  Float_t msq = (me/1000)*(me/1000);  // GeV^2
-
-  dE = E0/((Float_t)Npts);  // interval
-
-  x1 = exp((-2./3.)*log(z));
-  x2 = exp((-1./3.)*log(z));
-  Float_t psi = log(1440*x1)/log(183*x2);
-  bval = (4./3.)*(1 + (1./9.)*(( (z+1)/(z+psi) ) / (log(183*x2))));
-
-  // This is the equiv. radiator before / after scatt
-
+  qsq = 2*E0*E0*(1-TMath::Cos(theta_central));
+  Float_t alpha = (1./137.);
+  Float_t bval = 4./3.;
+  Float_t msq = 2.6112e-7;  // mass electron squared (GeV^2)
+// This is the equiv. radiator used for Internal Brehms.
   tequiv = (alpha/(bval*pi)) * (log(qsq/msq) - 1);
 
-  if (use_exact) {
-    Setup_Exact(0, tequiv, z, E0);
-  } else {
-    Setup(0, tequiv);
+  if (use_tf1) {
+    Setup_tf1(0, tequiv, tgtZ, E0);  
   }
+
+  Nslices = 10;  // # slices of target.
 
   Float_t dtgt = trlen/(Float_t(Nslices));
 
@@ -174,10 +186,10 @@ Int_t hamcEloss::InitRad(Float_t E, Float_t theta, Float_t z, Float_t rl, Float_
 
     Float_t tfrac = dtgt * (isl+1);
 
-    if (use_exact) {
-      Setup_Exact(isl, tfrac, z, E0);
+    if (use_tf1) {
+      Setup_tf1(isl, tfrac, tgtZ, E0);
     } else {
-      Setup(isl, tfrac);
+      Setup_numer(isl, tfrac);
     }
 
   }
@@ -190,143 +202,112 @@ Int_t hamcEloss::InitRad(Float_t E, Float_t theta, Float_t z, Float_t rl, Float_
 }
 
 
-void hamcEloss::Setup(Int_t which, Float_t trl) {
+void hamcEloss::Setup_numer(Int_t which, Float_t trl) {
 
-// recall, E0, dE, and bval are global
+// Setup numerical tables that includes internal,
+// external, and ionization all in one.
+// Recall, E0 is global
+// "which" = slices number
+// trl = radiation length for this slice size
 
-  Float_t E,eresol,Prob,XProb,Ptot,Ie;
-  Float_t x1,x2,x3,phi,plo,phltot,pcut;
+  Npts = 1000;
+  yfact = 10000;
+
+  Int_t ldebug = 0;
+
   Int_t ncnt,ncell;
 
-  if (use_genercone) return; // dont need this for genecone version
+  if (use_genercone) return; // dont need this for genercone version
+  if (use_tf1) return;   // error to call this for this state.
+
+  Float_t psi = psi_scale;
+
+  if (psi_scale == 0) {
+    psi = 1;
+    if (tgtA > 100) psi_scale = 0.2;
+  }
 
   vector<Float_t> radtail;
 
-  E = E0;  // Initialize
-  eresol = fracresol*E0;
-  Ptot  = 0; 
-  phi   = 0;
-  plo   = 0;
-  ncnt  = 0;
+  Float_t ehi = 1.1*E0;  
+  Float_t elo = 0.8*E0;  
+  Float_t dE = (ehi-elo)/((Float_t)(Npts));  // GeV
+  ncnt = 0;
 
   for (Int_t i=0; i<Npts; i++) {
 
-    E = E-dE;
+    Float_t E = elo + ((Float_t)i)*dE; 
+    Float_t eloss = E0-E;
+    Float_t lambda = (1000.*eloss/psi) - 0.225;
 
-    if (E<0) continue;
+    Double_t yval = 0;
 
-    x1 = bval*trl/(E0-E);
-    x2 = E/E0 + (3./4.)*(((E-E0)/E0)*((E-E0)/E0));
-    x3 = exp(bval*trl*log(log(E0/E)));
-
-    if(ldebug==1) cout << "rad. factors "<<i<<"  "<<bval<<"  "<<trl<<"  "<<E<<"  "<<x1<<"  "<<x2<<"  "<<x3<<endl;
-
-    Ie = x1*x2*x3;
-    Prob = Ie*dE;
-    if ((E0-E) > eresol) {
-      phi += Prob;
-    } else {
-      plo += Prob;
+    if (lambda > 0 && lambda < 100) {
+       yval = GenLandHi(lambda, (trl+0.5*tequiv));
+    } 
+    if (lambda > -6 && lambda <= 0) {
+       yval = GenLandLo(lambda, (trl+0.5*tequiv));
     }
-    Ptot += Prob;
-    XProb = yfact*Prob;
-    ncell = ((Int_t)XProb);
+
+    yval = yval*yfact; 
+
+    ncell = ((Int_t)yval);
     ncnt += ncell;
+
+    if (ldebug && lambda > -6 && lambda < 100) cout << "tail "<<i<<"  "<<trl<<"  "<<E<<"  "<<eloss<<"  "<<lambda<<"  "<<yval<<"  "<<ncell<<"  "<<ncnt<<endl;
 
     if (ncnt > MAXCNT) {
       // this should never happen
       cout << "hamcEloss::ERROR:  too many cells !  " <<ncell<<"  "<<ncnt<<endl;
     } else {
+
       for (Int_t j=0; j<ncell; j++) {
-	if (which==0) {
-           Eintern.push_back(E);
-	} else {
- 	   radtail.push_back(E);
-	}
+ 	   radtail.push_back(eloss);
       }
-    }        
-    
+
+    }
+
   }
 
-
-  phltot = phi+plo;  // This should be ~1, but may fall a bit short.
-  pcut = 0;
-  if (phltot != 0) pcut = plo/phltot;   
-
-  cout << "slice "<<which<<endl;
-  cout << "Ptot "<<Ptot<<endl;
-  cout << "Probs "<<phi<<"  "<<plo<<"  "<<phltot<<"  "<<pcut<<endl;
-
-  if (which ==0) {
-    cut_intern = pcut;
-    if(ldebug) cout << "Eintern size "<<Eintern.size()<<endl;
-  } else {
-    if(ldebug) cout << "Eextern["<<which-1<<"] size "<<radtail.size()<<endl;
-  }
-
-  if (!which) return;
-
-  Eextern.push_back(radtail);
-  cut_extern.push_back(pcut);
-
-   if (which ==  Nslices) {
-     cout << "Rad pcut "<<endl;
-     cout << "Internal Brehms "<<cut_intern<<endl;
-     cout << "External: ";
-     for (Int_t i=0; i<Nslices; i++) cout << cut_extern[i]<<"  ";
-     cout << endl << "Size of tails ";
-     for (Int_t i=0; i<Nslices; i++) cout << Eextern[i].size()<<"  ";
-     cout << endl;
-   }
-
+  Enumer.push_back(radtail);
 
 }
 
-void hamcEloss::Setup_Exact(Int_t which, Double_t rad, Double_t Ztgt, Double_t Ene) {
-// Setup the exact radiative tail for 
-// which: 0=internal, >0 = slice#.
+void hamcEloss::Setup_tf1(Int_t which, Double_t rad, Double_t Ztgt, Double_t Ene) {
+// Setup the radiative tail based on a TF1 radtail_tf1.
+// "which" flag: 0=internal, >0 = slice#.
 // radiation length = rad
 // charge of target material = Ztgt
 // initial electron energy = Ene
 
-   cout << "Exact Set up "<<which<<"  "<<rad<<"  "<<Ztgt<<"  "<<Ene<<endl;
+   cout << "TF1 Set up "<<which<<"  "<<rad<<"  "<<Ztgt<<"  "<<Ene<<endl;
    char ctf1name[80];
    sprintf(ctf1name,"distrFunc%d",which);
-   fdistr.push_back(new TF1(ctf1name,radtail_exact,0.,Ene,3));
+   fdistr.push_back(new TF1(ctf1name,radtail_tf1,0.,Ene,3));
    Double_t par[3];
-   par[0] = rad;
+   par[0] = rad; 
    par[1] = Ztgt;
    par[2] = Ene;
    Int_t idx = fdistr.size()-1;
    fdistr[idx]->SetParameters(par); 
-   cout << "Exact  fdistr["<<idx<<"] =  "<<fdistr[idx]<<endl;
+   cout << "TF1  fdistr["<<idx<<"] =  "<<fdistr[idx]<<"   rad "<<rad<<endl;
 
 }
 
 void hamcEloss::Print() {
 
   cout << "hamcEloss Print: "<<endl;
-  cout << "Eintern size "<<Eintern.size()<<endl;
-  cout << "Straggle # slices "<<Eextern.size()<<endl;
-  cout << "Ecut for int. Brehm "<<cut_intern<<endl;
-  cout << "Ecut for ext. Brehm by slice ";
-  for (Int_t i = 0; i<(Int_t)cut_extern.size(); i++) {
-    cout << "  cut["<<i<<"] = "<<cut_extern[i];
+  cout << "Enumer size "<<Enumer.size()<<endl;
+  if (Enumer.size() != Nslices) {
+    cout << "Nslices = "<<Nslices<<"  inconsistent "<<endl;
+    return;
   }
-  cout << endl;
   
-  cout << endl << "Internal Brehms. tail"<<endl;
-
-  for (Int_t i = 0; i < (Int_t)Eintern.size(); i++) {
-    cout << "  E("<<i<<") = "<<Eintern[i];
-    if (i > 0 && (i%8==0)) cout << endl;
-  }
-
   vector<Float_t> radtail;
 
   for (Int_t jj = 0; jj<Nslices; jj++) {
-    cout << endl << "External Brehms. # "<<jj<<endl;
-    radtail = Eextern[jj];
+    cout << endl << "Brehms. slice # "<<jj<<endl;
+    radtail = Enumer[jj];
     for (Int_t i = 0; i < (Int_t)radtail.size(); i++) {
       cout << "  E("<<i<<")  = "<<radtail[i];
       if (i > 0 && (i%8==0)) cout << endl;
@@ -366,20 +347,31 @@ Int_t hamcEloss::Generate(hamcExpt* expt) {
 // in target for the main scattering point, to decide
 // how much length before / after scattering.
 
+  dE_IntBrehm = 0;  // initialize
+  dE_ExtBrehmIn = 0;
+  dE_ExtBrehmOut = 0;
+  dE_Bsum = 0;
+  dE_IonizeIn = 0;
+  dE_IonizeOut = 0;
   Float_t radin = expt->target->GetRadIn();
   Float_t radout = expt->target->GetRadOut();
   
   if (use_genercone) {
-    GenerateRad(radin, radout);
-  } else {
-    if (use_exact) {
-      GenerateExact(expt->target->GetZScatt());
-    } else {
-      GenerateRad(expt->target->GetZScatt());
-    }
+     Generate_gcone(radin, radout);
+     return 1;
+  } 
+
+  if (use_tf1) {
+     Generate_tf1(expt->target->GetZScatt());
+     return 1;
   }
 
-  GenerateDeDx(expt);
+  if (use_numer) {
+     GenerateNumer(expt->target->GetZScatt());
+     return 1;
+  }
+
+  if (!use_numer) GenerateDeDx(expt);  
 
   return OK;
 
@@ -388,11 +380,13 @@ Int_t hamcEloss::Generate(hamcExpt* expt) {
 Int_t hamcEloss::GenerateDeDx(hamcExpt *expt) {
 // Generate the de/dx energy losses due to ionization.
 // Model uses no straggling.
+// Note, this is already built into the numerical results (if 'use_numer')
 
   dE_IonizeIn = 0; 
   dE_IonizeOut = 0;
 
   if ( !use_ionize ) return 0;
+  if ( use_numer ) return 0;   // already built in
 
   Float_t zmtl, density, zlen;
 
@@ -440,11 +434,11 @@ Int_t hamcEloss::GenerateDeDx(hamcExpt *expt) {
    
   }
 
+  return OK;
+
 }
 
-
-
-Int_t hamcEloss::GenerateRad(Float_t radin, Float_t radout) {
+Int_t hamcEloss::Generate_gcone(Float_t radin, Float_t radout) {
 
 //  This version uses gener_cone methods
 //  Generate the radiative losses in target
@@ -462,10 +456,9 @@ Int_t hamcEloss::GenerateRad(Float_t radin, Float_t radout) {
 
 }
 
-Int_t hamcEloss::GenerateExact(Float_t zpos) {
+Int_t hamcEloss::Generate_tf1(Float_t zpos) {
 
-// "Exact" version, under development
-// This version uses radiatiave tails generated in Setup.
+// Version uses a TF1 random number generator.
 // Input: zpos = position (meters) in target.
 // goes from -tlen/2 to +tlen/2.
 
@@ -480,7 +473,7 @@ Int_t hamcEloss::GenerateExact(Float_t zpos) {
 
    idx = LookupIdx(rin);  // before scattering
 
-   if (idx > 0 && idx < fdistr.size()) {
+   if (idx > 0 && idx < (Int_t)fdistr.size()) {
         dE_ExtBrehmIn = fdistr[idx]->GetRandom();
    }
 
@@ -489,7 +482,7 @@ Int_t hamcEloss::GenerateExact(Float_t zpos) {
 
    idx = LookupIdx(rout);  // after scattering
 
-   if (idx > 0 && idx < fdistr.size()) {
+   if (idx > 0 && idx < (Int_t)fdistr.size()) {
         dE_ExtBrehmOut = fdistr[idx]->GetRandom();
    }
 
@@ -499,47 +492,34 @@ Int_t hamcEloss::GenerateExact(Float_t zpos) {
 }
 
 
-Int_t hamcEloss::GenerateRad(Float_t zpos) {
+Int_t hamcEloss::GenerateNumer(Float_t zpos) {
 
-// This version uses radiatiave tails generated in Setup.
+// This version uses numerical radiatiave tails 
+// generated in Setup.
 // Input: zpos = position (meters) in target.
 // goes from -tlen/2 to +tlen/2.
 
    Int_t idx, jj;
-   Float_t prob;
+   Float_t x;
 
    if (CheckInit() == -1) return -1;
    
-   Float_t x = (Eintern.size()-1)*gRandom->Rndm();
-   idx = (Int_t)x;
-   if (idx < 0 || idx > (Int_t)Eintern.size()) return -1;
-
-   prob = gRandom->Rndm();
-   if (prob > cut_intern) {  // if there was an Brehm. event
-     dE_IntBrehm = E0 - Eintern[idx];
-   }
-
    Float_t xin = zpos + tlen/2;
    Float_t rin = xin*trlen/tlen;
 
    idx = LookupIdx(rin);  // before scattering
 
-   //   cout << "Stuff1 "<<tlen<<"  "<<trlen<<"  "<<Nslices<<"  "<<xin<<"   "<<rin<<"  "<<idx<<endl;
-
    vector<Float_t> radtail;  
 
    if (idx >= 0 && idx < Nslices) {
-      radtail = Eextern[idx];
+      radtail = Enumer[idx];
       if (radtail.size() == 0) {
         cout << "hamcEloss: WARNING: no radtail defined for slice "<<idx<<endl;
         return 0;
       }
-      x = (radtail.size()-1)*gRandom->Rndm();
+      x = (radtail.size()-1.)*gRandom->Rndm();
       jj = (Int_t)x; 
-      prob = gRandom->Rndm();
-      if (prob > cut_extern[idx]) {// if there was an Brehm. event
-        dE_ExtBrehmIn = E0 - radtail[jj];
-      }
+      dE_ExtBrehmIn = radtail[jj];
    }
 
    Float_t xout = tlen/2 - zpos;
@@ -547,20 +527,15 @@ Int_t hamcEloss::GenerateRad(Float_t zpos) {
 
    idx = LookupIdx(rout);  // after scattering
 
-   //   cout << "Stuff2 "<<rout<<"  "<<idx<<endl;
-
    if (idx >= 0 && idx < Nslices) {
-      radtail = Eextern[idx];
+      radtail = Enumer[idx];
       if (radtail.size() == 0) {
         cout << "hamcEloss: WARNING: no radtail defined for slice "<<idx<<endl;
         return 0;
       }
       x = (radtail.size()-1)*gRandom->Rndm();
       jj = (Int_t)x; 
-      prob = gRandom->Rndm();
-      if (prob > cut_extern[idx]) {// if there was an Brehm. event
-        dE_ExtBrehmOut = E0 - radtail[jj];
-      }
+      dE_ExtBrehmOut = radtail[jj];
    }
 
 
@@ -720,3 +695,57 @@ Float_t hamcEloss::dedx_eloss(Float_t Znuc) {
 }
 
    
+Double_t hamcEloss::GenLandLo(Float_t lambda, Float_t trl) {
+   
+  Double_t rmax = 1;
+  Double_t rmin = 0.001;
+  Double_t xpts = 5000;
+  Int_t npts = (Int_t)xpts;
+  Double_t dr = (rmax - rmin) / xpts;
+
+  Double_t dd = TMath::Exp(-1.0*(lambda + 1));
+
+  Double_t xfact1 = (1./pi)*TMath::Exp(-1.0*dd*(1 + (trl/dd)*TMath::Log(dd)));
+
+  Double_t result = 0;
+
+  for (Int_t i = 0; i < npts; i++) {
+
+    Double_t r = rmin + (rmax-rmin)*((Double_t)i)/xpts;
+
+    result += dr * xfact1 * (
+	 TMath::Exp (
+          0.5*(dd-trl) * TMath::Log(1.0 + (r/dd)*(r/dd)) 
+	  - dd*TMath::ATan(r/dd) )
+	 * TMath::Cos (r*(0.5*TMath::Log(1.0 + (r/dd)*(r/dd)) -1.0))
+         + (dd-trl)*TMath::ATan(r/dd));
+
+  }
+
+  return result;
+
+}
+
+
+Double_t hamcEloss::GenLandHi(Float_t lambda, Float_t trl) {
+
+  Double_t rmax = 1;
+  Double_t rmin = 0.001;
+  Double_t xpts = 5000;
+  Int_t npts = (Int_t)xpts;
+  Double_t dr = (rmax - rmin) / xpts;
+
+  Double_t result = 0;
+
+  for (Int_t i = 0; i < npts; i++) {
+
+    Double_t r = rmin + (rmax-rmin)*((Double_t)i)/xpts;
+
+    result += (dr/pi) * (TMath::Sin(pi*(trl + r)) * 
+	       TMath::Exp(-1.0*lambda*r - (trl+r)*TMath::Log(r)));
+
+  }
+
+  return result;
+  
+}

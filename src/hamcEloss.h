@@ -22,12 +22,12 @@ class hamcEloss {
      virtual ~hamcEloss(); 
 
      Int_t Init(hamcExpt *expt);
-     Int_t InitRad(Float_t E,Float_t theta,Float_t z,Float_t rl,Float_t tl);
+     Int_t InitRad();
 
      Int_t Generate(hamcExpt *expt);  // event generator
-     Int_t GenerateRad(Float_t rlin, Float_t rlout); 
-     Int_t GenerateRad(Float_t zpos);
-     Int_t GenerateExact(Float_t zpos);
+     Int_t Generate_gcone(Float_t rlin, Float_t rlout); 
+     Int_t GenerateNumer(Float_t zpos);
+     Int_t Generate_tf1(Float_t zpos);
      Int_t GenerateDeDx(hamcExpt *expt);
      Float_t GetDeIntern();  
      Float_t GetDeExternIn();  
@@ -45,29 +45,30 @@ class hamcEloss {
 
   private:
 
-     void Setup(Int_t which, Float_t tl);
-     void Setup_Exact(Int_t which, Double_t rad, Double_t Ztgt, Double_t Ene); 
+     void Setup_numer(Int_t which, Float_t tl);
+     void Setup_tf1(Int_t which, Double_t rad, Double_t Ztgt, Double_t Ene); 
+     Double_t GenLandLo(Float_t lambda, Float_t radlen);
+     Double_t GenLandHi(Float_t lambda, Float_t radlen);
 
-     static const Int_t MAXCNT=4000000;
+     static const Int_t MAXCNT=500000;
      static const Int_t ldebug=0;
      static const Float_t Me=0.0000511;
      static const Float_t Euler=0.5772157;
+     static const Double_t pi=3.1415926;
      Float_t fracresol;
 
      Bool_t did_init;
-     Bool_t use_genercone, use_ionize;
-     Bool_t use_exact;
+     Bool_t use_genercone, use_tf1, use_numer;
+     Bool_t use_ionize;
      Int_t Npts,nybin,Nslices;
-     Float_t tequiv,trlen,tlen,tgtZ,tdensity,E0,qsq,dE;
-     Float_t me,alpha,pi,yfact,ycell,bval;
+     Float_t psi_scale; 
+     Float_t trlen,tequiv;  // RL and equiv. raditor (int. Brehm)
+     Float_t tlen,tgtA,tgtZ,tdensity,E0,theta_central,qsq;
+     Float_t me,alpha,yfact,ycell,bval;
      Float_t dE_IntBrehm, dE_ExtBrehmIn, dE_ExtBrehmOut, dE_Ionization;
      Float_t dE_Bsum;
      Float_t dE_IonizeIn, dE_IonizeOut; 
-     std::vector<std::vector<Float_t> > Eextern;
-     std::vector<Float_t > Eintern;
-// Energy resolution cuts
-     Float_t cut_intern;
-     std::vector<Float_t > cut_extern;
+     std::vector<std::vector<Float_t> > Enumer;
      std::vector<TF1 *> fdistr;
 
      hamcEloss(const hamcEloss& eloss);
