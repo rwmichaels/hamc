@@ -158,7 +158,6 @@ Int_t hamcBeam::Generate(hamcExpt *expt) {
 // Transport coordinates.
 
   Float_t x_position, y_position;
-  Float_t sts, cts, sps, cps;
 
   if (IsRastered()) { 
     x_position = -0.5*xrast + xrast*gRandom->Rndm(1);
@@ -186,20 +185,21 @@ Int_t hamcBeam::Generate(hamcExpt *expt) {
   Radiate(expt);  // modifies the energy
 
   if (energy < mass) energy = mass;  // extrema of rad tail
-
+  
   pmom = TMath::Sqrt(energy*energy - mass*mass);
-
-
-  if (expt->iteration == 1){
-
-    sts = TMath::Sin(dtheta_iter);
-    cts = TMath::Cos(dtheta_iter);
-    sps = TMath::Sin(dphi_iter);
-    cps = TMath::Cos(dphi_iter);
+  
+  if (!dtheta_iter){
     
-    plab_x = sps*sts * pmom;
-    plab_y = cps*sts * pmom;
-    plab_z = cts * pmom;
+    plab_x = pmom*TMath::Sin(dtheta_iter);
+    plab_y = 0;
+    plab_z = pmom*TMath::Cos(dtheta_iter);
+  }
+  
+  else if (!dphi_iter) {
+    
+    plab_x = 0;
+    plab_y = pmom*TMath::Sin(dphi_iter);
+    plab_x = pmom*TMath::Cos(dphi_iter);
   }
   
   else{
@@ -213,18 +213,18 @@ Int_t hamcBeam::Generate(hamcExpt *expt) {
 }
 
 Int_t hamcBeam::Radiate(hamcExpt* expt) {
-
-// The internal is for 1/2 t_equivalent, so it's
-// what to subtract before and after scattering.
-
+  
+  // The internal is for 1/2 t_equivalent, so it's
+  // what to subtract before and after scattering.
+  
   Float_t dE = expt->physics->eloss->GetDeExternIn() + 
-               expt->physics->eloss->GetDeIntern() +
-               expt->physics->eloss->GetDeIonIn();
-
+    expt->physics->eloss->GetDeIntern() +
+    expt->physics->eloss->GetDeIonIn();
+  
   energy = energy - dE;
-
+  
   return 0;
-
+  
 }
 
 

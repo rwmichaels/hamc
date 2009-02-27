@@ -300,12 +300,18 @@ Int_t hamcKine::GenerateElastic() {
   sps2 = TMath::Sin(phi);
   cts2 = TMath::Cos(theta);
   cps2 = TMath::Cos(phi);
-
+  
   if ((theta1 ==0)&&(phi1 == 0))
-  eprime = ebeam / ( 1 + ((ebeam/mass_tgt) * 
-		         (1 - TMath::Cos(theta))) );
+    eprime = ebeam / ( 1 + ((ebeam/mass_tgt) * 
+			    (1 - TMath::Cos(theta))) );
   else {
-    costheta = 1-((sts1*cps1 - sts2*cps2)*(sts1*cps1 - sts2*cps2)+(sts1*sps1-sts2*sps2)*(sts1*sps1-sts2*sps2)+(cts1-cts2)*(cts1-cts2))/2.;
+    
+    if (!theta1)
+      costheta = 1-((sts1 - sts2*cps2)*(sts1 - sts2*cps2)+(0-sts2*sps2)*(0-sts2*sps2)+(cts1-cts2)*(cts1-cts2))/2.;
+
+    if (!phi1)
+      costheta = 1-((0-sts2*cps2)*(0-sts2*cps2)+(sps1-sts2*sps2)*(sps1-sts2*sps2)+(cps1-cts2)*(cps1-cts2))/2.;
+
     eprime = ebeam / (1+((ebeam/mass_tgt)*(1-costheta)));
   }
 
