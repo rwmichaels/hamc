@@ -40,8 +40,6 @@ int main(int argc, char **argv)
 
   happex->Run(nevents);
 
-  happex->RunSummary();
-
   return 1;
 
 }

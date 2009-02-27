@@ -41,8 +41,6 @@ int main(int argc, char **argv)
 
   prex->Run(nevents);
 
-  prex->RunSummary();
-
   return 1;
 
 }
