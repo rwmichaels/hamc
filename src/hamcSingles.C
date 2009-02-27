@@ -267,7 +267,9 @@ void hamcSingles::RunSummary(Int_t iteration) {
 
   }
 
-  if (iteration == numiter) hamcExpt::RunSummary();
+  cout << "duh "<<iteration+1<<"  "<<numiter<<endl;
+
+  if (iteration+1 == numiter) hamcExpt::RunSummary(iteration);
 
 }
    

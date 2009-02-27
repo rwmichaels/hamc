@@ -118,7 +118,10 @@ Int_t hamcExpt::Run(Int_t maxevent) {
 
 void hamcExpt::RunSummary(Int_t iteration) {
 
-  if (iteration == numiter) inout->Finish();
+  if (iteration+1 == numiter) {
+    cout << "calling inout->Finish()"<<endl;
+    inout->Finish();
+  }
 
 }
 

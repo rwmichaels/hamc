@@ -260,7 +260,7 @@ void hamcExptPREX::RunSummary(Int_t iteration) {
 
   }
 
-  if (iteration == numiter) hamcExpt::RunSummary();
+  if (iteration+1 == numiter) hamcExpt::RunSummary(iteration);
 
 
 }
