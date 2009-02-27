@@ -115,15 +115,17 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
    expt->inout->BookHisto(kFALSE, kFALSE, ITARGET, "ph", 
 		"Phi at target", &phi, nbin, -0.2,1.2*phimax);
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "mom", 
-	        "Momentum in HRS", &pmom, nbin, 0.5*P0,1.02*P0);
+	        "Momentum in HRS", &pmom, nbin, 0.5*P0,1.05*P0);
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "momu", 
-	        "Momentum in HRS", &pmom, nbin, 0.5*P0,1.02*P0);
+	        "Momentum in HRS", &pmom, nbin, 0.5*P0,1.1*P0);
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "momz", 
 	   "Momentum in HRS (zoom)", &pmom, nbin, 0.95*P0,1.02*P0);
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "momb", 
-	   "Momentum in HRS (hamc)", &pmom, 200, 1.050, 1.150);
+	   "Momentum in HRS (hamc)", &pmom, 200, 1.01, 1.07);
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "momb2", 
 	   "Momentum in HRS (hamc)", &pmom, 200, 3.0, 3.17);
+   expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "mombI", 
+	   "Momentum in HRS (hamc)", &pmom, 200, 2890, 3.180);
 
 
 // Note, th0,ph0, etc are the initial values right after scattering.
@@ -151,8 +153,8 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
                           &ph0,nbin,-0.04,0.04,
 			  &th0,nbin,-0.08,0.08);
    expt->inout->BookHisto(kFALSE, kFALSE, IFOCAL, "dpp",
-			  "Dpp generated ",
-                          &dpp0,nbin,-0.003,0.006);
+			  "dp/p generated ",
+                          &dpp0,nbin,-0.007,0.002);
 
 // For designing the collimator
    expt->inout->BookHisto(kFALSE, kFALSE, ICOLLIM, "xycoll",
@@ -206,6 +208,10 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 		   "Transport X-Y inside Sept-in acceptance", 
                             &xtrans, nbin,-xbox,xbox,
                             &ytrans, nbin,-ybox,ybox);
+   expt->inout->BookHisto(kFALSE, kTRUE, ISEPTIN, "xysepiaz", 
+		   "Transport X-Y inside Sept-in accept (zoom)", 
+                            &xtrans, nbin,-0.05,0.45,
+                            &ytrans, nbin,-0.2,0.2);
 
    expt->inout->BookHisto(kFALSE, kFALSE, ISEPTOUT, "xysepo", 
 		      "Transport X-Y at Septum exit", 
@@ -286,8 +292,13 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "xyfoc6", 
 		      "Weighted X-Y at focal plane (X on X-axis)", 
-                            &xtrans, nbin,-0.8,0.3,
-                            &ytrans, nbin,-0.1,0.1);
+                            &xtrans, nbin,-1,1,
+                            &ytrans, nbin,-0.2,0.2);
+
+    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "xyfoc6z", 
+		      "Weighted X-Y at focal plane (X on X-axis)", 
+                            &xtrans, nbin,-0.1,0.08,
+                            &ytrans, nbin,-0.08,0.07);
 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "xdet",
                          "X (det. frame)",
@@ -295,7 +306,7 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "qsq",
 			   "Qsq (weighted, in accept)",
-			   &qsq, 200,  0, 0.3);
+			   &qsq, 200,  0, 1);
 
 
     // Add some variables to the event ntuple
