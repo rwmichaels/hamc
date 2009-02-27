@@ -23,7 +23,8 @@ class hamcSingles : public hamcExpt {
      void SetP0(Float_t p) { P0 = p; };
      void SetTheta(Float_t ang) { angle = ang; };
      virtual void EventAnalysis();
-     virtual void RunSummary();
+     virtual void RunSummary(Int_t iter);
+     Int_t Run(Int_t maxevent);
 
   protected:
 

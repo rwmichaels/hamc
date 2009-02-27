@@ -101,6 +101,33 @@ Int_t hamcSingles::SetSpectrom(Int_t which, Float_t pmom, Float_t theta) {
   return OK;
 }
 
+
+Int_t hamcSingles::Run(Int_t maxevent) {
+
+  if (!didinit) {
+     cout << "hamcExpt::Run:ERROR: Need to Init() first."<<endl;
+     return ERROR;
+  }
+
+  for (iteration = 0; iteration < numiter; iteration++) {
+
+    for (Int_t ievt = 0; ievt < maxevent; ievt++ ) {
+
+      if (ievt > 0 && ((ievt%10000)==1)) cout << "event "<<ievt<<endl;
+ 
+      if (event) event->Process(this);
+
+    }
+
+    RunSummary(iteration);
+
+  }
+
+  return OK;
+  
+}
+
+
 void hamcSingles::EventAnalysis() {
 
   Int_t ldebug = 0;
@@ -176,7 +203,7 @@ void hamcSingles::EventAnalysis() {
 
 }
  
-void hamcSingles::RunSummary() {
+void hamcSingles::RunSummary(Int_t iteration) {
 
   Float_t sum_rate, sum_asy;
   Float_t rate, asy, avg_asy;
@@ -204,7 +231,7 @@ void hamcSingles::RunSummary() {
       xcnt = rate * run_time * 3600;  // run_time was in hours
 
       if (xcnt == 0) {
-	 cout << "hamcSingles::RunSum::ERROR: no run time ?"<<endl;
+	cout << "hamcSingles::RunSum:: no counts for mtl = "<<idx<<endl<<endl;
       } else {
           cout << "\nMaterial "<<idx<<"  "<<target->GetMtlName(idx)<<endl;
           cout << "Rate "<<rate<<" Hz "<<endl;
@@ -240,7 +267,7 @@ void hamcSingles::RunSummary() {
 
   }
 
-  hamcExpt::RunSummary();
+  if (iteration == numiter) hamcExpt::RunSummary();
 
 }
    

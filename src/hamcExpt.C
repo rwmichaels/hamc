@@ -107,15 +107,18 @@ Int_t hamcExpt::Run(Int_t maxevent) {
       if (event) event->Process(this);
 
     }
+
+    RunSummary(iteration);
+
   }
 
   return OK;
   
 }
 
-void hamcExpt::RunSummary() {
+void hamcExpt::RunSummary(Int_t iteration) {
 
-  inout->Finish();
+  if (iteration == numiter) inout->Finish();
 
 }
 

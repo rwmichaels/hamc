@@ -39,7 +39,7 @@ class hamcExpt {
      virtual Int_t InitInput(std::string sfile);
      virtual Int_t Run(Int_t maxev=1000000);
      virtual void  EventAnalysis()=0;  // must define in the inheriting class
-     virtual void  RunSummary();  
+     virtual void  RunSummary(Int_t i=0);  
      Int_t GetNumSpectrom() const { return (Int_t)spectrom.size(); };
      hamcSpecHRS* GetSpectrom(Int_t i) const;
  // Decided to make these public instead of using "get" functions
