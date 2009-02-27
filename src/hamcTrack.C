@@ -140,8 +140,6 @@ void hamcTrack::MultScatt(const hamcAperture *aperture, Int_t where) {
 
   Float_t radlen = aperture->GetRadLen(tvect->GetX(), tvect->GetY());
 
-  if (debug) cout << "Mult scatt "<<where<<"  "<<radlen<<endl;
-
   if (radlen <= 0) return;   // no mult scattering
 
   MultScatt(radlen, where);
@@ -161,14 +159,31 @@ void hamcTrack::MultScatt(Float_t radlen, Int_t where) {
 
   Float_t theta_sigma = (0.0136/P0) * TMath::Sqrt(radlen);
 
-  tvect->AddToTheta(theta_sigma * gRandom->Gaus());
-  tvect->AddToPhi(theta_sigma * gRandom->Gaus());
+  Float_t dtheta, prob;
+
+  prob = gRandom->Rndm();
+  if (prob < 0.02) {
+    dtheta = 5 * theta_sigma * gRandom->Rndm();  // flat tail
+  } else {
+    dtheta = theta_sigma * gRandom->Gaus();
+  }
+  tvect->AddToTheta(dtheta);
+
+  prob = gRandom->Rndm();
+  if (prob < 0.02) {
+    dtheta = 5 * theta_sigma * gRandom->Rndm();  // flat tail
+  } else {
+    dtheta = theta_sigma * gRandom->Gaus();
+  }
+  tvect->AddToPhi(dtheta);
 
   *tvect_orig = *tvect;
   origin = where;
 
   if (where == ICOLLIM2) {
+ 
     ms_collim=1;
+    if (radlen > 0.017) ms_collim=2;
     //    cout << "Mult scatt "<<where<<"  "<<radlen<<"  "<<ms_collim<<endl;
     //    tvect->Print();
   }
