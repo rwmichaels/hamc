@@ -25,10 +25,7 @@ using namespace std;
  hamcExptPREX::hamcExptPREX() : hamcSingles("PREX")
 {
   dpp_cut = 0.003;
-  // solid_athole = 6.1e-6;  // strategy 1
-  // solid_athole = 1.3e-6;  // strategy 2
-  // solid_athole = 1.4e-6;  // strategy 3
-   solid_athole = 2.1e-5;  // strategy 4
+  solid_athole = 4.6e-6;  
   physics = new hamcPhyPREX();
   target  = new hamcTgtPREX();
 }
@@ -53,13 +50,20 @@ Int_t hamcExptPREX::Init(string sfile) {
   spectrom[0]->Print();
 
   prex_xy1 = new TH2F("prex_xy1","XY focal (main peak)",100,-1.1,0.2,100,-0.1,0.1);
-  prex_xy2 = new TH2F("prex_xy2","XY focal (A_T hole)",100,-1.1,0.2,100,-0.1,0.1);
-  prex_xy3 = new TH2F("prex_xy3","XY focal (A_T detector)",100,-1.1,0.2,100,-0.1,0.1);
-  prex_x1  = new TH1F("prex_x1","X focal (meters)",100,-1.1,0.2);
-  prex_x2  = new TH1F("prex_x2","X focal (meters)",100,-1.1,0.2);
+  prex_xy2 = new TH2F("prex_xy2","XY focal (A_T hole 1)",100,-1.1,0.2,100,-0.1,0.1);
+  prex_xy3 = new TH2F("prex_xy3","XY focal (A_T hole 2)",100,-1.1,0.2,100,-0.1,0.1);
+  prex_xy4 = new TH2F("prex_xy4","XY focal (A_T det 1)",100,-1.1,0.2,100,-0.1,0.1);
+  prex_xy5 = new TH2F("prex_xy5","XY focal (A_T det 2)",100,-1.1,0.2,100,-0.1,0.1);
 
-  sumr_pc = 0;
-  xcnt_pc = 0;
+  prex_x1  = new TH1F("prex_x1","X focal (meters)",100,-1.1,0.2);
+  prex_x2  = new TH1F("prex_x2","X focal det 1",100,-1.1,0.2);
+  prex_x3  = new TH1F("prex_x3","X focal det 2",100,-1.1,0.2);
+
+  sumr_pc1 = 0;
+  xcnt_pc1 = 0;
+
+  sumr_pc2 = 0;
+  xcnt_pc2 = 0;
 
   return OK;
 }
@@ -68,7 +72,8 @@ void hamcExptPREX::EventAnalysis() {
 
   hamcSingles::EventAnalysis();
 
-  Float_t dedxX = 0.24;  // corresponding to 20 MeV, or 0.7 cm Be
+  Float_t dedxX1 = 0.18;  // corresponding to 15 MeV, or 0.47 cm Be
+  Float_t dedxX2 = 0.24;  // corresponding to 20 MeV, or 0.7 cm Be
 
   Float_t x = event->trackout[0]->xtrans;
   Float_t y = event->trackout[0]->ytrans;
@@ -83,12 +88,19 @@ void hamcExptPREX::EventAnalysis() {
 
     } else {
 
-      prex_xy2->Fill(x-dedxX,y,z);
-      prex_x2->Fill(x-dedxX,z);
+      if( event->trackout[0]->ms_collim == 1) {
+           prex_xy2->Fill(x-dedxX1,y,z);
+           prex_x2->Fill(x-dedxX1,z);
+      }
+      if( event->trackout[0]->ms_collim == 2) {
+           prex_xy3->Fill(x-dedxX2,y,z);
+           prex_x3->Fill(x-dedxX2,z);
+      }
 
-      if (x-dedxX > -0.30 && x-dedxX < -0.22 && y > -0.04 && y < -0.005) {
+// A_T det 1
+      if (x-dedxX1 > -0.22 && x-dedxX1 < -0.13 && y > -0.045 && y < -0.01) {
 
-        prex_xy3->Fill(x-dedxX,y,z);
+        prex_xy4->Fill(x-dedxX1,y,z);
 
         Int_t mtl_idx = target->GetMtlIndex();
         if (mtl_idx < 0 || mtl_idx >= target->GetNumMtl()) {
@@ -111,18 +123,52 @@ void hamcExptPREX::EventAnalysis() {
          Float_t crsec = physics->GetCrossSection();  // barns/str
          Float_t omega = solid_athole;   // steradians 
          Float_t rate = current * crsec * 0.602 * tlen * tdens * omega / anum;
-         sumr_pc += rate;
-         xcnt_pc += 1.0;
+         sumr_pc1 += rate;
+         xcnt_pc1 += 1.0;
       }
+
+// A_T det 2
+      if (x-dedxX2 > -0.30 && x-dedxX2 < -0.23 && y > -0.045 && y < -0.01) {
+
+        prex_xy5->Fill(x-dedxX2,y,z);
+
+        Int_t mtl_idx = target->GetMtlIndex();
+        if (mtl_idx < 0 || mtl_idx >= target->GetNumMtl()) {
+          cout << "hamcExptPrex::EventAna:ERROR:  bad mtl index"<<endl;
+          return;
+        }
+ 
+        Float_t anum = target->GetAscatt();    // atomic num.
+        if (anum == 0) {
+          cout << "hamcExptPREX::EventAna:ERROR:  A = 0 ?"<<endl;
+          return;
+        }
+
+         Float_t tdens = target->GetMtlDensity(mtl_idx);  // tgt density (g/cm^3)
+         Float_t tlen = target->GetMtlLen(mtl_idx);  // tgt len (m)
+  tlen = tlen*100;                        // need cm
+         Float_t current = event->beam->beam_current;  // microAmps (uA)
+         current = current * 6.25e12;    // 100 uA = 6.25e14 e- / sec
+
+         Float_t crsec = physics->GetCrossSection();  // barns/str
+         Float_t omega = solid_athole;   // steradians 
+         Float_t rate = current * crsec * 0.602 * tlen * tdens * omega / anum;
+         sumr_pc2 += rate;
+         xcnt_pc2 += 1.0;
+      }
+
     }
   }
 }
 
-void hamcExptPREX::RunSummary() {
+void hamcExptPREX::RunSummary(Int_t iteration) {
 
   cout << "hamcExptPREX:: summary "<<endl;
-  cout << "Rate in A_t detector "<<
-      sumr_pc/xcnt_pc<<"  Hz, for "<<xcnt_pc<<"  hits"<<endl;
+  cout << "iteration "<<iteration<<"   "<<numiter<<endl;
+  cout << "Rate in A_t detector 1  "<<
+      sumr_pc1/xcnt_pc1<<"  Hz, for "<<xcnt_pc1<<"  hits"<<endl;
+  cout << "Rate in A_t detector 2  "<<
+      sumr_pc1/xcnt_pc2<<"  Hz, for "<<xcnt_pc2<<"  hits"<<endl;
   cout << "Solid angle of A_t hole "<<solid_athole<<" str "<<endl;
 
 
@@ -214,7 +260,7 @@ void hamcExptPREX::RunSummary() {
 
   }
 
-  hamcExpt::RunSummary();
+  if (iteration == numiter) hamcExpt::RunSummary();
 
 
 }

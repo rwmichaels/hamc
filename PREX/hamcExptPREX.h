@@ -19,7 +19,7 @@ class hamcExptPREX : public hamcSingles {
      Int_t Init(std::string sfile);
 
      void EventAnalysis();
-     void RunSummary();
+     void RunSummary(Int_t i=0);
 
   private: 
 
@@ -27,10 +27,10 @@ class hamcExptPREX : public hamcSingles {
      hamcExptPREX(const hamcExptPREX& expt);
      hamcExptPREX& operator=(const hamcExptPREX& expt);
 
-     TH2F *prex_xy1, *prex_xy2, *prex_xy3;
-     TH1F *prex_x1, *prex_x2;
+     TH2F *prex_xy1, *prex_xy2, *prex_xy3, *prex_xy4, *prex_xy5;
+     TH1F *prex_x1, *prex_x2, *prex_x3;
 
-     Float_t sumr_pc, xcnt_pc;
+     Float_t sumr_pc1, xcnt_pc1, sumr_pc2, xcnt_pc2;
      Float_t solid_athole;
 
 
