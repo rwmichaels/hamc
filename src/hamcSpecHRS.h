@@ -144,7 +144,7 @@ class hamcSpecHRS {
      Int_t which_spectrom, numdet;
      std::string name, desc;
      Float_t P0, P0_sigma, central_angle;
-     Float_t collim2_radlen;
+     Float_t collim2_radlen1, collim2_radlen2;
  
   private:
 
