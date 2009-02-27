@@ -45,8 +45,6 @@ Int_t hamcTarget::Setup() {
   } else {
 
     Float_t weisum=0;
-    Float_t invradsum=0;
-    Float_t invx0;
 
     for (Int_t i=0; i<(Int_t)components.size(); i++) {
 
@@ -54,10 +52,6 @@ Int_t hamcTarget::Setup() {
        overall_length   += slab->GetLen(); 
        Float_t weight = slab->GetDensity()*slab->GetLen();
        weisum           += weight;
-       invx0 = 0;
-       if (slab->GetRadLen() != 0) invx0 = 1./slab->GetRadLen();
-       invradsum        += weight*invx0;
-       cout << "Chk1 "<<weight<<"  "<<slab->GetRadLen()<<"  "<<invx0<<"  "<<invradsum<<endl;
        effective_length += weight*slab->GetEffLen();
        weighted_anum    += weight*slab->GetA();
        weighted_znum    += weight*slab->GetZ();
@@ -69,10 +63,6 @@ Int_t hamcTarget::Setup() {
        exit(0);
     } else {
        effective_length = effective_length/weisum;
-       radiation_length = weisum/invradsum;
-       cout << "Chk2 "<<weisum<<"  "<<overall_length<<"  "<<radiation_length<<endl;
-       radiation_length = overall_length/radiation_length;
-       cout << "Chk3 "<<radiation_length<<endl;
        weighted_anum    = weighted_anum/weisum;
        weighted_znum    = weighted_znum/weisum;
        weighted_density = weighted_density/weisum;
@@ -81,13 +71,15 @@ Int_t hamcTarget::Setup() {
     Float_t zpos;
     zpos = -1 * overall_length/2;  // z=0 is center of overall target
 
- // Ok, the weighted radiation_length is not working yet, try this for now:
+ // A "weighted radiation_length" is nonsense (this is not a mix),
+ // so we do the following to get an approximate total radlength.
     zscatt = 0;
     Float_t x1 = GetRadIn(); 
     Float_t x2 = GetRadOut(); 
     radiation_length = x1 + x2;
 
-    cout << "Chk4 "<<radiation_length<<endl;
+
+    cout << "Weighted radiation length  "<<radiation_length<<endl;
 
     for (Int_t i=0; i<(Int_t)components.size(); i++) {
 
