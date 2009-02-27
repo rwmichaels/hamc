@@ -1,4 +1,4 @@
-#ifndef ROOT_hamcAperture
+ #ifndef ROOT_hamcAperture
 #define ROOT_hamcAperture
 
 //  hamcAperture   -- aperture defining the acceptance
@@ -24,6 +24,9 @@ public:
       if (idx < (Int_t)radlen.size()) {
          radlen[idx] = rl;
       } else {
+        for (Int_t ix = (Int_t)radlen.size(); ix < idx; ix++) {
+  	    radlen.push_back(0);
+	}
 	radlen.push_back(rl);
       }
     }
@@ -153,6 +156,100 @@ private:
   Float_t xlo2, xhi2, ylo2, yhi2;
 #ifndef NODICT
 ClassDef (hamcPaulBox, 0)   // Paul's complicated box.
+#endif
+};
+
+class hamcPaulCollim : public hamcAperture {  
+// This is Paul's idea to have two apertures with different RL
+// The A_T holes have a RL defined, the 3rd is vacuum normally.
+// The acceptance hugs the natural acceptance.
+public:
+  hamcPaulCollim(
+    Float_t x1l, Float_t x1h, Float_t y1l, Float_t y1h, // A_T hole 1   
+    Float_t x2l, Float_t x2h, Float_t y2l, Float_t y2h, // A_T hole 2   
+    Float_t r1, Float_t c1, // outer circle, main acceptance
+    Float_t r2, Float_t c2, // inner circle, main acceptance
+    Float_t ytp,            // y is below this line (on top) or above -1* this
+    Float_t xrgt,           // largest pos. X (small angle side)
+    Float_t x1, Float_t m1) // y is below this (top), above (bottom)
+       : hamcAperture() {
+    xlo1 = x1l; xhi1 = x1h; ylo1 = y1l; yhi1 = y1h;
+    xlo2 = x2l; xhi2 = x2h; ylo2 = y2l; yhi2 = y2h;
+    rad1 = r1; ycent1 = c1;
+    rad2 = r2; ycent2 = c2;
+    vtop = ytp;  vright = xrgt;
+    yline1 = x1; slope1 = m1;
+  }
+  ~hamcPaulCollim() { };
+  void Print() { 
+    std::cout<<"Paul's collimator with inner, outer radii"<<std::endl;
+    std::cout<<"A_T hole 1 :"<<std::endl;
+    std::cout <<xlo1<<"  "<<xhi1<<"  "<<ylo1<<"  "<<yhi1<<std::endl;
+    std::cout<<"A_T hole 2 :"<<std::endl;
+    std::cout <<xlo2<<"  "<<xhi2<<"  "<<ylo2<<"  "<<yhi2<<std::endl;
+    std::cout <<"outer circle "<<rad1<<"  "<<ycent1<<std::endl;
+    std::cout <<"inner circle "<<rad2<<"  "<<ycent2<<std::endl;
+    std::cout <<"Top/bottom +/= "<<vtop<<std::endl;
+    std::cout <<"Right side cut "<<vright<<std::endl;    
+    std::cout <<"Line (Champhor)  "<<yline1<<"  "<<slope1<<std::endl;
+    std::cout <<"Rad lens "<<hamcAperture::GetRadLen(0);
+    std::cout << "  "<<hamcAperture::GetRadLen(1);
+    std::cout << "  "<<hamcAperture::GetRadLen(2);
+    std::cout << "   size "<<radlen.size()<<std::endl;
+    hamcAperture::Print();
+  }
+  Int_t WhichBox(Float_t x, Float_t y) const {
+    Int_t debug=0;
+    Float_t xdif = x-xcent;
+    Float_t ydif = y-ycent;
+    if (debug) std::cout << "\n\n X, Y = "<<x<<"  "<<y<<std::endl;
+    if ((xdif > xlo1) && (xdif < xhi1) && 
+        (ydif > ylo1) && (ydif < yhi1) ) return 0;  // in A_T hole 1
+    if ((xdif > xlo2) && (xdif < xhi2) && 
+        (ydif > ylo2) && (ydif < yhi2) ) return 1;  // in A_T hole 2
+    // Now check if in main acceptance
+    // Remember x is vertical (transport), y is horizontal
+    Float_t xtrial,ytrial;
+    ytrial = ydif-ycent1;
+    xtrial = rad1*rad1 - ytrial*ytrial;
+    if (debug) std::cout<<"chk1 "<<xtrial<<"  "<<x<<std::endl;
+    if (xtrial < 0) return -1;   // outside outer circle
+    xtrial = TMath::Sqrt(xtrial);
+    if (debug) std::cout<<"chk2 "<<xtrial<<"  "<<x<<std::endl;
+    if (x > xtrial || x < -1.0*xtrial) return -1;  // outside outer circle
+    ytrial = ydif-ycent2;
+    xtrial = rad2*rad2 - ytrial*ytrial;
+    if (xtrial > 0) {  
+      xtrial = TMath::Sqrt(xtrial);
+      if (debug) std::cout<<"chk3 "<<xtrial<<"  "<<x<<std::endl;
+      if ((x > 0 && x < xtrial) || 
+          (x < 0 && x > -1.0*xtrial)) return -1; // outside innner circle
+    }
+    if (x > vtop) return -1;       // above upper line
+    if (x < -1.0*vtop) return -1;  // beneath lower line
+    if (y > vright) return -1;     // beyond right border
+    xtrial = slope1*ydif + yline1; // Champhor line
+    if (x > xtrial) return -1;     // above upper line
+    if (x < -1.0*xtrial) return -1;// below lower line
+    if (debug) std::cout<<"INSIDE "<<std::endl;
+    return 2;  // inside main acceptance.
+  }
+  Float_t GetRadLen(Float_t x, Float_t y) const {
+    return hamcAperture::GetRadLen(WhichBox(x,y));
+  }
+  Bool_t CheckAccept(Float_t x, Float_t y) const {
+    Int_t idx = WhichBox(x,y);
+    if (idx != -1) return kTRUE;
+    return kFALSE;
+  }
+private:
+  Float_t xlo1, xhi1, ylo1, yhi1;
+  Float_t xlo2, xhi2, ylo2, yhi2;
+  Float_t rad1, ycent1, rad2, ycent2;
+  Float_t yline1, slope1;
+  Float_t vtop, vright;
+#ifndef NODICT
+ClassDef (hamcPaulBox, 0)   // Paul's semicircular, really complicated box.
 #endif
 };
 
