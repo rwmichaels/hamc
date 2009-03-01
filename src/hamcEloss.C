@@ -210,20 +210,20 @@ void hamcEloss::Setup_numer(Int_t which, Float_t trl) {
 // trl = radiation length for this slice size
 
   Npts = 1000;
-  yfact = 100000;  // 1e6 requires MAXCNT=5e6
+  yfact = 10000;  // 1e6 requires MAXCNT=5e6
 
   Int_t ldebug = 0;
 
-  Int_t ncnt,ncell;
-
   if (use_genercone) return; // dont need this for genercone version
   if (use_tf1) return;   // error to call this for this state.
+
+  Int_t ncnt,ncell;
 
   Float_t psi = psi_scale;
 
   if (psi_scale == 0) {
     psi = 1;
-    if (tgtA > 100) psi_scale = 0.2;
+    if (tgtA > 100) psi_scale = 0.17;
   }
 
   vector<Float_t> radtail;
@@ -241,10 +241,10 @@ void hamcEloss::Setup_numer(Int_t which, Float_t trl) {
 
     Double_t yval = 0;
 
-    if (lambda > 0 && lambda < 100) {
+    if (lambda > 0 && lambda < 800) {
        yval = GenLandHi(lambda, (trl+0.5*tequiv));
     } 
-    if (lambda > -6 && lambda <= 0) {
+    if (lambda > -10 && lambda <= 0) {
        yval = GenLandLo(lambda, (trl+0.5*tequiv));
     }
 
@@ -253,7 +253,7 @@ void hamcEloss::Setup_numer(Int_t which, Float_t trl) {
     ncell = ((Int_t)yval);
     ncnt += ncell;
 
-    if (ldebug && lambda > -6 && lambda < 100) cout << "tail "<<i<<"  "<<trl<<"  "<<E<<"  "<<eloss<<"  "<<lambda<<"  "<<yval<<"  "<<ncell<<"  "<<ncnt<<endl;
+    if (ldebug && lambda > -6 && lambda < 500) cout << "tail "<<i<<"  "<<trl<<"  "<<E<<"  "<<eloss<<"  "<<lambda<<"  "<<yval<<"  "<<ncell<<"  "<<ncnt<<endl;
 
     if (ncnt > MAXCNT) {
       // this should never happen
