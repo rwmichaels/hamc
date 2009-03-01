@@ -25,9 +25,9 @@ class hamcEloss {
      Int_t InitRad();
 
      Int_t Generate(hamcExpt *expt);  // event generator
-     Int_t Generate_gcone(Float_t rlin, Float_t rlout); 
-     Int_t GenerateNumer(Float_t zpos);
-     Int_t Generate_tf1(Float_t zpos);
+     Int_t Generate_gcone();
+     Int_t GenerateNumer();
+     Int_t Generate_tf1();
      Int_t GenerateDeDx(hamcExpt *expt);
      Float_t GetDeIntern();  
      Float_t GetDeExternIn();  
@@ -55,7 +55,6 @@ class hamcEloss {
      static const Float_t Me=0.0000511;
      static const Float_t Euler=0.5772157;
      static const Double_t pi=3.1415926;
-     Float_t fracresol;
 
      Bool_t did_init;
      Bool_t use_genercone, use_tf1, use_numer;
@@ -64,6 +63,7 @@ class hamcEloss {
      Float_t psi_scale; 
      Float_t trlen,tequiv;  // RL and equiv. raditor (int. Brehm)
      Float_t tlen,tgtA,tgtZ,tdensity,E0,theta_central,qsq;
+     Float_t radin, radout;
      Float_t me,alpha,yfact,ycell,bval;
      Float_t dE_IntBrehm, dE_ExtBrehmIn, dE_ExtBrehmOut, dE_Ionization;
      Float_t dE_Bsum;

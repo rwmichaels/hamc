@@ -69,7 +69,6 @@ hamcEloss::hamcEloss(): did_init(kFALSE)
    use_ionize = kTRUE;
    use_tf1 = kFALSE;
    use_numer = kFALSE;
-   fracresol = 1e-4;
 }
 
 hamcEloss::~hamcEloss()
@@ -211,7 +210,7 @@ void hamcEloss::Setup_numer(Int_t which, Float_t trl) {
 // trl = radiation length for this slice size
 
   Npts = 1000;
-  yfact = 10000;
+  yfact = 100000;  // 1e6 requires MAXCNT=5e6
 
   Int_t ldebug = 0;
 
@@ -298,7 +297,7 @@ void hamcEloss::Print() {
 
   cout << "hamcEloss Print: "<<endl;
   cout << "Enumer size "<<Enumer.size()<<endl;
-  if (Enumer.size() != Nslices) {
+  if ((Int_t)Enumer.size() != Nslices) {
     cout << "Nslices = "<<Nslices<<"  inconsistent "<<endl;
     return;
   }
@@ -353,21 +352,21 @@ Int_t hamcEloss::Generate(hamcExpt* expt) {
   dE_Bsum = 0;
   dE_IonizeIn = 0;
   dE_IonizeOut = 0;
-  Float_t radin = expt->target->GetRadIn();
-  Float_t radout = expt->target->GetRadOut();
+  radin = expt->target->GetRadIn();   // variable of the class
+  radout = expt->target->GetRadOut(); //  "    "     "
   
   if (use_genercone) {
-     Generate_gcone(radin, radout);
+     Generate_gcone();
      return 1;
   } 
 
   if (use_tf1) {
-     Generate_tf1(expt->target->GetZScatt());
+     Generate_tf1();
      return 1;
   }
 
   if (use_numer) {
-     GenerateNumer(expt->target->GetZScatt());
+     GenerateNumer();
      return 1;
   }
 
@@ -438,7 +437,7 @@ Int_t hamcEloss::GenerateDeDx(hamcExpt *expt) {
 
 }
 
-Int_t hamcEloss::Generate_gcone(Float_t radin, Float_t radout) {
+Int_t hamcEloss::Generate_gcone() {
 
 //  This version uses gener_cone methods
 //  Generate the radiative losses in target
@@ -456,7 +455,7 @@ Int_t hamcEloss::Generate_gcone(Float_t radin, Float_t radout) {
 
 }
 
-Int_t hamcEloss::Generate_tf1(Float_t zpos) {
+Int_t hamcEloss::Generate_tf1() {
 
 // Version uses a TF1 random number generator.
 // Input: zpos = position (meters) in target.
@@ -468,19 +467,13 @@ Int_t hamcEloss::Generate_tf1(Float_t zpos) {
 
    dE_IntBrehm = fdistr[0]->GetRandom();
 
-   Float_t xin = zpos + tlen/2;
-   Float_t rin = xin*trlen/tlen;
-
-   idx = LookupIdx(rin);  // before scattering
+   idx = LookupIdx(radin);  // before scattering
 
    if (idx > 0 && idx < (Int_t)fdistr.size()) {
         dE_ExtBrehmIn = fdistr[idx]->GetRandom();
    }
 
-   Float_t xout = tlen/2 - zpos;
-   Float_t rout = xout*trlen/tlen;
-
-   idx = LookupIdx(rout);  // after scattering
+   idx = LookupIdx(radout);  // after scattering
 
    if (idx > 0 && idx < (Int_t)fdistr.size()) {
         dE_ExtBrehmOut = fdistr[idx]->GetRandom();
@@ -492,7 +485,7 @@ Int_t hamcEloss::Generate_tf1(Float_t zpos) {
 }
 
 
-Int_t hamcEloss::GenerateNumer(Float_t zpos) {
+Int_t hamcEloss::GenerateNumer() {
 
 // This version uses numerical radiatiave tails 
 // generated in Setup.
@@ -504,10 +497,7 @@ Int_t hamcEloss::GenerateNumer(Float_t zpos) {
 
    if (CheckInit() == -1) return -1;
    
-   Float_t xin = zpos + tlen/2;
-   Float_t rin = xin*trlen/tlen;
-
-   idx = LookupIdx(rin);  // before scattering
+   idx = LookupIdx(radin);  // before scattering
 
    vector<Float_t> radtail;  
 
@@ -522,10 +512,7 @@ Int_t hamcEloss::GenerateNumer(Float_t zpos) {
       dE_ExtBrehmIn = radtail[jj];
    }
 
-   Float_t xout = tlen/2 - zpos;
-   Float_t rout = xout*trlen/tlen;
-
-   idx = LookupIdx(rout);  // after scattering
+   idx = LookupIdx(radout);  // after scattering
 
    if (idx >= 0 && idx < Nslices) {
       radtail = Enumer[idx];
@@ -674,11 +661,10 @@ Float_t hamcEloss::gener_radlossext(Float_t k, Float_t fracrl) {
 
 Float_t hamcEloss::dedx_eloss(Float_t Znuc) {
 
-  // Model for stopping power from PDG fit
+  // Model for stopping power from PDG fit.
   // distance = distance through target (meters)
-  // No straggling in this version.
-
-  // FIXME: need better treatment of composite target.
+  // No straggling (Landau tail) in this version.
+  // Ideally, need better treatment of composite target.
 
   if (Znuc <= 0) {
     cout << "hamcEloss::ERROR: trying to calc. dE/dx for neutral ?"<<endl;
@@ -688,7 +674,7 @@ Float_t hamcEloss::dedx_eloss(Float_t Znuc) {
   Float_t dedx = 2.35 - 0.28*TMath::Log(Znuc);  // MeV g^-1 cm^2
 
   // exception for hydrogen
-  if (tgtZ == 1) dedx = 3.97;  // MeV g^-1 cm^2
+  if (Znuc == 1) dedx = 3.97;  // MeV g^-1 cm^2
 
   return dedx;
 
