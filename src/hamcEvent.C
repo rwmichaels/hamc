@@ -56,6 +56,8 @@ Int_t hamcEvent::Init(hamcExpt* expt) {
   expt->inout->AddToNtuple("inaccept",&inaccept);
   expt->inout->AddToNtuple("xcol",&xcol);
   expt->inout->AddToNtuple("ycol",&ycol);
+  expt->inout->AddToNtuple("xsep",&xsep);
+  expt->inout->AddToNtuple("ysep",&ysep);
 
   did_init = kTRUE;
 
@@ -83,8 +85,13 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
      
      {
        beam->Generate(expt);
+       Int_t timeout=0;
        while(expt->physics->kine->Generate(expt) == -1) //DIS event not good, try again
 	 {
+           if (timeout++ > 100000) {
+	     cout << "hamcEvent::Process: infinite loop ?"<<endl;
+             return 1;
+	   }
 	   expt->target->Zscatt();
 	   if (expt->physics->Radiate(expt) == -1) return 1;
 	   beam->Generate(expt);
@@ -93,6 +100,7 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
 
    inaccept = 1;
    xcol = -999;  ycol = -999;
+   xsep = -999;  ysep = -999;
 
 // Loop over spectrometers
 
@@ -148,7 +156,10 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
 	   xcol = track->GetTransX();
 	   ycol = track->GetTransY();
 	 }
-
+         if (brkpoint == ISEPTIN) {
+	   xsep = track->GetTransX();
+	   ysep = track->GetTransY();
+	 }
        }
 	     
 // The following line fills histograms, and will fill
