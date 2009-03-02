@@ -1,0 +1,36 @@
+
+# (optional) Setup parameters for hamc for HAPPEX
+
+# Setup choices for HRS
+hrs_setup coldseptum uselerose
+
+spreader_collim radlen 0.042
+
+# HRS momentum and angle
+HRS_P0 3.118
+HRS_angle 6
+
+# The HRS_acceptoff is normally commented out (or deleted)
+# When uncommented it's a way of testing the acceptance model.
+# Turn on one thing at a time to check the cuts at each point.
+# 0 means ignore the acceptance limit, 1 means use it.
+#  1         2       3        4             5     6     7        8        9   10
+# target, septin, septout, collim(collim2), q1, dipin, dipexit, q3in, q3exit, focal
+HRS_acceptoff 0 1 1 0 1 1 1 1 1 1 
+
+# Beam parameters.  Raster is in meters, typ 0.0004 (means +/- this)
+beam  E0 3.176 E0sigma 0.0002   rastered  xraster 0.0004  yraster 0.0004
+
+# range of angles (scatt, azimuth) in degrees
+# phi=0 is up.  phi=90 is into HRS,  phi=180 is down.
+out_angles thetamin 0.2 thetamax 12  phimin 0 phimax 180
+
+radcor genercone
+
+# uncomment the following line if you want to iterate
+# iterate
+
+# Here is the variable to iterate
+kick:track P0 0.003
+
+
