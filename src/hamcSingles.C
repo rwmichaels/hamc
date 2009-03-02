@@ -165,7 +165,7 @@ void hamcSingles::EventAnalysis() {
 
   Float_t tdens = target->GetMtlDensity(mtl_idx);  // tgt density (g/cm^3)
 
-  Float_t tlen = target->GetMtlLen(mtl_idx);  // tgt len (m)
+  Float_t tlen = target->GetMtlEffLen(mtl_idx);  // tgt effective len (m)
   tlen = tlen*100;                        // need cm
 
   Float_t current = event->beam->beam_current;  // microAmps (uA)
@@ -210,6 +210,9 @@ void hamcSingles::RunSummary(Int_t iteration) {
   Float_t xcnt, asy_err;
   Float_t omega;
   Float_t pol = event->beam->polarization;
+
+// Warning, you need to run with enough statistics to fill cells
+// in acceptance.  See comments in hamcAccAvg
 
   cout << "hamcSingles::RunSummary "<<endl;
  
@@ -266,8 +269,6 @@ void hamcSingles::RunSummary(Int_t iteration) {
     }
 
   }
-
-  cout << "duh "<<iteration+1<<"  "<<numiter<<endl;
 
   if (iteration+1 == numiter) hamcExpt::RunSummary(iteration);
 
