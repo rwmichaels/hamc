@@ -81,7 +81,7 @@ void hamcAccAvg::Increment(Float_t th, Float_t ph, Float_t relrate, Float_t asy)
     if (ncell >= 0 || ncell < numcell*numcell) {
         sumcnt[ncell] += 1.0;
         sumrate[ncell] += rate;
-        sumasy[ncell] += rate*asy; 
+        sumasy[ncell] += asy; 
     }
 }
 
@@ -131,15 +131,26 @@ void hamcAccAvg::RunSummary() {
   Float_t asysum = 0;
   Float_t ratecell;
   Int_t icell;
+  Int_t lprint = 1;
   rate = 0;
   asy = 0;
   omega = 0;
+
+  if (lprint) cout << endl<<endl<<"Cell scan ---- "<<endl;
 
   for (Int_t ix = 0; ix < numcell; ix++) {  // theta
 
     for (Int_t iy = 0; iy < numcell; iy++) {  // phi
 
       icell = ix*numcell + iy;
+
+      Float_t theta = GetTheta(ix);
+      Float_t phi = GetPhi(iy);
+      if (lprint && theta > 0.07 && theta < 0.14 &&
+        phi > 1.39 && phi<1.75 ) {
+        cout << "icell " <<icell<<"   theta "<<theta<<"   phi "<<phi;
+        cout << "   sum "<<sumcnt[icell]<<"  "<<sumrate[icell]<<endl;
+      }
 
       if (GetNum(icell) < ncellcut) continue;
       if (sumrate[icell] <= 0) continue;
@@ -148,10 +159,10 @@ void hamcAccAvg::RunSummary() {
  
       rate += ratecell;
 
-// sumasy was weigted by rate
-      asysum += ratecell * sumasy[icell]/sumrate[icell]; 
+// Take avg asy in cell, then weight by rate
+      asysum += ratecell * sumasy[icell]/sumcnt[icell]; 
 
-      omega += TMath::Sin(GetTheta(icell)) * dtheta * dphi;
+      omega += TMath::Sin(GetTheta(ix)) * dtheta * dphi;
 
       if (hacc) {
       

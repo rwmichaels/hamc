@@ -40,8 +40,8 @@ class hamcAccAvg {
 
      void Print();
 
-     static const Int_t numcell = 200; 
-     static const Int_t ncellcut = 4; 
+     static const Int_t numcell = 80;  // 80 is ~ok for 500K evts
+     static const Int_t ncellcut = 2; 
 
   private:
 
