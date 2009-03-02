@@ -131,7 +131,7 @@ void hamcAccAvg::RunSummary() {
   Float_t asysum = 0;
   Float_t ratecell;
   Int_t icell;
-  Int_t lprint = 1;
+  Int_t lprint = 0;
   rate = 0;
   asy = 0;
   omega = 0;
