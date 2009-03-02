@@ -28,12 +28,14 @@ Int_t hamcTgtPREX::Init(hamcExpt *expt) {
 
   if (did_init) return OK;
 
+  // Tgt_eff = 0.37 * Tgt_Len, accounts for radiative tail
+  // not already in hamc event generation.
   components.push_back(new hamcTgtSlab(
-     "diamond", 0, 0.00015, 0.00005, 0.0188, 12, 6, 11.25, 3.52));
+     "diamond", 0, 0.00015, 0.000056, 0.0188, 12, 6, 11.25, 3.52));
   components.push_back(new hamcTgtSlab(
-     "lead",    1, 0.00050, 0.00017, 0.0056, 208, 82, 195, 11.35));
+     "lead",    1, 0.00050, 0.000186, 0.0056, 208, 82, 195, 11.35));
   components.push_back(new hamcTgtSlab(
-     "diamond", 0, 0.00015, 0.00005, 0.0188, 12, 6, 11.25, 3.52));
+     "diamond", 0, 0.00015, 0.000056, 0.0188, 12, 6, 11.25, 3.52));
 
   expt->inout->AddToNtuple("zscat",&zscatt);
 
