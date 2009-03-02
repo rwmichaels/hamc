@@ -1,5 +1,12 @@
 //  hamcAccAvg   -- Class to organize the averaging over acceptance.
 
+//  One danger:  you must run hamc with enough statistics to fill the 
+//  cells of the acceptance, see the cut ncellcut.
+//  You can then see that the total solid angle agrees approx. with
+//  the rectangular approximation.  Another way to see it is that
+//  the rate "plateaus" with number of events.  Rule of thumb: 10M events
+//  to get a reaonable rate estimate.  (or reduce ncellcut, or ...)
+
 //  R. Michaels  Jan 2009
 
 
