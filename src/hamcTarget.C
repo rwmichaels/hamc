@@ -267,6 +267,14 @@ Float_t hamcTarget::GetMtlLen(Int_t iloc) {
 
 }
 
+Float_t hamcTarget::GetMtlEffLen(Int_t iloc) {
+ 
+  if (CheckIndex(iloc) == ERROR) return 0;
+
+  return components[iloc]->GetEffLen();
+
+}
+
 Float_t hamcTarget::GetMtlDensity(Int_t iloc) {
  
   if (CheckIndex(iloc) == ERROR) return 0;

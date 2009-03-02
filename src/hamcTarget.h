@@ -78,6 +78,7 @@ class hamcTarget {
      Int_t   GetNumMtl() const { return components.size(); }; 
      Float_t GetMtlZloc(Int_t iloc);  // returns Z location of material #iloc
      Float_t GetMtlLen(Int_t iloc);
+     Float_t GetMtlEffLen(Int_t iloc);
      Float_t GetMtlRadLen(Int_t iloc);
      Float_t GetMtlDensity(Int_t iloc);
      Float_t GetMtlA(Int_t iloc);
