@@ -72,8 +72,8 @@ void hamcExptPREX::EventAnalysis() {
 
   hamcSingles::EventAnalysis();
 
-  Float_t dedxX1 = 0.18;  // corresponding to 15 MeV, or 0.47 cm Be
-  Float_t dedxX2 = 0.24;  // corresponding to 20 MeV, or 0.7 cm Be
+  Float_t dedxX1 = 0.055;  // corresponding to 4.4 MeV, or 1.5 cm Be
+  Float_t dedxX2 = 0.073;  // corresponding to 5.9 MeV, or 2.0 cm Be
 
   Float_t x = event->trackout[0]->xtrans;
   Float_t y = event->trackout[0]->ytrans;
@@ -173,7 +173,7 @@ void hamcExptPREX::RunSummary(Int_t iteration) {
 
 
   Float_t sum_rate, sum_asy;
-  Float_t rate, asy, avg_asy;
+  Float_t rate, asy, avg_asy, avg_rawasy;
   Float_t xcnt, asy_err;
   Float_t omega;
   Float_t pol = event->beam->polarization;
@@ -219,14 +219,15 @@ void hamcExptPREX::RunSummary(Int_t iteration) {
       cout << "\nhamcExptPREX::RunSum::ERROR: no summed rate ?"<<endl;
     } else {
       avg_asy = sum_asy / sum_rate;  // physics asymmetry
-      avg_asy = avg_asy * pol;       // raw asymmetry
+      avg_rawasy = avg_asy * pol;       // raw asymmetry
       xcnt = sum_rate * run_time * 3600;
       asy_err = 0;   
       if (xcnt != 0) asy_err = 1e6 / TMath::Sqrt(xcnt);
-      daa = asy_err / avg_asy;
+      daa = asy_err / avg_rawasy;
 
       if (num_phyt > 1) cout << "Physics model "<<imodel<<endl;
-      cout << endl << "Raw measured <A>_raw = "<<avg_asy;
+      cout << endl << "Avg <A>_phy = "<<avg_asy;
+      cout << endl << "Raw measured <A>_raw = "<<avg_rawasy;
       cout << " +/- "<<asy_err<<"   ppm "<<endl;
       if (imodel == 0) {
         cout << "Num of counts "<<xcnt<<endl;
