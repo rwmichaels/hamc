@@ -29,6 +29,7 @@ class hamcTrackOut : public hamcTrack {
      Float_t Getthetamax() const {return thetamax;};
      Float_t Getphimin() const {return phimin;};
      Float_t Getphimax() const {return phimax;};
+     Int_t UpdateAtDet();
 
   protected:
 
@@ -46,6 +47,8 @@ class hamcTrackOut : public hamcTrack {
      Float_t theta_iteration;
      Float_t dpp,qsq;
      Int_t which_hrs;
+     Float_t xfpd,yfpd,thfpd,phfpd;
+     Float_t det_dist;
 
      hamcTrackOut(const hamcTrackOut& phys);
      hamcTrackOut& operator=(const hamcTrackOut& phys);

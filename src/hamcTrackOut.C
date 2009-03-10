@@ -25,6 +25,7 @@ ClassImp(hamcTrackOut)
 hamcTrackOut::hamcTrackOut() : hamcTrack("electron"),thetamin(0),thetamax(0),phimin(0),phimax(0),which_hrs(0)
 {
   did_init = kFALSE;
+  det_dist = 1.2; // meters
   trktype = "out";
 }
 
@@ -86,6 +87,12 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
    }
 
    cout << "Track-out angles ranges: "<<thetamin<<"  "<<thetamax<<"  "<<phimin<<"  "<<phimax<<endl;
+
+   parser.Load(expt->inout->GetStrVect("detector"));
+   if (parser.IsFound("dist")) {
+    det_dist = parser.GetData(); 
+    cout << "Z dist. of detector to foc. plane = "<<det_dist<<" m"<<endl;
+   }    
 
 
    Int_t nbin=120;
@@ -155,6 +162,11 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
    expt->inout->BookHisto(kFALSE, kFALSE, IFOCAL, "dpp",
 			  "dp/p generated ",
                           &dpp0,nbin,-0.007,0.002);
+
+   expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "xyfpd",
+			  "X-Y at focal plane detector",
+			  &xfpd, nbin, -1, 1,
+                          &yfpd, nbin, -0.2, 0.2);
 
 // For designing the collimator
    expt->inout->BookHisto(kFALSE, kFALSE, ICOLLIM, "xycoll",
@@ -322,7 +334,9 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
     expt->inout->AddToNtuple("ydet",&ydet);
     expt->inout->AddToNtuple("mscol",&ms_collim);
     expt->inout->AddToNtuple("th0",&th0);
-    expt->inout->AddToNtuple("ph0",&ph0);
+    expt->inout->AddToNtuple("xfpd",&xfpd);
+    expt->inout->AddToNtuple("yfpd",&yfpd);
+ 
 
     did_init = kTRUE;
 
@@ -340,6 +354,10 @@ Int_t hamcTrackOut::Generate(hamcExpt *expt) {
   }
 
   ms_collim = 0;  // reset
+  thfpd = 0;
+  phfpd = 0;
+  xfpd  = 0;
+  yfpd  = 0;
 
   hamcBeam *beam = expt->event->beam;
 
@@ -384,6 +402,16 @@ Int_t hamcTrackOut::Generate(hamcExpt *expt) {
   UpdateTrans();
   ComputePvect();   
 
+  return OK;
+
+}
+
+Int_t hamcTrackOut::UpdateAtDet() {
+
+  thfpd = tvect->GetTheta();
+  phfpd = tvect->GetPhi();
+  xfpd  = tvect->GetX() + det_dist*thfpd;
+  yfpd  = tvect->GetY() + det_dist*phfpd;
   return OK;
 
 }
