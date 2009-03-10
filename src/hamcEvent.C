@@ -44,6 +44,7 @@ Int_t hamcEvent::InitBeam(hamcExpt* expt) {
 Int_t hamcEvent::Init(hamcExpt* expt) {
 
   Int_t nspect = expt->GetNumSpectrom();
+
   if (nspect == 0) {
     cout << "hamcEvent::ERROR: no spectrometers ?!"<<endl;
   } else {
@@ -159,6 +160,9 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
          if (brkpoint == ISEPTIN) {
 	   xsep = track->GetTransX();
 	   ysep = track->GetTransY();
+	 }
+         if (brkpoint == IFOCAL) {
+           track->UpdateAtDet();
 	 }
        }
 	     
