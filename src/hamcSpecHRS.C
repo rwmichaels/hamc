@@ -110,16 +110,10 @@ Int_t hamcSpecHRS::Init(hamcExpt *expt) {
    }   
 
    collim2_radlen1 = 0;
-   collim2_radlen2 = 0;
    parser.Load(expt->inout->GetStrVect("spreader_collim"));
    if (parser.IsFound("radlen1")) {
      collim2_radlen1 = parser.GetData(); 
    }      
-   if (parser.IsFound("radlen2")) {
-     collim2_radlen2 = parser.GetData(); 
-     cout << "hamcSpecHRS: Using spreader collimator, RL = "<<
-       collim2_radlen1<<"  "<<collim2_radlen2<<endl;
-   }
 
    BuildSpectrom();
 
@@ -237,33 +231,13 @@ void hamcSpecHRS::AddBreakPoint(Int_t where) {
 // Collim2 is in the Q1 coordinate system (center = 0,0).
     case ICOLLIM2:
       if (IsWarmSeptum()) { 
-// Notes: total solid angle is ~3.5 msr.
-// cuts for A_T hole are a fraction (F/0.022) * 3.5 msr. where F is given 
-// strategy 1  (no A_T hole, no theta cut)
-// F = 0.
-//        break_point.push_back(new hamcSpecBrk(where, new hamcPaulBox(0.3,0.4,0.3,0.4,-0.2,0.2,-0.2,0.1)));
-// strategy 2  
-// F = 0.00012 -> 0.019 msr
-//        break_point.push_back(new hamcSpecBrk(where, new hamcPaulBox(0.081,0.105,0.035,0.040,-0.2,0.2,-0.2,0.035)));
-// strategy 3
-// F = 0.00027 -> 0.043 msr
-//        break_point.push_back(new hamcSpecBrk(where, new hamcPaulBox(0.079,0.109,0.031,0.040,-0.2,0.2,-0.2,0.031)));
-// strategy 4
-// F = 0.00063 -> 0.10 msr
-//        break_point.push_back(new hamcSpecBrk(where, new hamcPaulBox(0.060,0.110,0.0275,0.040,-0.2,0.2,-0.2,0.0275)));
-
-
-// theta > 4.4
        break_point.push_back(new hamcSpecBrk(where, new hamcPaulCollim(
-         0.032, 0.040,  0.037, 0.04,  // 1st A_T
- 	-0.040, -0.032, 0.037, 0.04,  // 2nd A_T
+         0.032, 0.040,  0.15, 0.180,  // A_T hole (low, right, and R,C of arc)
 	 0.205, 0.145,  0.15, 0.180,     // outer, inner circles
-         0.117, 0.04,       // top, right, and Champhor	 
+         0.117, 0.04,       // top, right
          0.1474, -1.88)));  // Champhor line.
-
         idx = break_point.size()-1; 
         break_point[idx]->aperture->DefineRadLen(0,collim2_radlen1);
-        break_point[idx]->aperture->DefineRadLen(1,collim2_radlen2);
       }
       break;
 
