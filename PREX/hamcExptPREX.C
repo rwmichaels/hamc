@@ -25,7 +25,8 @@ using namespace std;
  hamcExptPREX::hamcExptPREX() : hamcSingles("PREX")
 {
   dpp_cut = 0.003;
-  solid_athole = 4.6e-6;  
+  solid_athole = 1.5e-5;  
+  inatdet = 0;
   physics = new hamcPhyPREX();
   target  = new hamcTgtPREX();
 }
@@ -49,15 +50,16 @@ Int_t hamcExptPREX::Init(string sfile) {
   spectrom[0]->Init(this);
   spectrom[0]->Print();
 
-  prex_xy1 = new TH2F("prex_xy1","XY focal (main peak)",100,-1.1,0.2,100,-0.1,0.1);
-  prex_xy2 = new TH2F("prex_xy2","XY focal (A_T hole 1)",100,-1.1,0.2,100,-0.1,0.1);
-  prex_xy3 = new TH2F("prex_xy3","XY focal (A_T hole 2)",100,-1.1,0.2,100,-0.1,0.1);
-  prex_xy4 = new TH2F("prex_xy4","XY focal (A_T det 1)",100,-1.1,0.2,100,-0.1,0.1);
-  prex_xy5 = new TH2F("prex_xy5","XY focal (A_T det 2)",100,-1.1,0.2,100,-0.1,0.1);
+  prex_xy1 = new TH2F("prex_xy1","XY focal (main peak)",100,-0.7,0.2,100,-0.1,0.1);
+  prex_xy2 = new TH2F("prex_xy2","XY focal (A_T hole 1)",100,-0.7,0.2,100,-0.1,0.1);
+  prex_xy3 = new TH2F("prex_xy3","XY focal (A_T hole 2)",100,-0.7,0.2,100,-0.1,0.1);
+  prex_xy4 = new TH2F("prex_xy4","XY focal (A_T det 1)",100,-0.7,0.2,100,-0.1,0.1);
+  prex_xy5 = new TH2F("prex_xy5","XY focal (A_T det 2)",100,-0.7,0.2,100,-0.1,0.1);
 
-  prex_x1  = new TH1F("prex_x1","X focal (meters)",100,-1.1,0.2);
-  prex_x2  = new TH1F("prex_x2","X focal det 1",100,-1.1,0.2);
-  prex_x3  = new TH1F("prex_x3","X focal det 2",100,-1.1,0.2);
+  prex_x1  = new TH1F("prex_x1","X focal (meters)",200,-0.7,0.2);
+  prex_x2  = new TH1F("prex_x2","X focal det 1",200,-0.7,0.2);
+  prex_x2a  = new TH1F("prex_x2a","X focal det 1 in det",200,-0.7,0.2);
+  prex_x3  = new TH1F("prex_x3","X focal det 2",200,-0.7,0.2);
 
   sumr_pc1 = 0;
   xcnt_pc1 = 0;
@@ -72,19 +74,28 @@ void hamcExptPREX::EventAnalysis() {
 
   hamcSingles::EventAnalysis();
 
+  // Update Mar 14, 2009: there is only 1 A_T hole at the moment.  (X1)
+
   Float_t dedxX1 = 0.055;  // corresponding to 4.4 MeV, or 1.5 cm Be
   Float_t dedxX2 = 0.073;  // corresponding to 5.9 MeV, or 2.0 cm Be
 
+  Float_t ydetlo = -0.04;
+  Float_t ydethi = 0;
+
   Float_t x = event->trackout[0]->xtrans;
   Float_t y = event->trackout[0]->ytrans;
-  Float_t z = physics->GetCrossSection();
+  Float_t z = 1000.*physics->GetCrossSection();
+
+  inatdet = 0;
+
 
   if (event->inaccept == 1) {
 
     if (event->trackout[0]->ms_collim == 0) {
 
        prex_xy1->Fill(x,y,z);
-       prex_x1->Fill(x,z);
+
+       if (y > ydetlo && y < ydethi) prex_x1->Fill(x,z);  // All within Y band
 
     } else {
 
@@ -98,9 +109,12 @@ void hamcExptPREX::EventAnalysis() {
       }
 
 // A_T det 1
-      if (x-dedxX1 > -0.22 && x-dedxX1 < -0.13 && y > -0.045 && y < -0.01) {
+      if (x-dedxX1 > -0.11 && x-dedxX1 < -0.04 && y > ydetlo && y < ydethi) {
+
+        inatdet = 1;
 
         prex_xy4->Fill(x-dedxX1,y,z);
+        if (event->trackout[0]->ms_collim==1) prex_x2a->Fill(x-dedxX1,z);  // from A_T hole and in det.
 
         Int_t mtl_idx = target->GetMtlIndex();
         if (mtl_idx < 0 || mtl_idx >= target->GetNumMtl()) {
@@ -127,8 +141,9 @@ void hamcExptPREX::EventAnalysis() {
          xcnt_pc1 += 1.0;
       }
 
-// A_T det 2
-      if (x-dedxX2 > -0.30 && x-dedxX2 < -0.23 && y > -0.045 && y < -0.01) {
+// A_T det 2  (obsolete, Mar 14, 2009)
+
+      if (x-dedxX2 > -0.11 && x-dedxX2 < -0.06 && y > ydetlo && y < ydethi) {
 
         prex_xy5->Fill(x-dedxX2,y,z);
 
@@ -173,7 +188,7 @@ void hamcExptPREX::RunSummary(Int_t iteration) {
 
 
   Float_t sum_rate, sum_asy;
-  Float_t rate, asy, avg_asy, avg_rawasy;
+  Float_t rate, asy, avg_asy, rawasy, avg_rawasy;
   Float_t xcnt, asy_err;
   Float_t omega;
   Float_t pol = event->beam->polarization;
@@ -195,6 +210,7 @@ void hamcExptPREX::RunSummary(Int_t iteration) {
 
       rate = acc[imodel*num_mtl + idx]->GetRate();
       asy  = acc[imodel*num_mtl + idx]->GetAsy();
+      rawasy = pol * asy;
       omega = acc[imodel*num_mtl + idx]->GetOmega();
 
       xcnt = rate * run_time * 3600;  // run_time was in hours
@@ -206,44 +222,30 @@ void hamcExptPREX::RunSummary(Int_t iteration) {
           cout << "\nMaterial "<<idx<<"  "<<target->GetMtlName(idx)<<endl;
           cout << "Rate "<<rate<<" Hz "<<endl;
           cout << "<A>_phys = "<<asy<<endl;
-          cout << "<A>_raw = "<<asy*pol<<endl;
+          cout << "<A>_raw = "<<rawasy<<endl;
           cout << "omega "<<omega<<"  str "<<endl;
       }
 
       sum_asy += rate * asy;
       sum_rate += rate;
 
-    }
+// Here it's assumed diamond gets subtracted.
+// Evaluate sensitivity for lead (only) 
 
-    if (sum_rate == 0) {
-      cout << "\nhamcExptPREX::RunSum::ERROR: no summed rate ?"<<endl;
-    } else {
-      avg_asy = sum_asy / sum_rate;  // physics asymmetry
-      avg_rawasy = avg_asy * pol;       // raw asymmetry
-      xcnt = sum_rate * run_time * 3600;
-      asy_err = 0;   
-      if (xcnt != 0) asy_err = 1e6 / TMath::Sqrt(xcnt);
-      daa = asy_err / avg_rawasy;
-
-      if (num_phyt > 1) cout << "Physics model "<<imodel<<endl;
-      cout << endl << "Avg <A>_phy = "<<avg_asy;
-      cout << endl << "Raw measured <A>_raw = "<<avg_rawasy;
-      cout << " +/- "<<asy_err<<"   ppm "<<endl;
-      if (imodel == 0) {
+      if (target->GetMtlName(idx) == "lead") {
+        if (imodel==0) asy0 = asy;
+        xcnt = rate * run_time * 3600;
+        asy_err = 0;   
+        if (xcnt != 0) asy_err = 1e6 / TMath::Sqrt(xcnt);
+        daa = asy_err / rawasy;
+        cout << endl<<"+++++++++++++  LEAD +++++++++++++"<<endl;
         cout << "Num of counts "<<xcnt<<endl;
-        cout << "Stat precision "<<daa<<endl;
-        cout << "using polarization = "<<pol<<endl;
-        cout << "Total rate "<<sum_rate<<"  Hz "<<endl;
-        cout << "run time "<<run_time<<" hours "<<endl;
-        cout << "beam current "<<event->beam->beam_current<<" uA"<<endl; 
-        cout << "dpp cut "<<dpp_cut<<endl;
-      }
-      if (imodel==0) asy0 = avg_asy;
-      if (imodel==1) {
-          asy1 = avg_asy;
+        cout << "Stat error = "<<100*daa<<" % "<<endl;
+        if (imodel==1) {
+          asy1 = asy;
           sensi = 0;
-          if (asy0 != 0) {
-            sensi = (asy1-asy0)/asy0;          
+          if (asy1 != 0) {
+            sensi = (asy1-asy0)/asy1;          
             if (sensi < 0) sensi = -1.0*sensi;
 	  }
           drr = 999999;
@@ -251,15 +253,44 @@ void hamcExptPREX::RunSummary(Int_t iteration) {
           blowup = 1;
           if (daa != 0) blowup = (TMath::Sqrt(polerr*polerr + daa*daa))/daa;
           drrtot = drr * blowup;
-          cout << endl << "Sensitivity "<<sensi<<endl;
+          cout << "Sensitivity for lead  "<<100*sensi<<" %"<<endl;
           cout << "dR/R = "<<drr<<endl;
           cout << "blowup factor "<<blowup<<endl;
           cout << "total dR/R = "<<drrtot<<endl;
+// "Bottom line" printout (GeV, degrees, GHz, ppm, 4* %)
+	  printf("\nBL:  %4.3f  %2.0f  %5.4f  %5.4f  %4.3f  %4.3f  %4.3f  %4.3f\n",event->beam->GetE0(),GetSpectrom(0)->GetScattAngle(),1e-9*rate,rawasy,100*daa,100*sensi,100*drr,100*drrtot);
+          cout << "++++++++++++++++++++++++++++++++++++++++++"<<endl;
+	}
       }
 
+    } // Loop over materials
+
+    if (imodel==0) {
+     if (sum_rate == 0) {
+       cout << "\nhamcExptPREX::RunSum: no rate (probably low stats)"<<endl;
+     } else {
+       avg_asy = sum_asy / sum_rate;     // target-averaged physics asymmetry
+       avg_rawasy = avg_asy * pol;       // raw asymmetry
+       xcnt = sum_rate * run_time * 3600;
+       asy_err = 0;   
+       if (xcnt != 0) asy_err = 1e6 / TMath::Sqrt(xcnt);
+       daa = asy_err / avg_rawasy;
+       cout << endl << "Material - Averaged Results "<<endl;
+       cout << "<A>_phy = "<<avg_asy;
+       cout << endl << "Raw measured <A>_raw = "<<avg_rawasy;
+       cout << " +/- "<<asy_err<<"   ppm "<<endl;
+      
+       cout << "Num of counts "<<xcnt<<endl;
+       cout << "Stat precision "<<daa<<endl;
+       cout << "using polarization = "<<pol<<endl;
+       cout << "Total rate "<<sum_rate<<"  Hz "<<endl;
+       cout << "run time "<<run_time<<" hours "<<endl;
+       cout << "beam current "<<event->beam->beam_current<<" uA"<<endl; 
+       cout << "dpp cut "<<dpp_cut<<endl;
+     }
     }
 
-  }
+  }   // Loop over models
 
   if (iteration+1 == numiter) hamcExpt::RunSummary(iteration);
 
