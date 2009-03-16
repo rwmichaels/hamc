@@ -18,9 +18,9 @@ HRS_angle 6
 HRS_acceptoff 0 1 1 0 1 1 1 1 1 1 
 
 
-# Beam parameters.  Raster is in meters, typ 0.0004 (means +/- this)
+# Beam parameters.  Raster is in meters, typ 0.002 (means +/- this)
 # current in uA.
-beam  E0 1.1 E0sigma 0.00011   rastered  xraster 0.0004  yraster 0.0004 current 80
+beam  E0 1.1 E0sigma 0.00011   rastered  xraster 0.002  yraster 0.002 current 80
 
 # range of angles (scatt, azimuth) in degrees
 # phi=0 is up.  phi=90 is into HRS,  phi=180 is down.
