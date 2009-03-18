@@ -345,6 +345,8 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
     expt->inout->AddToNtuple("th0",&th0);
     expt->inout->AddToNtuple("xfpd",&xfpd);
     expt->inout->AddToNtuple("yfpd",&yfpd);
+    expt->inout->AddToNtuple("thfpd",&thfpd);
+    expt->inout->AddToNtuple("phfpd",&phfpd);
  
 
     did_init = kTRUE;
@@ -478,6 +480,8 @@ Int_t hamcTrackOut::LabToTrans() {
   dpp0 = tvect->GetDpp();
 
   htp->Fill(tanphi_t, tantheta_t);
+
+  *tvect_orig = *tvect;  // update the "origin" tvect.
 
   //  cout << "stuff "<<uparam<<"  "<<tantheta_t<<"  "<<tp_prime<<"  "<<tanphi_t<<endl;
 
