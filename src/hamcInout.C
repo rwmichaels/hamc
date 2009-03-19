@@ -131,12 +131,12 @@ Int_t hamcInout::Finish() {
   if (hFile) {
     hFile->cd();
     for (Int_t i=0; i<(Int_t)fHist.size(); i++) {
-      fHist[i]->Write();
+       fHist[i]->Write();
     }
+    if (ntup) ntup->Write();
     hFile->Write();
     hFile->Close();
   }
-  //  if (ntup) ntup->Write();
   return OK;
 }
 
@@ -285,7 +285,7 @@ Int_t hamcInout::BookNtuple() {
   string stemp = sntup.substr(0,pos);
 
   ntup  = new TNtuple("hamc","hamc ntuple",stemp.c_str());
-  fntup = new Float_t[fntptr.size()];    
+  fntup = new Float_t[fntptr.size()+1];    
   return OK;
 
 }
