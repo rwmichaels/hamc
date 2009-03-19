@@ -70,6 +70,7 @@ SRC = $(SRCDIR)/hamcExpt.C $(SRCDIR)/hamcSingles.C $(SRCDIR)/hamcPhysics.C \
       $(SRCDIR)/hamcEvent.C $(SRCDIR)/hamcSpecHRS.C \
       $(SRCDIR)/hamcTrans.C $(SRCDIR)/hamcTransMat.C \
       $(SRCDIR)/hamcAccAvg.C \
+      $(SRCDIR)/hamcTransGuido.C \
       $(SRCDIR)/hamcTransLerWarmSeptum.C \
       $(SRCDIR)/hamcTransLerColdSeptum.C \
       $(SRCDIR)/hamcTransLerHRS.C \

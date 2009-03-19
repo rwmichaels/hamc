@@ -57,13 +57,21 @@ I/O control of code
     happex.dat to control happex
 
 
+Notes on Guido Transport (Mar 2009)
 
-Known issues (Dec 2008)
+   An appropriate line in prex.dat:
 
--  Makefile might still not have all dependencies correct yet
-   (sometimes need to "make clean ; make")
+hrs_setup coldseptum uselerose useguido
 
--  The classes are generally still under rapid development
+   LeRose functions produce xfoc,yfoc, etc and "inaccept".
+   In ntuple you'll see Guido's new xgui,ygui,thgui,phgui 
+   for transport variables at the focal plane.
+   Impose the accepance cut from LeRose transport model
+   and compare the variables.
 
--  Nothing done for pvdis yet
+Issues
+
+   radcor numer is best for prex.
+   genercone radiative tail is best for happex.
+
 
