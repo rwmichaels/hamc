@@ -9,6 +9,7 @@
 #include "hamcTransLerHRS.h"
 #include "hamcTransLerColdSeptum.h"
 #include "hamcTransLerWarmSeptum.h"
+#include "hamcTransGuido.h"
 #include "hamcTrans.h"
 #include "hamcAperture.h"
 //#include "hamcDetector.h"
@@ -31,7 +32,9 @@ hamcSpecHRS::hamcSpecHRS(Int_t which, Float_t pmom, Float_t angle) : P0(pmom), c
   sept_choice   = noseptum; 
   trans_choice  = tmatrix;  
   collim_choice = nocollim;
+  use_guido = kFALSE;
   transport = 0;
+  tguido = 0;
 }
 
 hamcSpecHRS::~hamcSpecHRS() {
@@ -67,6 +70,11 @@ void hamcSpecHRS::UseMatrixTrans() {
 void hamcSpecHRS::UseLeroseTrans() {
   trans_choice = tlerose;
 }
+
+void hamcSpecHRS::UseGuidoTrans() {
+  use_guido = kTRUE;
+}
+
 
 Int_t hamcSpecHRS::Init(hamcExpt *expt) {
 
@@ -107,6 +115,15 @@ Int_t hamcSpecHRS::Init(hamcExpt *expt) {
    if (parser.IsFound("uselerose")) {
      cout << "hamcSpecHRS: Using LeRose functions"<<endl;
      UseLeroseTrans();
+   }   
+   if (parser.IsFound("useguido")) {
+     // Guido's parameterziation has no acceptance criteria.
+     // Therefore we use this as an alternative to transport
+     // but must use another model for acceptance.
+     cout << "hamcSpecHRS: Using Guido's parameterization"<<endl;
+     UseGuidoTrans();
+     tguido = new hamcTransGuido();
+     tguido->Init(this);
    }   
 
    collim2_radlen1 = 0;
@@ -232,8 +249,8 @@ void hamcSpecHRS::AddBreakPoint(Int_t where) {
     case ICOLLIM2:
       if (IsWarmSeptum()) { 
        break_point.push_back(new hamcSpecBrk(where, new hamcPaulCollim(
-         0.032, 0.040,  0.15, 0.180,  // A_T hole (low, right, and R,C of arc)
-	 0.205, 0.145,  0.15, 0.180,     // outer, inner circles
+         0.032, 0.042,  0.20, 0.229,  // A_T hole (low, right, and R,C of arc)
+	 0.205, 0.145,  0.20, 0.229,     // outer, inner circles
          0.117, 0.04,       // top, right
          0.1474, -1.88)));  // Champhor line.
         idx = break_point.size()-1; 

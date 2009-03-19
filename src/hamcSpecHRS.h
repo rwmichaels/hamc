@@ -93,6 +93,7 @@ public:
   hamcAperture *aperture;
 };
 
+class hamcTransGuido;
 
 class hamcSpecHRS {
 
@@ -105,6 +106,7 @@ class hamcSpecHRS {
      
      hamcAperture* Aperture(Int_t brk);
      hamcTrans* transport;
+     hamcTransGuido *tguido;
      Bool_t IsMultScatt(Int_t brk);
      Float_t GetRadLen(Int_t brk);
 
@@ -125,7 +127,7 @@ class hamcSpecHRS {
      void UseMatrixTrans();  // To use 1st order TRANSPORT
      void UseLeroseTrans();  // To use LeRose Transfer functions
                              // for either HRS, warm or cold septum
-
+     void UseGuidoTrans();   // To use Guido's parameterization.
 
 // Query about setup
 
@@ -135,6 +137,7 @@ class hamcSpecHRS {
      Bool_t IsWarmSeptum()  { return sept_choice==warmsept; };
      Bool_t IsMatrixTrans() { return trans_choice==tmatrix; };
      Bool_t IsLeroseTrans() { return trans_choice==tlerose; };
+     Bool_t IsGuidoTrans() { return use_guido; };
 
      Float_t GetP0() const { return P0;};
      Float_t GetP0Sigma() const { return P0_sigma; };
@@ -161,6 +164,7 @@ class hamcSpecHRS {
      static const Int_t nocollim =0;
      static const Int_t reg_coll =1;
      static const Int_t paul_coll=2;
+     Bool_t use_guido;
 
      Int_t BuildSpectrom();
      Int_t ChkIdx(Int_t idx);

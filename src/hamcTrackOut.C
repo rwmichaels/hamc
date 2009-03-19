@@ -9,6 +9,7 @@
 #include "hamcEvent.h"
 #include "hamcInout.h"
 #include "hamcSpecHRS.h"
+#include "hamcTransGuido.h"
 #include "hamcExpt.h"
 #include "TRandom.h"
 #include "Rtypes.h"
@@ -27,6 +28,8 @@ hamcTrackOut::hamcTrackOut() : hamcTrack("electron"),thetamin(0),thetamax(0),phi
   did_init = kFALSE;
   det_dist = 1.2; // meters
   trktype = "out";
+  tvect_guido = 0;
+  xgui = 0; ygui = 0; thgui = 0; phgui = 0; 
 }
 
 
@@ -35,9 +38,12 @@ hamcTrackOut::hamcTrackOut(string pid, Float_t ee, Float_t x, Float_t th, Float_
   did_init = kFALSE;
   trktype = "out";
   which_hrs = 0;
+  tvect_guido = 0;
+  xgui = 0; ygui = 0; thgui = 0; phgui = 0; 
 }
 
 hamcTrackOut::~hamcTrackOut() {
+  if (tvect_guido) delete tvect_guido;
 }
    
 
@@ -54,6 +60,14 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
   P0 = spec->GetP0();
   P0sigma = spec->GetP0Sigma();
   which_hrs = spec->which_spectrom;  // affects angle convention
+  parser.Load(expt->inout->GetStrVect("hrs_setup"));
+  Int_t use_guido=0;
+  if (parser.IsFound("useguido")) {
+    // Would rather do 'if (spec->IsGuidoTrans())' but 
+    // spec is not initialized yet.
+     use_guido=1;
+     tvect_guido = new hamcTransVect();
+  }
 
   hamcTrack::Init();
 
@@ -332,6 +346,7 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 
     // Add some variables to the event ntuple
     // These get filled at the focal plane
+
     expt->inout->AddToNtuple("pmom",&pmom);
     expt->inout->AddToNtuple("dpp",&dpp);
     expt->inout->AddToNtuple("qsq",&qsq);
@@ -339,15 +354,20 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
     expt->inout->AddToNtuple("phi",&phi);
     expt->inout->AddToNtuple("xfoc",&xtrans);
     expt->inout->AddToNtuple("yfoc",&ytrans);
-    expt->inout->AddToNtuple("xdet",&xdet);
-    expt->inout->AddToNtuple("ydet",&ydet);
     expt->inout->AddToNtuple("mscol",&ms_collim);
     expt->inout->AddToNtuple("th0",&th0);
+    expt->inout->AddToNtuple("ph0",&ph0);
     expt->inout->AddToNtuple("xfpd",&xfpd);
     expt->inout->AddToNtuple("yfpd",&yfpd);
     expt->inout->AddToNtuple("thfpd",&thfpd);
     expt->inout->AddToNtuple("phfpd",&phfpd);
- 
+
+    if (use_guido) {
+      expt->inout->AddToNtuple("xgui",&xgui);
+      expt->inout->AddToNtuple("ygui",&ygui);
+      expt->inout->AddToNtuple("thgui",&thgui);
+      expt->inout->AddToNtuple("phgui",&phgui);
+    }
 
     did_init = kTRUE;
 
@@ -427,6 +447,29 @@ Int_t hamcTrackOut::UpdateAtDet() {
 
 }
 
+Int_t hamcTrackOut::UpdateGuidoFocal(hamcSpecHRS *spec) {
+
+  // Initialize Guido's transport vector
+  if (!tvect_guido) {
+    cout << "hamcTrackOut::Error: No Guido tvect "<<endl;
+    return 0;
+  }
+
+  *tvect_guido = *tvect_orig;
+
+  // Transform the vector 
+  if (spec->IsGuidoTrans()) {
+    spec->tguido->TransForm(tvect_guido,IFOCAL);
+  }
+     
+  xgui  = tvect_guido->GetX();
+  ygui  = tvect_guido->GetY();
+  thgui = tvect_guido->GetTheta();
+  phgui = tvect_guido->GetPhi();
+
+  return OK;
+
+}
 
 Int_t hamcTrackOut::LabToTrans() {
 

@@ -13,6 +13,7 @@
 #include <map>
 
 class hamcBeam;
+class hamcSpecHRS;
 
 class hamcTrackOut : public hamcTrack {
 
@@ -30,6 +31,7 @@ class hamcTrackOut : public hamcTrack {
      Float_t Getphimin() const {return phimin;};
      Float_t Getphimax() const {return phimax;};
      Int_t UpdateAtDet();
+     Int_t UpdateGuidoFocal(hamcSpecHRS *spec);  // using Guido's focal plane variables
 
   protected:
 
@@ -48,7 +50,9 @@ class hamcTrackOut : public hamcTrack {
      Float_t dpp,qsq;
      Int_t which_hrs;
      Float_t xfpd,yfpd,thfpd,phfpd;
+     Float_t xgui,ygui,thgui,phgui;  // Guido's focal plane variables.
      Float_t det_dist;
+     hamcTransVect *tvect_guido;
 
      hamcTrackOut(const hamcTrackOut& phys);
      hamcTrackOut& operator=(const hamcTrackOut& phys);

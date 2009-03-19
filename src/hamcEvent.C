@@ -162,6 +162,9 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
 	   ysep = track->GetTransY();
 	 }
          if (brkpoint == IFOCAL) {
+           if (spect->IsGuidoTrans()) {
+	      track->UpdateGuidoFocal(spect);
+	   }
            track->UpdateAtDet();
 	 }
        }
