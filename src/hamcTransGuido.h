@@ -34,9 +34,11 @@ class hamcTransGuido : public hamcTrans {
      hamcTransGuido& operator=(const hamcTransGuido& trans);
 
 // Parameters of the transport
-     Float_t xDth,xDthth,xDph,xDphph,yDth,yDph;
-     Float_t yDphph,thDx,phDx,phDxx,phDy;
-
+     //Float_t xDth,xDthth,xDph,xDphph,yDth,yDph;
+     //Float_t yDphph,thDx,phDx,phDxx,phDy;
+     Float_t  xDph,xDdpp,xDdppdpp,xDdppdppdppdpp,xDth,xDththth,xDthththth,xDththththth,xDthdpp,xDthththph,xDththththththph,xDthdppdpp,xDthththdppdpp,xDthththdppdppdpp,xDththththdppdppdpp,xDphdpp,xDphdppdppdpp,xDthphdpp,xDthy0y0,xDthy0y0y0,xDdppy0,xDy0;
+     Float_t yDph,yDdpp,yDth,yDthth,yDththth,yDphdpp,yDphphdpp,yDy0;
+     
 #ifndef NODICT
 ClassDef (hamcTransGuido, 0)   // Guido's Model for HRS Transport
 #endif
