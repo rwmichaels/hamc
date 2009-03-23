@@ -153,9 +153,13 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
 	   }
 	 }
 
+// Things to do for specific break points
          if (brkpoint == ICOLLIM || brkpoint == ICOLLIM2) {
 	   xcol = track->GetTransX();
 	   ycol = track->GetTransY();
+	 }
+         if (brkpoint == ICOLLIM2) {
+           track->Eloss(expt, spect->Aperture(ibrk), brkpoint);
 	 }
          if (brkpoint == ISEPTIN) {
 	   xsep = track->GetTransX();

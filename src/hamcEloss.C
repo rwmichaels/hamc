@@ -12,6 +12,7 @@
 #include "hamcBeam.h"
 #include "hamcEloss.h"
 #include "hamcInout.h"
+#include "hamcSpecHRS.h"
 #include "TRandom.h"
 #include "Rtypes.h"
 #include <string>
@@ -376,9 +377,24 @@ Int_t hamcEloss::Generate(hamcExpt* expt) {
 
 }
 
+
+Float_t hamcEloss::GetDeDx(Float_t radlen, Int_t where) {
+ 
+  if (where != ICOLLIM2) return 0;  // only for 2nd collimator -- Be plug
+
+  Float_t dE = 0.1023*radlen;  // GeV per fraction
+ // e.g. 1.5 cm Be = 4.3 % RL = 0.043 -> 0.0044 GeV = 4.4 MeV
+
+  return dE;
+
+}
+
+
 Int_t hamcEloss::GenerateDeDx(hamcExpt *expt) {
-// Generate the de/dx energy losses due to ionization.
-// Model uses no straggling.
+// Generate the de/dx energy losses due to ionization
+// in the target.  For degrader collimator like Be plug
+// use GetDeDx(Float_t radlen, Int_t where);
+// Model here uses no straggling.
 // Note, this is already built into the numerical results (if 'use_numer')
 
   dE_IonizeIn = 0; 

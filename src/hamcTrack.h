@@ -135,6 +135,10 @@ class hamcTrack {
      virtual void MultScatt(const hamcAperture *app, Int_t where);
      virtual void MultScatt(Float_t radlen, Int_t where);
 
+// Apply energy loss (elsewhere from target)
+     Int_t Eloss(const hamcExpt *expt, const hamcAperture *aperture, Int_t where);
+
+
      Int_t ms_collim;      // mult. scatt. in collim ? (1/0)
 
 

@@ -1,11 +1,13 @@
 //  hamcTrack   -- A track
-//  R. Michaels  June 2008
+//  R. Michaels  Feb 2009
 
 #include "hamcTrack.h"
 #include "hamcTrans.h"
 #include "hamcSpecHRS.h"
 #include "hamcAperture.h"
 #include "hamcExpt.h"
+#include "hamcPhysics.h"
+#include "hamcEloss.h"
 #include "hamcTarget.h"
 #include "hamcBeam.h"
 #include "TRandom.h"
@@ -55,6 +57,30 @@ Int_t hamcTrack::InitMass() {
 
   return OK;
 }
+
+Int_t hamcTrack::Eloss(const hamcExpt *expt, const hamcAperture *aperture, Int_t where) {
+
+ // For an energy loss in a location other than target.
+ // The target radiation is handled in event generation.
+
+  Float_t radlen = aperture->GetRadLen(tvect->GetX(), tvect->GetY());
+
+  if (radlen <= 0) return 0;   // not in the A_T hole
+
+  Float_t dE = expt->physics->eloss->GetDeDx(radlen, where);
+
+  if (P0 != 0) {
+    Float_t P = P0*(1+tvect->GetDpp());
+    P = P - dE;  // assumes rel. electron
+    Float_t dpn = (P-P0)/P0;
+    tvect->PutDpp(dpn);
+    *tvect_orig = *tvect;   // reset the original tvect.
+  }
+
+  return OK;
+
+}
+
 
 
 Int_t hamcTrack::Init() {
@@ -180,13 +206,7 @@ void hamcTrack::MultScatt(Float_t radlen, Int_t where) {
   *tvect_orig = *tvect;
   origin = where;
 
-  if (where == ICOLLIM2) {
- 
-    ms_collim=1;
-    if (radlen > 0.05) ms_collim=2;
-    //    cout << "Mult scatt "<<where<<"  "<<radlen<<"  "<<ms_collim<<endl;
-    //    tvect->Print();
-  }
+  if (where == ICOLLIM2) ms_collim=1;
 
 }
 

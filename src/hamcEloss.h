@@ -29,6 +29,8 @@ class hamcEloss {
      Int_t GenerateNumer();
      Int_t Generate_tf1();
      Int_t GenerateDeDx(hamcExpt *expt);
+     Float_t GetDeDx(Float_t radlen, Int_t where);
+
      Float_t GetDeIntern();  
      Float_t GetDeExternIn();  
      Float_t GetDeExternOut();  
