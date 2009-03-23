@@ -14,7 +14,7 @@ class hamcAperture {  // an aperture that defines the acceptance
 public:
     hamcAperture() : xcent(0),ycent(0) {};
     virtual ~hamcAperture() {};  
-    virtual void Print() { 
+    virtual void Print() const { 
       std::cout<<"Center " << xcent << "  "<<ycent<<std::endl;
     }
     void SetCenter(Float_t x, Float_t y) { xcent=x; ycent=y; };
@@ -54,7 +54,7 @@ public:
     xlo = xl; xhi = xh, ylo = yl; yhi = yh;
   }
   ~hamcBox() { };
-  void Print() { 
+  void Print() const { 
     std::cout<<"Aperture box "<<xlo<<"  "<<xhi<<"  "<<
        ylo<<"  "<<yhi<<std::endl;
     hamcAperture::Print();
@@ -77,7 +77,7 @@ public:
     radius_squared = rad*rad;
   }
   ~hamcCircle() { };
-  void Print() { 
+  void Print() const { 
     std::cout<<"Aperture circle R = "<<TMath::Sqrt(radius_squared)<<std::endl;
     hamcAperture::Print();
   }
@@ -99,7 +99,7 @@ public:
     xlow = xlo;  xhigh = xhi;   ysize = ys;  yslope = sl;
   }
   ~hamcTrapezoid() {};
-  void Print() { 
+  void Print() const { 
     std::cout<<"Aperture trapezoid "<<xlow<<"  "<<xhigh;
     std::cout<<"  "<<ysize<<"  "<<yslope<<std::endl;
     hamcAperture::Print();
@@ -127,7 +127,7 @@ public:
     xlo2 = x2l; xhi2 = x2h, ylo2 = y2l; yhi2 = y2h;
   }
   ~hamcPaulBox() { };
-  void Print() { 
+  void Print() const { 
     std::cout<<"Paul's collimator with two boxes ";
     std::cout <<xlo1<<"  "<<xhi1<<"  "<<ylo1<<"  "<<yhi1<<std::endl;
     std::cout <<xlo2<<"  "<<xhi2<<"  "<<ylo2<<"  "<<yhi2<<std::endl;
@@ -179,7 +179,7 @@ public:
     yline1 = x1; slope1 = m1;
   }
   ~hamcPaulCollim() { };
-  void Print() { 
+  void Print() const { 
     std::cout<<"Paul's collimator with inner, outer radii"<<std::endl;
     std::cout<<"A_T hole :"<<std::endl;
     std::cout <<" (vert) X > "<<atxlo<<"  (hor) Y < "<<atyhi;
