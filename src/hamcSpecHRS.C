@@ -249,7 +249,7 @@ void hamcSpecHRS::AddBreakPoint(Int_t where) {
     case ICOLLIM2:
       if (IsWarmSeptum()) { 
        break_point.push_back(new hamcSpecBrk(where, new hamcPaulCollim(
-         0.032, 0.042,  0.20, 0.229,  // A_T hole (low, right, and R,C of arc)
+         0.032, 0.041,  0.20, 0.229,  // A_T hole (low, right, and R,C of arc)
 	 0.205, 0.145,  0.20, 0.229,     // outer, inner circles
          0.117, 0.04,       // top, right
          0.1474, -1.88)));  // Champhor line.
