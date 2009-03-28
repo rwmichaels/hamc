@@ -182,6 +182,14 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 			  &xfpd, nbin, -1, 1,
                           &yfpd, nbin, -0.2, 0.2);
 
+   expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "th0",
+                          "Theta(transport) at target",
+                          &thtgt, nbin, -0.07, 0.07);
+
+   expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "phi0",
+                          "Phi(transport) at target",
+                          &phtgt, nbin, -0.04, 0.04);
+
 // For designing the collimator
    expt->inout->BookHisto(kFALSE, kFALSE, ICOLLIM, "xycoll",
 			  "X-Y at collimator",
@@ -523,6 +531,14 @@ Int_t hamcTrackOut::LabToTrans() {
   dpp0 = tvect->GetDpp();
 
   htp->Fill(tanphi_t, tantheta_t);
+
+  Float_t th0resol = 0.0;
+  Float_t ph0resol = 0.0;
+
+  th0sm = th0 + th0resol*gRandom->Gaus();
+  ph0sm = ph0 + ph0resol*gRandom->Gaus();
+
+
 
   *tvect_orig = *tvect;  // update the "origin" tvect.
 

@@ -52,6 +52,7 @@ class hamcTrackOut : public hamcTrack {
      Float_t xfpd,yfpd,thfpd,phfpd;
      Float_t xgui,ygui,thgui,phgui;  // Guido's focal plane variables.
      Float_t det_dist;
+     Float_t ph0sm,th0sm;  // smeared by resolution
      hamcTransVect *tvect_guido;
 
      hamcTrackOut(const hamcTrackOut& phys);
