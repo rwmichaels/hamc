@@ -160,6 +160,7 @@ class hamcTrack {
      Float_t dP0_iter;     // offset in P0 (% of P0, for iteration)
      Float_t plab_x, plab_y, plab_z;   // Pmom components in lab
      Float_t xdet, ydet;   // detector frame vars. (in focal plane)
+     Float_t thtgt,phtgt;  // theta, phi at target after mult. scatt.
 
      Bool_t did_init, inaccept;     
       

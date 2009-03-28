@@ -150,7 +150,7 @@ void hamcTrack::MultScatt(const hamcExpt *expt, Int_t where) {
     Float_t zscat = expt->target->GetZScatt();
     Float_t x0rad = expt->target->GetRadLength();
     radlen = 0;
-    if (x0rad != 0) radlen = ((tlen/2)-zscat)/x0rad;
+    if (x0rad != 0) radlen = (((tlen/2)-zscat)/tlen) * x0rad;
     MultScatt(radlen, ITARGET);     
 
   }
@@ -207,6 +207,14 @@ void hamcTrack::MultScatt(Float_t radlen, Int_t where) {
   origin = where;
 
   if (where == ICOLLIM2) ms_collim=1;
+
+  if (where == ITARGET) {
+    thtgt = tvect->GetTheta();
+    phtgt = tvect->GetPhi();
+    // Resolution smearing
+    thtgt = thtgt + 0.001*gRandom->Gaus();
+    phtgt = phtgt + 0.001*gRandom->Gaus();
+  }
 
 }
 
