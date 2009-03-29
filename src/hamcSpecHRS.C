@@ -236,7 +236,7 @@ void hamcSpecHRS::AddBreakPoint(Int_t where) {
         if (IsWarmSeptum()) {
          break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.088,0.382,-0.12,0.12)));
 	} else {
-	  break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.3485,-0.2156,-0.11,0.11)));  // cold septum
+	  break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.30,-0.2156,-0.10,0.10)));  // cold septum
 	}
       } else { // HRS alone  collimator: (horiz)62.9 mm x  (vert)121.8 mm 
 	 break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.0609,0.0609,-0.03145,0.03145)));  
