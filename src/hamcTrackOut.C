@@ -230,8 +230,8 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
                             &xtrans, nbin,-ybox,ybox);
    expt->inout->BookHisto(kFALSE, kTRUE, ICOLLIM, "xycola", 
 		   "Transport X-Y inside collimator acceptance", 
-                            &ytrans, nbin,-xbox,xbox,
-                            &xtrans, nbin,-ybox,ybox);
+			  &ytrans, nbin,-0.2,0.2,
+			  &xtrans, nbin,-0.35,-0.17);
 
    // But inside septum, X,Y are rotated 90, so put them back ...
    expt->inout->BookHisto(kFALSE, kFALSE, ISEPTIN, "xysepi", 
@@ -369,6 +369,11 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
     expt->inout->AddToNtuple("yfpd",&yfpd);
     expt->inout->AddToNtuple("thfpd",&thfpd);
     expt->inout->AddToNtuple("phfpd",&phfpd);
+// at tgt, after mult. scatt. and resol. smearing -- to compare to data
+    expt->inout->AddToNtuple("thtgt",&thtgt);  
+    expt->inout->AddToNtuple("phtgt",&phtgt);
+    
+    //    expt->inout->AddToNtuple("thchk",&thchk);
 
     if (use_guido) {
       expt->inout->AddToNtuple("xgui",&xgui);
@@ -538,6 +543,20 @@ Int_t hamcTrackOut::LabToTrans() {
   th0sm = th0 + th0resol*gRandom->Gaus();
   ph0sm = ph0 + ph0resol*gRandom->Gaus();
 
+  // Cross-check of scattering angle 
+  Double_t cthchk;
+  Double_t xdum1,xdum2;
+  xdum1 = (xsign*stc*ph0);
+  xdum2 = TMath::Sqrt(1 + th0*th0 + ph0*ph0);
+  cthchk = (ctc - xdum1)/xdum2;
+  thchk = TMath::ACos(cthchk);
+
+  if (debug) {
+    cout << "whichhrs "<<which_hrs<<"  "<<RIGHTHRS<<endl;
+    cout << "chk angle "<<th0<<"  "<<ph0<<"  "<<ctc<<"  "<<stc;
+    cout <<"  "<<xsign<<"  "<<xdum1<<"  "<<xdum2<<endl;
+    cout <<"  "<<cthchk<<"  =======>  " << thchk << "  "<<theta <<endl;
+  }
 
 
   *tvect_orig = *tvect;  // update the "origin" tvect.

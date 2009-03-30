@@ -178,6 +178,10 @@ void hamcTrack::MultScatt(Float_t radlen, Int_t where) {
 // Resets track origin to present location.
 // The transport model must provide transport from this new origin.
 
+  Int_t use_resol = 1;
+  Int_t use_mscat = 1;
+
+
   if (P0 == 0) {   
     cout << "hamcTrack::MultScatt: ERROR: P0 = 0 ?"<<endl;
     return;
@@ -193,7 +197,7 @@ void hamcTrack::MultScatt(Float_t radlen, Int_t where) {
   } else {
     dtheta = theta_sigma * gRandom->Gaus();
   }
-  tvect->AddToTheta(dtheta);
+  if (use_mscat) tvect->AddToTheta(dtheta);
 
   prob = gRandom->Rndm();
   if (prob < 0.02) {
@@ -201,7 +205,7 @@ void hamcTrack::MultScatt(Float_t radlen, Int_t where) {
   } else {
     dtheta = theta_sigma * gRandom->Gaus();
   }
-  tvect->AddToPhi(dtheta);
+  if (use_mscat) tvect->AddToPhi(dtheta);
 
   *tvect_orig = *tvect;
   origin = where;
@@ -212,8 +216,10 @@ void hamcTrack::MultScatt(Float_t radlen, Int_t where) {
     thtgt = tvect->GetTheta();
     phtgt = tvect->GetPhi();
     // Resolution smearing
-    thtgt = thtgt + 0.001*gRandom->Gaus();
-    phtgt = phtgt + 0.001*gRandom->Gaus();
+    if (use_resol) {
+      thtgt = thtgt + 0.001*gRandom->Gaus();
+      phtgt = phtgt + 0.001*gRandom->Gaus();
+    }
   }
 
 }
