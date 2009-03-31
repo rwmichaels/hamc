@@ -406,7 +406,7 @@ Int_t hamcTrackOut::Generate(hamcExpt *expt) {
   hamcBeam *beam = expt->event->beam;
 
 // Initial tvect X,Y,Z is tied to the beam
-// X is vertical up, Y is horizontal.
+// X is vertical up, Y is horizontal, positive to right.
 // tvect units are meters.  
 // (And the "angles" are actually tan(theta), tan(phi),
 //    so those are approximately radians).
@@ -418,7 +418,7 @@ Int_t hamcTrackOut::Generate(hamcExpt *expt) {
     zb = beam->GetTransZ();
     xt = xb;
     yt = yb * TMath::Cos(theta_central);
-    zt = zb + yb * TMath::Sin(theta_central);
+    zt = zb * TMath::Cos(theta_central) + yb * TMath::Sin(theta_central); 
     tvect->PutX(xt);
     tvect->PutY(yt);
     tvect->PutZ(zt);
