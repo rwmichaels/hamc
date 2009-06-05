@@ -510,7 +510,6 @@ Int_t hamcTrackOut::LabToTrans() {
 // for L-HRS positive phi_t is away from beam
 
   Int_t ldebug=0;
-  Int_t useold=0;   // test to use old or new angles 
 
   Float_t stc, ctc, ttc, sts, cts, sps, cps;
   stc = TMath::Sin(theta_central);
@@ -521,55 +520,21 @@ Int_t hamcTrackOut::LabToTrans() {
   sps = TMath::Sin(phi);
   cps = TMath::Cos(phi);
 
-  Float_t uparam = stc*sps*sts + ctc*cts;
+  Float_t xsign = 1.0;
+  if (which_hrs == LEFTHRS) xsign = -1.0;  // sign convention, see above
 
-
-  if (uparam == 0) {
-    cout << "hamcTrackOut:: ERROR: uparam = 0 !"<<endl;
-    tvect->Clear();
-    return ERROR;
-  }
-
-
-// The "old" variables (apparently wrong) --------------
-
-    Float_t tht_old,pht_old;
-
-// The -1.0 is to obey sign convention, see above.
-    tht_old = -1.0*cps*sts / uparam;
-
-    Float_t tp_prime = sps*sts / uparam;
-
-// Need to subtract the central scattering angle:
-    Float_t xsign = 1.0;
-    if (which_hrs == RIGHTHRS) xsign = -1.0;  // sign convention, see above
-    pht_old = xsign*(tp_prime - ttc) / (1 + tp_prime*ttc);
-
-// Cross-check of scattering angle 
-    Double_t cthchk;
-    Double_t xdum1,xdum2;
-    xdum1 = (xsign*stc*pht_old);
-    xdum2 = TMath::Sqrt(1 + tht_old*tht_old + pht_old*pht_old);
-    cthchk = (ctc - xdum1)/xdum2;
-    thchk = TMath::ACos(cthchk);
-
-// end of "old"  ----------------------------------
-
-// The following is "new" from D. Wang
+// The following 3 lines are from D. Wang (new, June 2009)
+// tanphprime is slightly different and correct now.
 
   Float_t tanphprime = sts*sps/cts;
-  Float_t tanphi_t = ( ttc - tanphprime)/(1 + ttc * tanphprime); 
+  Float_t tanphi_t = xsign * ( ttc - tanphprime)/(1 + ttc * tanphprime); 
   Float_t tantheta_t = -1. *  (sts * cps) * TMath::Sqrt( 1 + tanphi_t * tanphi_t)/(TMath::Sqrt(cts * cts + sts*sts*sps*sps));
 
-  if (useold) {
-      tvect->PutTheta(tht_old);
-      tvect->PutPhi(pht_old);      
-  } else {
-      tvect->PutTheta(tantheta_t);
-      tvect->PutPhi(tanphi_t);      
-  }
+  tvect->PutTheta(tantheta_t);
+  tvect->PutPhi(tanphi_t);      
 
-  Float_t scat_angle = TMath::ACos(( ctc + fabs(stc)*tanphi_t)/(TMath::Sqrt(1 + tanphi_t * tanphi_t + tantheta_t * tantheta_t)));
+// Check of scattering angle
+  Float_t scat_angle = TMath::ACos(( ctc + xsign*fabs(stc)*tanphi_t)/(TMath::Sqrt(1 + tanphi_t * tanphi_t + tantheta_t * tantheta_t)));
 
   th0 = tvect->GetTheta();
   ph0 = tvect->GetPhi();
@@ -591,12 +556,12 @@ Int_t hamcTrackOut::LabToTrans() {
   if (ldebug) {
     cout << "\n\nDebug LabToTrans for whichhrs ";
     cout <<  which_hrs<<"  "<<RIGHTHRS<<endl;
-    cout << "Old and new transport angles "<<endl;
-    cout << "tan(theta) = "<<tht_old<<"   "<<tantheta_t<<endl;
-    cout << "tan(phi)   = "<<pht_old<<"   "<<tanphi_t<<endl;
-    cout << "Scat angle chk = "<<theta<<"  "<<scat_angle<<"  "<<thchk<<endl;
+    cout << "Transport angles "<<endl;
+    cout << "tan(theta) = "<<tantheta_t<<endl;
+    cout << "tan(phi)   = "<<tanphi_t<<endl;
+    cout << "Scat angle chk = "<<theta<<"  "<<scat_angle<<endl;
     cout << "Scat angle (degr) = "<<180*theta/PI<<"  ";
-    cout << 180*scat_angle/PI<<"  "<<180*thchk/PI<<endl;
+    cout << 180*scat_angle/PI<<endl;
     cout << endl<<"LabToTrans print"<<endl;
     tvect->Print();
   }
