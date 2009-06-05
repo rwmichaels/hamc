@@ -15,7 +15,6 @@
 #include "Rtypes.h"
 #include <string>
 #include <vector>
-#include <cmath>
 
 using namespace std;
 
@@ -132,11 +131,12 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
                 &theta, nbin, 0.8*thetamin,1.2*thetamax);
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "th4", 
 		"Theta at focal plane weighted by crsec, in accept", 
-			  &theta, nbin, 0.8*thetamin,1.2*thetamax);
-   //   expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "mom", 
-   //        "Momentum in HRS", &pmom, nbin, 0.5*P0,1.02*P0);
-     expt->inout->BookHisto(kTRUE, kFALSE, ITARGET, "mom2",
-		"Momentum weighted at target", &pmom, nbin, 0.9*P0, 1.1*P0);
+                &theta, nbin, 0.8*thetamin,1.2*thetamax);
+
+   expt->inout->BookHisto(kFALSE, kFALSE, ITARGET, "ph", 
+		"Phi at target", &phi, nbin, -0.2,1.2*phimax);
+   expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "mom", 
+	        "Momentum in HRS", &pmom, nbin, 0.5*P0,1.05*P0);
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "momu", 
 	        "Momentum in HRS", &pmom, nbin, 0.5*P0,1.1*P0);
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "momz", 
@@ -145,6 +145,8 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 	   "Momentum in HRS (hamc)", &pmom, 200, 1.01, 1.07);
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "momb2", 
 	   "Momentum in HRS (hamc)", &pmom, 200, 3.0, 3.17);
+   expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "mombI", 
+	   "Momentum in HRS (hamc)", &pmom, 200, 2890, 3.180);
 
 
 // Note, th0,ph0, etc are the initial values right after scattering.
@@ -215,9 +217,6 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
    htp = new TH2F("htp","Generated Theta-Phi",
               100,-0.3,0.3,100,-0.3,0.3);
 
-   xyb4trans = new TH2F("xyb4trans", "X-Y before transport", 100, -0.08, 0.08, 100, -0.008, 0.008);
-   tpb4trans = new TH2F("tpb4trans", "theta-phi before transport", 100, -0.3, 0.3, 100, -0.3, 0.3);
-   dpb4trans = new TH1F("dpb4trans", "dp before transport", 100, -0.1, 0.1);
 
    Float_t xbox = 0.8;
    Float_t ybox = 0.8;
@@ -269,9 +268,20 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
    expt->inout->BookHisto(kFALSE, kFALSE, IDIPIN, "xydipi", 
 		      "Transport X-Y at dipole entrance", 
  			    &ytrans, nbin,-1,1,
-                            &xtrans, nbin,-4,4);
+                            &xtrans, nbin,-6,-4);
+
    expt->inout->BookHisto(kFALSE, kTRUE, IDIPIN, "xydipia", 
 		   "Transport X-Y inside dipole-in acceptance", 
+			  &ytrans, nbin,-1,1,
+			  &xtrans, nbin,-6,-4);
+
+   expt->inout->BookHisto(kFALSE, kFALSE, IDIPIN, "xydipsi", 
+		      "(std) Trans X-Y at dipole entrance", 
+ 			    &ytrans, nbin,-1,1,
+                            &xtrans, nbin,-1,1);
+
+   expt->inout->BookHisto(kFALSE, kTRUE, IDIPIN, "xydipsia", 
+		   "(std) Trans X-Y inside dipole-in acceptance", 
 			  &ytrans, nbin,-1,1,
 			  &xtrans, nbin,-1,1);
 
@@ -417,14 +427,9 @@ Int_t hamcTrackOut::Generate(hamcExpt *expt) {
     xb = beam->GetTransX();  
     yb = beam->GetTransY();
     zb = beam->GetTransZ();
-
-    xt = -1. * xb;
-    yt = -1. * (yb * TMath::Cos(theta_central) - zb * TMath::Sin(theta_central));
-    zt = zb * TMath::Cos(theta_central) + yb * TMath::Sin(theta_central);
-//     xt = xb;
-//     yt = yb * TMath::Cos(theta_central);
-//     zt = zb * TMath::Cos(theta_central) + yb * TMath::Sin(theta_central); 
-
+    xt = xb;
+    yt = yb * TMath::Cos(theta_central);
+    zt = zb * TMath::Cos(theta_central) + yb * TMath::Sin(theta_central); 
     tvect->PutX(xt);
     tvect->PutY(yt);
     tvect->PutZ(zt);
@@ -432,9 +437,8 @@ Int_t hamcTrackOut::Generate(hamcExpt *expt) {
     tvect->Clear();
   }
 
-  if(expt->physics->kine->Generate(expt)==-1)
-    return -1;
- 
+  expt->physics->kine->Generate(expt);
+
   theta = expt->physics->kine->theta;
   phi = expt->physics->kine->phi;
   energy = expt->physics->kine->eprime;
@@ -504,7 +508,10 @@ Int_t hamcTrackOut::LabToTrans() {
 // phi_t sign depends on which spectrometer.
 // for R-HRS positive phi_t is towards beam, and 
 // for L-HRS positive phi_t is away from beam
- 
+
+  Int_t ldebug=0;
+  Int_t useold=0;   // test to use old or new angles 
+
   Float_t stc, ctc, ttc, sts, cts, sps, cps;
   stc = TMath::Sin(theta_central);
   ctc = TMath::Cos(theta_central);
@@ -514,33 +521,53 @@ Int_t hamcTrackOut::LabToTrans() {
   sps = TMath::Sin(phi);
   cps = TMath::Cos(phi);
 
-//   Float_t uparam = stc*sps*sts + ctc*cts;
+  Float_t uparam = stc*sps*sts + ctc*cts;
 
-//   if (uparam == 0) {
-//     cout << "hamcTrackOut:: ERROR: uparam = 0 !"<<endl;
-//     tvect->Clear();
-//     return ERROR;
-//   }
 
-// // The -1.0 is to obey sign convention, see above.
-//   Float_t tantheta_t = -1.0*cps*sts / uparam;
+  if (uparam == 0) {
+    cout << "hamcTrackOut:: ERROR: uparam = 0 !"<<endl;
+    tvect->Clear();
+    return ERROR;
+  }
 
-//   Float_t tp_prime = sps*sts / uparam;
 
-// // Need to subtract the central scattering angle:
-//   Float_t xsign = 1.0;
-//   if (which_hrs == RIGHTHRS) xsign = -1.0;  // sign convention, see above
-//   Float_t tanphi_t = xsign*(tp_prime - ttc) / (1 + tp_prime*ttc);
+// The "old" variables (apparently wrong) --------------
 
-//new transform equations, implemented by dwang
+    Float_t tht_old,pht_old;
+
+// The -1.0 is to obey sign convention, see above.
+    tht_old = -1.0*cps*sts / uparam;
+
+    Float_t tp_prime = sps*sts / uparam;
+
+// Need to subtract the central scattering angle:
+    Float_t xsign = 1.0;
+    if (which_hrs == RIGHTHRS) xsign = -1.0;  // sign convention, see above
+    pht_old = xsign*(tp_prime - ttc) / (1 + tp_prime*ttc);
+
+// Cross-check of scattering angle 
+    Double_t cthchk;
+    Double_t xdum1,xdum2;
+    xdum1 = (xsign*stc*pht_old);
+    xdum2 = TMath::Sqrt(1 + tht_old*tht_old + pht_old*pht_old);
+    cthchk = (ctc - xdum1)/xdum2;
+    thchk = TMath::ACos(cthchk);
+
+// end of "old"  ----------------------------------
+
+// The following is "new" from D. Wang
 
   Float_t tanphprime = sts*sps/cts;
   Float_t tanphi_t = ( ttc - tanphprime)/(1 + ttc * tanphprime); 
   Float_t tantheta_t = -1. *  (sts * cps) * TMath::Sqrt( 1 + tanphi_t * tanphi_t)/(TMath::Sqrt(cts * cts + sts*sts*sps*sps));
 
-
-  tvect->PutTheta(tantheta_t);
-  tvect->PutPhi(tanphi_t);      
+  if (useold) {
+      tvect->PutTheta(tht_old);
+      tvect->PutPhi(pht_old);      
+  } else {
+      tvect->PutTheta(tantheta_t);
+      tvect->PutPhi(tanphi_t);      
+  }
 
   Float_t scat_angle = TMath::ACos(( ctc + fabs(stc)*tanphi_t)/(TMath::Sqrt(1 + tanphi_t * tanphi_t + tantheta_t * tantheta_t)));
 
@@ -559,28 +586,18 @@ Int_t hamcTrackOut::LabToTrans() {
   th0sm = th0 + th0resol*gRandom->Gaus();
   ph0sm = ph0 + ph0resol*gRandom->Gaus();
 
-  // Cross-check of scattering angle 
-  Double_t cthchk;
-  Double_t xdum1,xdum2;
-  xdum1 = (xsign*stc*ph0);
-  xdum2 = TMath::Sqrt(1 + th0*th0 + ph0*ph0);
-  cthchk = (ctc - xdum1)/xdum2;
-  thchk = TMath::ACos(cthchk);
-
-  if (debug) {
-    cout << "whichhrs "<<which_hrs<<"  "<<RIGHTHRS<<endl;
-    cout << "chk angle "<<th0<<"  "<<ph0<<"  "<<ctc<<"  "<<stc;
-    cout <<"  "<<xsign<<"  "<<xdum1<<"  "<<xdum2<<endl;
-    cout <<"  "<<cthchk<<"  =======>  " << thchk << "  "<<theta <<endl;
-  }
-
-
   *tvect_orig = *tvect;  // update the "origin" tvect.
 
-  //  cout << "stuff "<<uparam<<"  "<<tantheta_t<<"  "<<tp_prime<<"  "<<tanphi_t<<endl;
-
-  if (debug) {
-    cout << "LabToTrans print"<<endl;
+  if (ldebug) {
+    cout << "\n\nDebug LabToTrans for whichhrs ";
+    cout <<  which_hrs<<"  "<<RIGHTHRS<<endl;
+    cout << "Old and new transport angles "<<endl;
+    cout << "tan(theta) = "<<tht_old<<"   "<<tantheta_t<<endl;
+    cout << "tan(phi)   = "<<pht_old<<"   "<<tanphi_t<<endl;
+    cout << "Scat angle chk = "<<theta<<"  "<<scat_angle<<"  "<<thchk<<endl;
+    cout << "Scat angle (degr) = "<<180*theta/PI<<"  ";
+    cout << 180*scat_angle/PI<<"  "<<180*thchk/PI<<endl;
+    cout << endl<<"LabToTrans print"<<endl;
     tvect->Print();
   }
 
