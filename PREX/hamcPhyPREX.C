@@ -48,6 +48,57 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
 
   hamcPhysics::Init(expt);
 
+  if (histo_test) {
+
+    hpph1 = new TH1F("hpph1","Horowitz Lookup Crsec  vs  Mott*FF",2000,3,9);
+    hpph2 = new TH1F("hpph2","Mott * FF (1.05 GeV)",2000,3,9);
+    hpph3 = new TH1F("hpph3","Cross Section (0.2482 GeV)",2000,17,95);
+    hpph4 = new TH1F("hpph4","Cross Section (0.502 GeV)",2000,12,42);
+    hpph5 = new TH2F("hpph5","Percent diff vs angle",100,3,9,100,-10,2);
+
+    Float_t energy[4];
+    energy[0] = 1.05;
+    energy[1] = 1.05;
+    energy[2] = 0.2482;
+    energy[3] = 0.502;
+
+    Float_t theta_rad, theta_degr;
+
+    for (Int_t iene = 0; iene<4; iene++) {
+
+    for (Int_t iang=0; iang<2000; iang++) {
+
+      theta_degr = 3 + 125*(0.5+(Float_t)iang)/2000;
+      theta_rad = 3.1415926*theta_degr/180.0;
+
+      CrossSection(energy[iene],theta_rad,0);
+
+      Float_t frecoil = 1 + (energy[iene]/195.)*(1-TMath::Cos(theta_rad));
+      Float_t eprime = energy[iene]/frecoil;
+      qsq = 2*energy[iene]*eprime*(1-TMath::Cos(theta_rad));
+      Float_t crsec2 = CalculateCrossSection(0, energy[iene], theta_degr);
+
+      if (iene==0) hpph1->Fill(theta_degr,crsec);
+      if (iene==1) hpph2->Fill(theta_degr,crsec2);
+      if (iene==2) hpph3->Fill(theta_degr,crsec2);
+      if (iene==3) hpph4->Fill(theta_degr,crsec2);
+      if (iene==1 && theta_degr>3 && theta_degr<9) {
+	Float_t diff = crsec2 - crsec;
+        if (crsec != 0) {
+	  diff = 100*diff/crsec;
+	} else {
+          diff = -5;
+	}
+        cout << "crsec "<<"  "<<theta_degr<<"  "<<crsec<<"  "<<crsec2<<"  "<<diff<<endl;
+
+        hpph5->Fill(theta_degr,diff);
+      }
+
+    }
+    }
+  }
+    
+
   return 1;
 }
 
@@ -259,7 +310,7 @@ Float_t hamcPhyPREX::CalculateCrossSection(Int_t nuc, Float_t energy, Float_t an
   // nuc = 1  --> C12
   // no other choices !
 
-  // energy in GeV,  angle in radians.
+  // energy in GeV,  angle in degrees.
 
   if (nuc != 0 && nuc != 1) {
     cout << "hamcPhyPREX::ERROR: invalid nucleus choice "<<endl;
@@ -283,7 +334,7 @@ Float_t hamcPhyPREX::CalculateCrossSection(Int_t nuc, Float_t energy, Float_t an
   }
 
   mott = pow(((znuc*0.197*cos(halfangle_rad))/137),2)/ (400*pow(energy,2)*sin4);
-   
+
   // qsq comes from hamcKine 
 
   if (nuc == 0) {  // lead
@@ -291,7 +342,7 @@ Float_t hamcPhyPREX::CalculateCrossSection(Int_t nuc, Float_t energy, Float_t an
     vector<Float_t>::const_iterator iterQsq = upper_bound(qsq_row.begin(), qsq_row.end(), qsq); //search for the first value of qsq which is larger or equal than actual   
     int indxQsq = iterQsq - qsq_row.begin(); 
 
-    if (indxQsq <= 0 || indxQsq >= qsq_row.size()) return 0;
+    if (indxQsq <= 0 || indxQsq >= (Int_t)qsq_row.size()) return 0;
     
     Float_t qsq1, qsq2, form_factor1, form_factor2;
     qsq1 =  qsq_row.at(indxQsq);
@@ -306,7 +357,7 @@ Float_t hamcPhyPREX::CalculateCrossSection(Int_t nuc, Float_t energy, Float_t an
     vector<Float_t>::const_iterator iterQsq = upper_bound(c12qsq_row.begin(), c12qsq_row.end(), qsq); //search for the first value of qsq which is larger or equal than actual   
     int indxQsq = iterQsq - c12qsq_row.begin(); 
 
-    if (indxQsq <= 0 || indxQsq >= qsq_row.size()) return 0;
+    if (indxQsq <= 0 || indxQsq >= (Int_t)qsq_row.size()) return 0;
 
     Float_t qsq1, qsq2, form_factor1, form_factor2;
     qsq1 =  c12qsq_row.at(indxQsq);

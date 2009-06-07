@@ -7,6 +7,7 @@
 #include "Rtypes.h"
 #include "hamcPhysics.h"
 #include "TH1F.h"
+#include "TH2F.h"
 #include <vector>
 #include <string>
 #include <map>
@@ -68,6 +69,10 @@ class hamcPhyPREX : public hamcPhysics {
 
      vector<Float_t> angle_row;  //to save the angle values of Horowitch table
      vector<Float_t> energy_row; //to save the energy values 
+
+     TH1F *hpph1,*hpph2,*hpph3,*hpph4;
+     TH2F *hpph5;
+     static const Int_t histo_test=1; // to test(1) or not(0) this code
 
 
 #ifndef NODICT
