@@ -11,6 +11,7 @@
 #include "hamcTrack.h"
 #include "hamcInout.h"
 #include "hamcKine.h"
+#include "THaString.h"
 #include "Rtypes.h"
 #include "TMath.h"
 #include "TRandom.h"
@@ -33,20 +34,83 @@ hamcPhyPREX::hamcPhyPREX() : hamcPhysics()
 {
   phy_name = "PREX physics";
   scatt_process = "elastic";
+  whichmodel = HORPB;  // default
   do_radiate = kTRUE;
-  num_models = 2;  // number of physics models for asymmetry.
+  num_models = 2;  // if =2 we're considering stretched vs unstretched R_N
 }
 
 
 hamcPhyPREX::~hamcPhyPREX() { }
 
+Int_t hamcPhyPREX::SetModel(Int_t modeln) {
+  if (modeln >= HORPB && modeln <= NL3M05) {
+    whichmodel = modeln;
+  } else {
+    cout << "hamcPhyPREX::Warning: model # outside range"<<endl;
+    return ERROR;
+  }
+  num_models = 1;
+  if (modeln == HORPB) num_models = 2; // considering stretched vs unstretched R_N
+  return OK;
+}
+
 
 Int_t hamcPhyPREX::Init(hamcExpt* expt) {
 
+  hamcPhysics::Init(expt);
+
+  THaString strin;
+  vector<string> sdata; 
+  sdata = expt->inout->GetStrVect("PREX_model");
+  if (sdata.size()>=1) {
+    strin = sdata[0];
+    if (strin.CmpNoCase("horpb")==0) {
+      cout << "Using HORPB (original) model from Horowitz "<<endl;
+      cout << "With stretching of R_N by 1%"<<endl;
+      whichmodel = HORPB;
+      num_models = 2;
+    }
+    if (strin.CmpNoCase("si")==0) {
+      cout << "Using SI model from Horowitz "<<endl;
+      whichmodel = SI;
+      num_models = 1;
+    }
+    if (strin.CmpNoCase("siii")==0) {
+      cout << "Using SIII model from Horowitz "<<endl;
+      whichmodel = SIII;
+      num_models = 1;
+    }
+    if (strin.CmpNoCase("sly4")==0) {
+      cout << "Using SLY4 model from Horowitz "<<endl;
+      whichmodel = SLY4;
+      num_models = 1;
+    }
+    if (strin.CmpNoCase("fsu")==0) {
+      cout << "Using FSU-Gold model from Horowitz "<<endl;
+      whichmodel = FSU;
+      num_models = 1;
+    }
+    if (strin.CmpNoCase("nl3")==0) {
+      cout << "Using NL3 model from Horowitz "<<endl;
+      whichmodel = NL3;
+      num_models = 1;
+    }
+    if (strin.CmpNoCase("nl3m05")==0) {
+      cout << "Using NL3M05 model from Horowitz "<<endl;
+      whichmodel = NL3M05;
+      num_models = 1;
+    }
+    if (strin.CmpNoCase("nl3p06")==0) {
+      cout << "Using NL3P06 model from Horowitz "<<endl;
+      whichmodel = NL3P06;
+      num_models = 1;
+    }
+
+  }
+
+
   LoadFiles();  // Load the lookup files
   didinit = kTRUE;
-
-  hamcPhysics::Init(expt);
 
   if (histo_test) {
 
@@ -89,7 +153,7 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
 	} else {
           diff = -5;
 	}
-        cout << "crsec "<<"  "<<theta_degr<<"  "<<crsec<<"  "<<crsec2<<"  "<<diff<<endl;
+	//        cout << "crsec "<<"  "<<theta_degr<<"  "<<crsec<<"  "<<crsec2<<"  "<<diff<<endl;
 
         hpph5->Fill(theta_degr,diff);
       }
@@ -127,13 +191,13 @@ Int_t hamcPhyPREX::Generate(hamcExpt *expt) {
    CrossSection(energy, theta, 0);
 
 // Compute the PV asymmetry 
-   Asymmetry(energy, theta,1);  // stretched
+   if (num_models > 1) Asymmetry(energy, theta,1);  // stretched
    Asymmetry(energy, theta,0);  // unstretched (call this last)
 
    return OK;
 }
 
-Float_t hamcPhyPREX::GetCrossSection(Int_t imodel) const {
+Float_t hamcPhyPREX::GetCrossSection(Int_t istretch) const {
 // No model dependence yet (Jan 2009)
 
   return crsec;
@@ -141,9 +205,9 @@ Float_t hamcPhyPREX::GetCrossSection(Int_t imodel) const {
 }
 
 
-Float_t hamcPhyPREX::GetAsymmetry(Int_t imodel) const {
+Float_t hamcPhyPREX::GetAsymmetry(Int_t istretch) const {
 
-  if (imodel == 1) return asy1;
+  if (istretch == 1) return asy1;
   return asy0;
 
 }
@@ -289,10 +353,12 @@ Int_t hamcPhyPREX::LoadFiles() {
   crsc_table_temp.clear();
   asymmetry_table_temp.clear();
 
-  stretch = 1; 
-  LoadHorowitzTable(crsc_table_temp, asymmetry_table_temp,stretch);
-  crsc_tables.push_back(crsc_table_temp);
-  asymmetry_tables.push_back(asymmetry_table_temp);
+  if (whichmodel == HORPB) {  
+    stretch = 1; 
+    LoadHorowitzTable(crsc_table_temp, asymmetry_table_temp,stretch);
+    crsc_tables.push_back(crsc_table_temp);
+    asymmetry_tables.push_back(asymmetry_table_temp);
+  }
 
   LoadFormFactorTable();
 
@@ -470,16 +536,28 @@ Int_t hamcPhyPREX::LoadHorowitzTable(vector<vector<Float_t> >& crsc_table, vecto
 
   /*Check wich filename*/
   char* filename;
-  if (stretch==0) {
-    filename="horpb.dat";
-  }  else {
-    filename="horpb1.dat";
-    }
+
+  if (whichmodel == HORPB) {
+     if (stretch==0) {
+       filename="./PREX/horpb.dat";
+     }  else {
+       filename="./PREX/horpb1.dat";
+     }
+  }
+  if (whichmodel == SI) filename = "./PREX/si.dat";
+  if (whichmodel == NL3P06) filename = "./PREX/nl3p06.dat";
+  if (whichmodel == SLY4) filename = "./PREX/sly4.dat";
+  if (whichmodel == SIII) filename = "./PREX/siii.dat";
+  if (whichmodel == FSU) filename = "./PREX/fsu.dat";
+  if (whichmodel == NL3) filename = "./PREX/nl3.dat";
+  if (whichmodel == NL3M05) filename = "./PREX/nl3m05.dat";
+
+  cout << "PREX: using lookup file = "<<whichmodel<<"  "<<filename<<endl;
 
   fd=fopen(filename, "r");
   if (fd==NULL) {
-    printf("ERROR: file %s does not exist \n", filename);
-    printf("Bye bye. \n");
+    printf("hamcPhyPREX::ERROR: file %s does not exist \n", filename);
+    printf("Bye bye !! \n");
     exit(0);
   }
 
@@ -501,8 +579,14 @@ Int_t hamcPhyPREX::LoadHorowitzTable(vector<vector<Float_t> >& crsc_table, vecto
 	crsc_row.clear(); //empty temporary variable
 	asymmetry_row.clear();
     } else {
-      sscanf(strin, "%f %f %f %f %f %f",
+      // Format depends on the model
+      if (whichmodel==HORPB || whichmodel==FSU) {
+         sscanf(strin, "%f %f %f %f %f %f",
 	     &angle, &cross_section, &ignore1, &asymmetry, &ignore2, &ignore3);
+      } else {
+        sscanf(strin, "%f %f %f ",
+	       &angle, &cross_section, &asymmetry);
+      }
       if (didWriteAngle==0) {
 	angle_row.push_back(angle);	
       }

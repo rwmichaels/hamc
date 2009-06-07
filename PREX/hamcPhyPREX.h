@@ -12,6 +12,16 @@
 #include <string>
 #include <map>
 
+#define NOMODEL  0
+#define HORPB    1
+#define SI       2
+#define NL3P06   3
+#define SLY4     4
+#define SIII     5
+#define FSU      6
+#define NL3      7
+#define NL3M05   8
+
 using namespace std;
 
 class hamcExpt;
@@ -36,7 +46,7 @@ class hamcPhyPREX : public hamcPhysics {
     /*Calculates CrossSection and Asymmetry using formulas*/
      Float_t CalculateCrossSection(Int_t nuc, Float_t energy, Float_t angle);
      Float_t CalculateAsymmetry(Int_t nuc);  // Born asymmetry.
-
+     Int_t SetModel(Int_t modeln);  // To set the model used
 
   protected:
 
@@ -57,6 +67,21 @@ class hamcPhyPREX : public hamcPhysics {
 
      Float_t qsq;
      Float_t asy0, asy1;  // unstretched and streteched R_N asymmetries 
+
+     // Now considering 8 models.
+     // The first one is "old" (~10 years)
+
+     // Model        Rn(fm)    A(850 MeV, 6 deg)  A(1050 MeV, 5deg)
+     // 1. horpb.dat and horpb1.dat
+     // 2. SI          5.492   .731               .753
+     // 3. NL3p06      5.604   .700               .721
+     // 4. SLY4        5.618   .698               .719
+     // 5. SIII        5.646   .683               .702
+     // 6. FSU         5.679   .677               .695
+     // 7. NL3         5.740   .655               .672
+     // 8. NL3m05      5.851   .617               .631
+     
+     Int_t whichmodel;
 
      Bool_t didinit;
 
