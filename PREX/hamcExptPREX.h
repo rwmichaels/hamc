@@ -33,6 +33,7 @@ class hamcExptPREX : public hamcSingles {
      Float_t sumr_pc1, xcnt_pc1, sumr_pc2, xcnt_pc2;
      Float_t solid_athole;
      Float_t inatdet;
+     Float_t xdetlo, xdethi, ydetlo, ydethi; // A_T detector
 
 
 #ifndef NODICT
