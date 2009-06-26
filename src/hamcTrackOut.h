@@ -31,6 +31,7 @@ class hamcTrackOut : public hamcTrack {
      Float_t Getphimin() const {return phimin;};
      Float_t Getphimax() const {return phimax;};
      Int_t UpdateAtDet();
+     Float_t GetDetSpot(Int_t i); //for pvdis use
      TH2F *xyb4trans, *tpb4trans;
      TH1F *dpb4trans;
      Int_t UpdateGuidoFocal(hamcSpecHRS *spec);  // using Guido's focal plane variables
