@@ -217,6 +217,10 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
    htp = new TH2F("htp","Generated Theta-Phi",
               100,-0.3,0.3,100,-0.3,0.3);
 
+   xyb4trans = new TH2F("xyb4trans", "X-Y before transport", 100, -0.08, 0.08, 100, -0.008, 0.008);
+   tpb4trans = new TH2F("tpb4trans", "theta-phi before transport", 100, -0.3, 0.3, 100, -0.3, 0.3);
+   dpb4trans = new TH1F("dpb4trans", "dp before transport", 100, -0.1, 0.1);
+
 
    Float_t xbox = 0.8;
    Float_t ybox = 0.8;
@@ -437,7 +441,8 @@ Int_t hamcTrackOut::Generate(hamcExpt *expt) {
     tvect->Clear();
   }
 
-  expt->physics->kine->Generate(expt);
+  if (expt->physics->kine->Generate(expt) == -1)
+    return -1;
 
   theta = expt->physics->kine->theta;
   phi = expt->physics->kine->phi;
@@ -612,6 +617,20 @@ void hamcTrackOut::ComputeQsqToTrack(const hamcTrack *trk) {
 
 }
 
+Float_t hamcTrackOut::GetDetSpot(Int_t i) {
 
+  if (i == 0)
+    return xfpd;
+  else if (i == 1)
+    return thfpd;
+  else if (i == 2)
+    return yfpd;
+  else if (i == 3)
+    return phfpd;
+  else {
+    cout<<"ERROR: error in hamcTrackOut->GetDetSpot(Int_t i), i should be 0 to 3"<<endl;
+    return -999;
+  }
+}
 
    
