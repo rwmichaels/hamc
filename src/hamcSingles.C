@@ -13,6 +13,7 @@
 #include "hamcInout.h"
 #include "THaString.h"
 #include "Rtypes.h"
+#include "TH1F.h"
 #include "TMath.h"
 #include <string>
 #include <vector>
@@ -110,19 +111,26 @@ Int_t hamcSingles::Run(Int_t maxevent) {
   }
 
   for (iteration = 0; iteration < numiter; iteration++) {
+    
+    for (Int_t imodel = 0; imodel<num_phyt; imodel++){
+      for (Int_t imtl =0; imtl<num_mtl; imtl++){
+	
+	Int_t idx = imodel*num_mtl+imtl;
+	acc[idx]->Init();
+      }      
+    }
 
     for (Int_t ievt = 0; ievt < maxevent; ievt++ ) {
-
+      
       if (ievt > 0 && ((ievt%10000)==1)) cout << "event "<<ievt<<endl;
- 
       if (event) event->Process(this);
-
+      
     }
 
     RunSummary(iteration);
-
+    
   }
-
+  
   return OK;
   
 }
@@ -177,7 +185,6 @@ void hamcSingles::EventAnalysis() {
 
     Float_t crsec = physics->GetCrossSection(imodel);  // barns/str
     Float_t asy = 1e6 * physics->GetAsymmetry(imodel); // ppm
-
     Float_t rel_rate = 
         current * crsec * 0.602 * tlen * tdens / anum;
 
@@ -243,7 +250,7 @@ void hamcSingles::RunSummary(Int_t iteration) {
           cout << "omega "<<omega<<"  str "<<endl;
       }
 
-      sum_asy += rate * asy;
+      sum_asy += rate * asy;  
       sum_rate += rate;
 
     }

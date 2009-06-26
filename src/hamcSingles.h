@@ -9,8 +9,9 @@
 #include "TH2F.h"
 #include <string>
 #include <vector>
+#include "hamcAccAvg.h"
 
-class hamcAccAvg;
+//class hamcAccAvg;
 
 class hamcSingles : public hamcExpt {
 
