@@ -160,8 +160,8 @@ Int_t hamcBeam::Generate(hamcExpt *expt) {
   Float_t x_position, y_position;
 
   if (IsRastered()) { 
-    x_position = -0.5*xrast + xrast*gRandom->Rndm(1);
-    y_position = -0.5*yrast + yrast*gRandom->Rndm(1);
+     x_position = -0.5*xrast + xrast*gRandom->Rndm(1);
+     y_position = -0.5*yrast + yrast*gRandom->Rndm(1);
 
     if (expt->iteration == 1){
       x_position += dx_iter;
@@ -188,20 +188,23 @@ Int_t hamcBeam::Generate(hamcExpt *expt) {
   
   pmom = TMath::Sqrt(energy*energy - mass*mass);
   
-  if (!dtheta_iter){
+  if (expt->iteration == 1) {
+  if (dtheta_iter > 1.E-8){
     
     plab_x = pmom*TMath::Sin(dtheta_iter);
     plab_y = 0;
     plab_z = pmom*TMath::Cos(dtheta_iter);
   }
   
-  else if (!dphi_iter) {
+  else if (dphi_iter > 1.E-8) {
     
     plab_x = 0;
     plab_y = pmom*TMath::Sin(dphi_iter);
-    plab_x = pmom*TMath::Cos(dphi_iter);
+    plab_z = pmom*TMath::Cos(dphi_iter);
   }
   
+  }
+
   else{
     // Assume the beam is along the Z axis.
     

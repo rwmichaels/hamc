@@ -30,7 +30,8 @@ class hamcBeam : public hamcTrack {
      void Print();
      Float_t beam_current, polarization, polerr;
      Float_t dtheta_iter, dphi_iter;
-
+     Float_t dx_iter, dy_iter;
+     Float_t dE_iter;
 
   protected:
 
@@ -38,8 +39,7 @@ class hamcBeam : public hamcTrack {
 
      Bool_t rastered;
      Float_t xrast,yrast;
-     Float_t dx_iter, dy_iter;
-     Float_t dE_iter;
+
 
      hamcBeam(const hamcBeam& phys);
      hamcBeam& operator=(const hamcBeam& phys);
