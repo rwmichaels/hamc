@@ -78,7 +78,8 @@ void hamcAccAvg::Increment(Float_t th, Float_t ph, Float_t relrate, Float_t asy)
     icell = ((Int_t)((th-thmin)/dtheta));
     jcell = ((Int_t)((ph-phmin)/dphi));
     ncell = icell*numcell + jcell;
-    if (ncell >= 0 || ncell < numcell*numcell) {
+    //    if (ncell >= 0 || ncell < numcell*numcell) {
+    if (ncell >= 0 && ncell < numcell*numcell) {
         sumcnt[ncell] += 1.0;
         sumrate[ncell] += rate;
         sumasy[ncell] += asy; 
@@ -187,6 +188,7 @@ void hamcAccAvg::RunSummary() {
     }
   }
  
+
   if (rate != 0) asy = asysum / rate;
 
   did_summary = kTRUE;    
