@@ -82,22 +82,8 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
 
    if (expt->physics->Radiate(expt) == -1) return 1;
 
-   if (beam) 
-     
-     {
-       beam->Generate(expt);
-       Int_t timeout=0;
-       while(expt->physics->kine->Generate(expt) == -1) //DIS event not good, try again
-	 {
-           if (timeout++ > 100000) {
-	     cout << "hamcEvent::Process: infinite loop ?"<<endl;
-             return 1;
-	   }
-	   expt->target->Zscatt();
-	   if (expt->physics->Radiate(expt) == -1) return 1;
-	   beam->Generate(expt);
-	 }
-     }
+   if (beam)
+     beam->Generate(expt);
 
    inaccept = 1;
    xcol = -999;  ycol = -999;
@@ -111,9 +97,13 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
      hamcTrackOut *track = trackout[ispect]; // Assumes 1 track per spectrom.
      if (!track) continue;
 
-     track->Generate(expt);
+     if (track->Generate(expt)==-1) {
+       //       cout<<"no good dis event generated"<<endl;
+       return OK;
+     }
 
      expt->physics->Generate(expt); 
+
 
 // Weight by cross section (optionally used for some histograms)
      Float_t weight = expt->physics->GetCrossSection();
@@ -121,6 +111,19 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
      expt->inout->SetWeight(weight);
 
      track->MultScatt(expt, ITARGET);
+
+     Float_t xb4trans = track->GetTransX();
+     Float_t yb4trans = track->GetTransY();
+     //    cout<<"xb4trans="<<xb4trans<<"yb4trans="<<yb4trans<<endl;
+     track->xyb4trans->Fill(yb4trans, xb4trans);
+
+     Float_t tb4trans = track->GetTransTheta();
+     Float_t pb4trans = track->GetTransPhi();
+     track->tpb4trans->Fill(tb4trans,pb4trans);
+
+     Float_t Dpb4trans = track->GetTransDp();
+     track->dpb4trans->Fill(Dpb4trans);
+
 
 // Loop over break points in spectrometer
 
@@ -166,8 +169,8 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
 	   ysep = track->GetTransY();
 	 }
          if (brkpoint == IFOCAL) {
-           if (spect->IsGuidoTrans()) {
-	      track->UpdateGuidoFocal(spect);
+	   if (spect->IsGuidoTrans()) {
+	     track->UpdateGuidoFocal(spect);
 	   }
            track->UpdateAtDet();
 	 }
