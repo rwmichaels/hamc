@@ -274,7 +274,8 @@ void hamcSpecHRS::AddBreakPoint(Int_t where) {
         break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-5.22, -4.98, -0.1924, -0.1924)));
         break;
       }
-      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, 0.00149)));  // standard HRS
+      //      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, 0.149)));  // standard HRS
+      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, 0.0186)));  // standard HRS
       break;
 
     case IDIPEXIT:
@@ -282,7 +283,9 @@ void hamcSpecHRS::AddBreakPoint(Int_t where) {
         break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.462, 0.462, 0.125, -0.0161)));
         break;
       }
-      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, 0.00149)));  // standard HRS
+      //      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, 0.149)));  // standard HRS
+      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, 0.0186)));  // standard HRS
+
       break;
 
     case IQ1EXIT:
