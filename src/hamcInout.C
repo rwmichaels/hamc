@@ -8,6 +8,7 @@
 #include "hamcInout.h"
 #include "hamcExpt.h"
 #include "hamcEvent.h"
+#include "hamcPhysics.h"
 #include "THaString.h"
 #include "Rtypes.h"
 #include "TH1F.h"
@@ -61,6 +62,29 @@ Int_t hamcInout::Init(hamcExpt *expt) {
    }
  
    SetNumIterations();
+
+   string process = expt->physics->GetProcess();
+   if (process == "dis" || process == "DIS") {
+     t1 = new TTree("T1","pvdis kinematics tree");
+   }
+
+   if (numiter == 2)
+   {
+     string name = expt->physics->GetName();
+     if (name == "PVDIS physics") {
+     deriv.open("deri_pvdis.txt", ios::app);
+     }
+     else if(name == "PREX physics") {
+       deriv.open("deri_prex.txt", ios::app);
+     }
+     else if(name == "HAPPEX physics") {
+       deriv.open("deri_happex.txt", ios::app);
+     }
+     else 
+       cout<<"ERROR: experiment not recongnized!!"<<endl;
+     if (deriv.is_open())
+       deriv<<"#dE\tdx\tdy\tdtheta\tdphi\titeration\timodel\tnum_mtl\tRate\t<A>_phys\t<A>_raw\tomega"<<endl;
+   }
 
    did_init = kTRUE;
 
@@ -133,10 +157,14 @@ Int_t hamcInout::Finish() {
     for (Int_t i=0; i<(Int_t)fHist.size(); i++) {
        fHist[i]->Write();
     }
+
     if (ntup) ntup->Write();
     hFile->Write();
     hFile->Close();
   }
+  if (deriv.is_open())
+    deriv.close();
+  
   return OK;
 }
 
@@ -289,7 +317,6 @@ Int_t hamcInout::BookNtuple() {
   return OK;
 
 }
-   
 
 
 

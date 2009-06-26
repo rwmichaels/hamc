@@ -12,6 +12,9 @@
 #include <fstream>
 #include <vector>
 #include <map>
+#include "TTree.h"
+#include <fstream>
+
 
 class hamcExpt;
 class hamcEvent;
@@ -173,6 +176,8 @@ class hamcInout {
      std::vector<std::string> GetStrVect(std::string, Int_t i=0);
      Int_t AddToNtuple(std::string var, Float_t* dptr);
      Int_t AddToNtuple(std::string var, Int_t* dptr);
+     TTree *t1;
+     ofstream deriv;
      Int_t Finish();
 
      Int_t BookHisto(Bool_t tow, Bool_t acc, Int_t bk, std::string hid, std::string stitle, Float_t* dx, Int_t nxbin, Float_t xlo, Float_t xhi, Float_t* dy=0, Int_t nybin=0, Float_t ylo=0, Float_t yhi=0);
