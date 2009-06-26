@@ -18,6 +18,8 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include "TH1F.h"
+#include <math.h>
 
 using namespace std;
 
@@ -58,6 +60,8 @@ Int_t hamcKine::Init(hamcExpt* expt) {
 // theta_central, converted to radians, only for single-arm.
   Float_t theta = PI * expt->GetSpectrom(0)->GetScattAngle() / 180;
   Float_t masst = expt->target->GetMass();
+
+  iteration = 0;
 
 // Ranges of angles for the simulation
 
@@ -128,6 +132,8 @@ Int_t hamcKine::Init(hamcExpt* expt) {
    if (parser.IsFound("wsqlo")) {
      wsqlo = parser.GetData();
    }
+
+   eprime_gen = new TH1F("eprime_gen", "eprime generated for PVDIS", 100, 0.9*emin, 1.1*emax);
 
    cout << "hamcKine:: angles ranges: "<<thetamin<<"  "<<thetamax<<"  "<<phimin<<"  "<<phimax<<endl;
    if (process == "dis" || process == "DIS") {
@@ -221,16 +227,21 @@ Int_t hamcKine::Generate(hamcExpt *expt) {
 //   if (iteration == 1) {
 //       dE = dE - dP0_iter*E0;
 //   }
-  
-  if(Generate(eb, dE) == -1)  //no dis event found.
-    return -1;
-  if(energy <= (eprime+dE_after))      //physicslly not acceptable.
-    return -1;
 
-    return 1;
+  iteration = expt->iteration;  
+
+  if(Generate(eb, dE) == -1) {  //no dis event found.
+    //    cout<<"no dis event found"<<endl;
+    return -1;
+  }
+  if(energy <= (eprime+dE_after)) {     //physicslly not acceptable.
+
+    //   cout<<"physically unacceptable"<<endl;
+    return -1;
+  }
+  return 1;
 
  
-
 }
 
 Int_t hamcKine::Generate(Float_t eb, Float_t dE) {
@@ -268,13 +279,14 @@ Int_t hamcKine::Generate(Float_t eb, Float_t dE) {
 
   if (iproc == proc_dis) {
       if (GenerateDis() == -1) {
-	//     cout << "hamcKine::WARNING: inf. loop? "<<ebeam<<endl;
+	//	cout << "hamcKine::WARNING: inf. loop? "<<ebeam<<endl;
         return -1;
       }
   }
   return 1;
 
 }
+
 
 Int_t hamcKine::GenerateElastic() {
 
@@ -301,21 +313,29 @@ Int_t hamcKine::GenerateElastic() {
   cts2 = TMath::Cos(theta);
   cps2 = TMath::Cos(phi);
   
-  if ((theta1 ==0)&&(phi1 == 0))
+
+  if (iteration == 0)
     eprime = ebeam / ( 1 + ((ebeam/mass_tgt) * 
 			    (1 - TMath::Cos(theta))) );
-  else {
-    
-    if (!theta1)
+
+  else if (iteration == 1) {
+
+    if (theta1 > 1.E-8)
       costheta = 1-((sts1 - sts2*cps2)*(sts1 - sts2*cps2)+(0-sts2*sps2)*(0-sts2*sps2)+(cts1-cts2)*(cts1-cts2))/2.;
 
-    if (!phi1)
+   else if (phi1 > 1.E-8)
       costheta = 1-((0-sts2*cps2)*(0-sts2*cps2)+(sps1-sts2*sps2)*(sps1-sts2*sps2)+(cps1-cts2)*(cps1-cts2))/2.;
 
-    eprime = ebeam / (1+((ebeam/mass_tgt)*(1-costheta)));
-  }
+   else costheta = TMath::Cos(theta);
 
-  pprime = TMath::Sqrt(eprime*eprime - mass_electron*mass_electron);
+    eprime = ebeam / (1+((ebeam/mass_tgt)*(1-costheta)));
+
+  }
+ 
+  else 
+    cout<<"ERROR:hamcKine:   Generating Elastic error, iteration>1"<<endl;
+
+  //  pprime = TMath::Sqrt(eprime*eprime - mass_electron*mass_electron);
   erecoil = ebeam + mass_tgt - eprime;
   
   ComputeKine();
@@ -335,17 +355,24 @@ Int_t hamcKine::GenerateDis() {
 
   while (iloop++ < maxloop) {
 
-    eprime = epmin + (epmax - epmin)*gRandom->Rndm();
+    eprime = epmin + (epmax - epmin)*gRandom->Rndm(1);
 
     ComputeKine();
 
     eprime = eprime - dE_after;
+    //    eprime_gen->Fill(eprime);
+    //    return 1;
 
  // Impose cuts that define DIS here
-    if (x > xbjlo && x < xbjhi && qsq > qsqlo 
-	&& wsq > wsqlo) return 1;     // Found a DIS event
+    if ((x > xbjlo) && (x < xbjhi) && (qsq > qsqlo) 
+ 	&& (wsq > wsqlo)) {
+      eprime_gen->Fill(eprime);
+       return 1;     // Found a DIS event
+     }
+//     else 
+//       cout<<"trial failed x="<<x<<" qsq="<<qsq<<" wsq="<<wsq<<" eprime="<<eprime<<endl;
   }
-
+  cout<<"beam energy:"<<energy<<"hamcKine::infinite loop while generating"<<endl;
   return -1;
 
 }
@@ -353,11 +380,13 @@ Int_t hamcKine::GenerateDis() {
  
 Int_t hamcKine::ComputeKine() {
 
-
-  //  qsq = 2*ebeam*eprime*(1 - TMath::Cos(theta));
+  //  qsq = 2*ebeam*eprime*(1 - TMath::Cos(scat_ang));
 
   Float_t px1,py1,pz1,px2,py2,pz2;
   Float_t sts, cts, sps, cps;
+  Float_t sts1,cts1,sps1,cps1;
+  Float_t theta1 = beam->dtheta_iter;
+  Float_t phi1 = beam->dphi_iter;
 
   px1 = beam->GetPx();
   py1 = beam->GetPy();
@@ -367,12 +396,24 @@ Int_t hamcKine::ComputeKine() {
   cts = TMath::Cos(theta);
   sps = TMath::Sin(phi);
   cps = TMath::Cos(phi);
+  sts1 = TMath::Sin(theta1);
+  cts1 = TMath::Cos(theta1);
+  sps1 = TMath::Sin(phi1);
+  cps1 = TMath::Cos(phi1);
 
-  px2 = pprime*sps*sts;
-  py2 = pprime*cps*sts;
+
+  pprime = TMath::Sqrt(eprime*eprime - mass_electron*mass_electron);
+
+  //  cout<<"pprime:"<<pprime<<endl;
+
+  px2 = pprime*cps*sts;
+  py2 = pprime*sps*sts;
   pz2 = pprime*cts;
 
   qsq = -1.0*((ebeam-eprime)*(ebeam-eprime)-((px1-px2)*(px1-px2)+(py1-py2)*(py1-py2)+(pz1-pz2)*(pz1-pz2)));
+
+
+  //   cout<<qsq<<"  "<<qsq1<<endl;
 
   Float_t mass = mass_tgt;
   if (iproc == proc_dis) mass = mass_proton;
@@ -381,6 +422,23 @@ Int_t hamcKine::ComputeKine() {
   x = qsq/2/mass/(ebeam-eprime);
   y = (ebeam - eprime) / ebeam;
   bigy = ( 1 - (1-y)*(1-y) ) / ( 1 + (1-y)*(1-y) );
+
+
+  if (iteration == 0)
+    scat_ang = theta;
+
+  else if (iteration == 1) {
+    if (theta1 > 1.E-8) {
+      Float_t   costheta = 1-((sts1 - sts*cps)*(sts1 - sts*cps)+(0-sts*sps)*(0-sts*sps)+(cts1-cts)*(cts1-cts))/2.;
+      scat_ang = TMath::ACos(costheta);
+      //   cout<<"theta="<<theta<<"scat_ang="<<scat_ang<<endl;
+    }
+    else if (phi1 > 1.E-8) {
+      Float_t  costheta = 1-((0-sts*cps)*(0-sts*cps)+(sps1-sts*sps)*(sps1-sts*sps)+(cps1-cts)*(cps1-cts))/2.;
+      scat_ang = TMath::ACos(costheta);
+    }
+    else scat_ang = theta;
+  }
 
   return 1;
 
@@ -394,6 +452,3 @@ void hamcKine::Print() {
   cout << "qsq  "<<qsq<<"   wsq "<<wsq<<endl;
 
 }
-
-
-  
