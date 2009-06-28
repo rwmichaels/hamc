@@ -28,7 +28,7 @@ ClassImp(hamcInout)
 #endif
 
 
-hamcInout::hamcInout() : numiter(0),did_init(kFALSE),weight(1),setupfile("hamc.dat"),hFile(0),fntup(0) {
+hamcInout::hamcInout() : numiter(0),did_init(kFALSE),root_disable(kFALSE),weight(1),setupfile("hamc.dat"),hFile(0),fntup(0) {
   ntup  = 0;
   sntup = "";
 }
@@ -49,7 +49,7 @@ Int_t hamcInout::Init(hamcExpt *expt) {
 
    if (did_init) return OK;  // already init'd 
 
-   TROOT fadcana("hamcroot","Hall A Monte Carlo");
+   TROOT hamcana("hamcroot","Hall A Monte Carlo");
    hFile = new TFile("hamc.root","RECREATE","Hall A Monte Carlo");
 
    Int_t errcond = 0;
@@ -62,6 +62,17 @@ Int_t hamcInout::Init(hamcExpt *expt) {
    }
  
    SetNumIterations();
+
+   vector<string> sdata;
+   THaString strin;
+   sdata = GetStrVect("hamc_inout");
+   if (sdata.size() >= 1) {
+     strin = sdata[0];
+     if (strin.CmpNoCase("disable")==0) {
+       cout << "Disabling ROOT output for this run !"<<endl;
+       root_disable=kTRUE;
+     }
+   }
 
    string process = expt->physics->GetProcess();
    if (process == "dis" || process == "DIS") {
@@ -108,6 +119,8 @@ Int_t hamcInout::Process(hamcExpt *expt) {
 // and whether you're in acceptance (and whether you care), see inacc.
 // ntuple filled for 0th iteration only and only at focal plane.
 
+  if (root_disable) return 0;
+
   Int_t iter, ibrk, inacc;
 
   iter  = expt->iteration;        // iteration of the experiment
@@ -151,6 +164,11 @@ Int_t hamcInout::Process(hamcExpt *expt) {
 }
 
 Int_t hamcInout::Finish() {
+
+  if (root_disable) {
+    cout << "hamcInout: Warning: root output disabled (see hamc_inout in ctl file) "<<endl;
+    return 0;
+  }
   
   if (hFile) {
     hFile->cd();
@@ -255,6 +273,11 @@ Int_t hamcInout::BookHisto(Bool_t toweight, Bool_t accept, Int_t bkpt, string hi
 //     similarly y (if nybin=0, it's a 1D histo)
 //     More histos like "hid_ITERATE" appear if do_iterate is true.
 
+  if (root_disable) {
+    cout << "hamcInout: root output disabled, not booking histo "<<hid<<endl;
+    return 0;
+  }
+
   Int_t dimen = 1;
   if (nybin > 0) dimen=2;
 
@@ -279,6 +302,8 @@ Int_t hamcInout::BookHisto(Bool_t toweight, Bool_t accept, Int_t bkpt, string hi
 Int_t hamcInout::AddToNtuple(std::string var, Int_t* dptr) {
 // Add integer data to ntuple
 
+  if (root_disable) return 0;
+
   sntup += var;
   sntup += ":";
   
@@ -292,6 +317,8 @@ Int_t hamcInout::AddToNtuple(std::string var, Int_t* dptr) {
 
 Int_t hamcInout::AddToNtuple(std::string var, Float_t* dptr) {
 // Add floating point data to ntuple
+
+  if (root_disable) return 0;
 
   sntup += var;
   sntup += ":";

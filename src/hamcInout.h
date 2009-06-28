@@ -207,7 +207,7 @@ class hamcInout {
      Int_t SetNumIterations();
      Int_t FillHisto(Int_t id, Float_t x, Float_t y=0, Float_t wei=1, Int_t iter=0);
 
-     Bool_t did_init;
+     Bool_t did_init, root_disable;
      Float_t weight;
      std::string setupfile;
      TFile *hFile;
