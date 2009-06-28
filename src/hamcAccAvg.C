@@ -31,7 +31,7 @@ ClassImp(hamcAccAvg)
 #endif
 
 hamcAccAvg::hamcAccAvg(Float_t thc, Float_t th1, Float_t th2, Float_t ph1, Float_t ph2): 
-  central_angle(thc),thmin(th1),thmax(th2),phmin(ph1),phmax(ph2),did_init(kFALSE),did_summary(kFALSE),hacc(0) {
+  ncellcut(5),central_angle(thc),thmin(th1),thmax(th2),phmin(ph1),phmax(ph2),did_init(kFALSE),did_summary(kFALSE),hacc(0) {
   Init();
 }
 
@@ -78,7 +78,6 @@ void hamcAccAvg::Increment(Float_t th, Float_t ph, Float_t relrate, Float_t asy)
     icell = ((Int_t)((th-thmin)/dtheta));
     jcell = ((Int_t)((ph-phmin)/dphi));
     ncell = icell*numcell + jcell;
-    //    if (ncell >= 0 || ncell < numcell*numcell) {
     if (ncell >= 0 && ncell < numcell*numcell) {
         sumcnt[ncell] += 1.0;
         sumrate[ncell] += rate;
@@ -139,6 +138,29 @@ void hamcAccAvg::RunSummary() {
 
   if (lprint) cout << endl<<endl<<"Cell scan ---- "<<endl;
 
+// Procedure determine a possibly better ncellcut
+
+  Float_t xcellpeak = 0;
+  Float_t xycnt = 0;
+  for (Int_t ix = 0; ix < numcell; ix++) {  
+    for (Int_t iy = 0; iy < numcell; iy++) {  
+      icell = ix*numcell + iy;
+      if (GetNum(icell) < ncellcut) continue;
+      if (lprint) cout << "cellcnt  "<<GetNum(icell)<<endl;
+      xcellpeak += GetNum(icell);
+      xycnt += 1.0;        
+    }
+  }
+
+  if (xycnt > 0) {
+    xcellpeak = 0.05*xcellpeak/xycnt;
+    cout << "hamcAccAvg::xcellpeak = "<<xcellpeak<<"  "<<xycnt<<endl;
+    if (xcellpeak > ncellcut) {
+      ncellcut = (Int_t)(xcellpeak);
+    }
+  } 
+  cout << "hamcAccAvg::ncellcut = "<<ncellcut<<endl;
+
   for (Int_t ix = 0; ix < numcell; ix++) {  // theta
 
     for (Int_t iy = 0; iy < numcell; iy++) {  // phi
@@ -188,7 +210,6 @@ void hamcAccAvg::RunSummary() {
     }
   }
  
-
   if (rate != 0) asy = asysum / rate;
 
   did_summary = kTRUE;    
