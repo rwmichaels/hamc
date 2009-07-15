@@ -177,9 +177,14 @@ Int_t hamcPhyPREX::Generate(hamcExpt *expt) {
 
    Float_t anum = expt->target->GetAscatt();
 
+   Int_t mtl_idx = expt->target->GetMtlIndex();
+   Float_t tdens = expt->target->GetMtlDensity(mtl_idx);  // tgt density (g/cm^3)
+   Float_t tlen = expt->target->GetMtlLen(mtl_idx);  // tgt len (m)
+
    if (anum == 12) {
      crsec = CalculateCrossSection(1, energy, theta*180/PI);
      asymmetry = CalculateAsymmetry(1);
+     drate = CalculateDrate(anum, tdens, tlen, crsec);
      if (ldebug) {
        cout << endl<< "C12:  energy "<<energy<<"  theta "<<theta<<"  qsq "<<qsq<<endl;
        cout<< "C12 crsec = "<<crsec<<"   A = "<<asymmetry<<endl<<endl;
@@ -300,6 +305,15 @@ Int_t hamcPhyPREX::Asymmetry(Float_t energy, Float_t angle_rad, Int_t stretch) {
     cout << "Calculated lead asy "<<calcasy<<endl;
   }
 
+  return 1;
+}
+
+Int_t hamcPhyPREX::Drate(Float_t anum, Float_t tdens,Float_t tlen, Float_t crsec) {
+
+  tlen = tlen*100;   // need cm
+  //cout<<"tlen="<<tlen<<", tdens = "<<tdens<<", anum="<<anum<<", crsec = "<<crsec<<endl;
+  Float_t avg_omega = 0.004671;
+  drate = 6.25e12 * crsec * 0.602 * tlen * tdens * avg_omega / anum;
   return 1;
 }
 
@@ -480,6 +494,14 @@ Float_t hamcPhyPREX::CalculateAsymmetry(Int_t nuc) {
   return xasy;
 }
 
+Float_t hamcPhyPREX::CalculateDrate(Float_t anum, Float_t tdens,Float_t tlen, Float_t crsec) {
+
+  tlen = tlen*100;   // need cm
+  //cout<<"tlen="<<tlen<<", tdens = "<<tdens<<", anum="<<anum<<", crsec = "<<crsec<<endl;
+  Float_t avg_omega = 0.004671;
+  Float_t xdrate = 6.25e12 * crsec * 0.602 * tlen * tdens * avg_omega / anum;
+  return xdrate;
+}
 
 Int_t hamcPhyPREX::LoadFormFactorTable(){
 

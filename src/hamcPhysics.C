@@ -38,6 +38,7 @@ Int_t hamcPhysics::Init(hamcExpt* expt) {
 
   expt->inout->AddToNtuple("crsec",&crsec);
   expt->inout->AddToNtuple("asy",&asymmetry);
+  expt->inout->AddToNtuple("drate",&drate);
 
   eloss->Init(expt);
   //  eloss->Print();
@@ -67,6 +68,8 @@ Int_t hamcPhysics::Generate(hamcExpt* expt) {
 
   Asymmetry();  
 
+  Drate();
+
   return 1;
 }
 
@@ -80,6 +83,12 @@ Int_t hamcPhysics::CrossSection() {
 Int_t hamcPhysics::Asymmetry() {
 // Generates the asymmetry. Called by Generate.
   asymmetry = 0;
+  return 1;
+}
+
+Int_t hamcPhysics::Drate() {
+// Calculates the relative rate. Called by Generate.
+  drate = 0;
   return 1;
 }
 

@@ -37,6 +37,7 @@ class hamcPhysics {
 
      virtual Int_t CrossSection();    
      virtual Int_t Asymmetry();
+     virtual Int_t Drate();
 
      Float_t tlen,tgtM;  // target length (RL), target mass (GeV)
 
@@ -46,6 +47,7 @@ class hamcPhysics {
      Float_t energy, theta_rad, theta_deg, phi_rad, phi_deg;
      Float_t dE_IntBrehm, dE_ExtBrehm, dE_Ionization;
      Int_t num_models;
+     Float_t drate;
 
      std::string phy_name;
      std::string scatt_process;

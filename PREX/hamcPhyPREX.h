@@ -42,10 +42,12 @@ class hamcPhyPREX : public hamcPhysics {
      /* Reads CrossSection and Asymmetry from Horowitz tables and saves in class variables*/
      Int_t CrossSection(Float_t energy, Float_t angle, Int_t stretch=0);    
      Int_t Asymmetry(Float_t energy, Float_t angle, Int_t stretch=0);
+     Int_t Drate(Float_t anum, Float_t tdens,Float_t tlen, Float_t crsec);
 
     /*Calculates CrossSection and Asymmetry using formulas*/
      Float_t CalculateCrossSection(Int_t nuc, Float_t energy, Float_t angle);
      Float_t CalculateAsymmetry(Int_t nuc);  // Born asymmetry.
+     Float_t CalculateDrate(Float_t anum, Float_t tdens,Float_t tlen, Float_t crsec);
      Int_t SetModel(Int_t modeln);  // To set the model used
 
   protected:

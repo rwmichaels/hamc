@@ -175,8 +175,8 @@ void hamcExptPREX::RunSummary(Int_t iteration) {
   
 
 
-  Float_t sum_rate, sum_asy;
-  Float_t rate, asy, avg_asy, rawasy, avg_rawasy;
+  Float_t sum_rate, sum_asy, sum_omega;
+  Float_t rate, asy, avg_asy, rawasy, avg_rawasy, avg_omega;
   Float_t xcnt, asy_err;
   Float_t omega;
   Float_t pol = event->beam->polarization;
@@ -191,7 +191,7 @@ void hamcExptPREX::RunSummary(Int_t iteration) {
 
     sum_rate = 0;
     sum_asy = 0;
-
+    sum_omega=0;
     for (Int_t idx = 0; idx < num_mtl; idx++) {
 
       acc[imodel*num_mtl + idx]->RunSummary();
@@ -216,6 +216,7 @@ void hamcExptPREX::RunSummary(Int_t iteration) {
 
       sum_asy += rate * asy;
       sum_rate += rate;
+      sum_omega += rate * omega;
 
 // Here it's assumed diamond gets subtracted.
 // Evaluate sensitivity for lead (only) 
@@ -259,6 +260,7 @@ void hamcExptPREX::RunSummary(Int_t iteration) {
      } else {
        avg_asy = sum_asy / sum_rate;     // target-averaged physics asymmetry
        avg_rawasy = avg_asy * pol;       // raw asymmetry
+       avg_omega = sum_omega / sum_rate; // target-averaged solid angle
        xcnt = sum_rate * run_time * 3600;
        asy_err = 0;   
        if (xcnt != 0) asy_err = 1e6 / TMath::Sqrt(xcnt);
@@ -267,7 +269,8 @@ void hamcExptPREX::RunSummary(Int_t iteration) {
        cout << "<A>_phy = "<<avg_asy;
        cout << endl << "Raw measured <A>_raw = "<<avg_rawasy;
        cout << " +/- "<<asy_err<<"   ppm "<<endl;
-      
+       cout << "<omega> = "<<avg_omega<<endl;
+
        cout << "Num of counts "<<xcnt<<endl;
        cout << "Stat precision "<<daa<<endl;
        cout << "using polarization = "<<pol<<endl;
