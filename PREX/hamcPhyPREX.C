@@ -199,6 +199,8 @@ Int_t hamcPhyPREX::Generate(hamcExpt *expt) {
    if (num_models > 1) Asymmetry(energy, theta,1);  // stretched
    Asymmetry(energy, theta,0);  // unstretched (call this last)
 
+   Drate(anum, tdens, tlen, crsec); //Hz/uA
+
    return OK;
 }
 
@@ -313,7 +315,7 @@ Int_t hamcPhyPREX::Drate(Float_t anum, Float_t tdens,Float_t tlen, Float_t crsec
   tlen = tlen*100;   // need cm
   //cout<<"tlen="<<tlen<<", tdens = "<<tdens<<", anum="<<anum<<", crsec = "<<crsec<<endl;
   Float_t avg_omega = 0.004671;
-  drate = 6.25e12 * crsec * 0.602 * tlen * tdens * avg_omega / anum;
+  drate = 6.25e12 * crsec * 0.602 * tlen * tdens * avg_omega / anum; //Hz/uAww
   return 1;
 }
 
@@ -499,7 +501,7 @@ Float_t hamcPhyPREX::CalculateDrate(Float_t anum, Float_t tdens,Float_t tlen, Fl
   tlen = tlen*100;   // need cm
   //cout<<"tlen="<<tlen<<", tdens = "<<tdens<<", anum="<<anum<<", crsec = "<<crsec<<endl;
   Float_t avg_omega = 0.004671;
-  Float_t xdrate = 6.25e12 * crsec * 0.602 * tlen * tdens * avg_omega / anum;
+  Float_t xdrate = 6.25e12 * crsec * 0.602 * tlen * tdens * avg_omega / anum; //Hz/uA
   return xdrate;
 }
 
