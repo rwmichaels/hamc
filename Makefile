@@ -94,7 +94,9 @@ else
   OBJS = $(SRC:.C=.o)
   OBJS += hamcDict.o
 endif
-OBJS += $(SRCDIR)/prex_forward.o $(SRCDIR)/monte_trans_hrs.o $(SRCDIR)/R6_forward.o $(SRCDIR)/ls_6d_forward.o
+#OBJS += $(SRCDIR)/prex_forward.o $(SRCDIR)/monte_trans_hrs.o $(SRCDIR)/R6_forward.o $(SRCDIR)/ls_6d_forward.o
+#Replace line below with line above for standard HRS optics
+OBJS += $(SRCDIR)/prex_retune_for.o $(SRCDIR)/monte_trans_hrs.o $(SRCDIR)/R6_forward.o $(SRCDIR)/ls_6d_forward.o
 
 # PREX experiment
 PREX_SRC = ./PREX/main_PREX.C ./PREX/hamcExptPREX.C ./PREX/hamcPhyPREX.C ./PREX/hamcTgtPREX.C
@@ -151,9 +153,13 @@ $(HAMCLIBS): $(LOBJS) $(LSRC) $(HEAD)
 	rm -f $@
 	ar cr $@ $(LOBJS)
 
-$(SRCDIR)/prex_forward.o: $(SRCDIR)/prex_forward.f
+#$(SRCDIR)/prex_forward.o: $(SRCDIR)/prex_forward.f
+#	rm -f $@
+#	cd $(SRCDIR) ; g77 -c prex_forward.f ; cd ../
+#Replace 3 lines below with 3 lines above for standard HRS optics
+$(SRCDIR)/prex_retune_for.o: $(SRCDIR)/prex_retune_for.f
 	rm -f $@
-	cd $(SRCDIR) ; g77 -c prex_forward.f ; cd ../
+	cd $(SRCDIR) ; g77 -c prex_retune_for.f ; cd ../
 
 $(SRCDIR)/monte_trans_hrs.o: $(SRCDIR)/monte_trans_hrs.f
 	rm -f $@
