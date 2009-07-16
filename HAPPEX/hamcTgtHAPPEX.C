@@ -29,11 +29,11 @@ Int_t hamcTgtHAPPEX::Init(hamcExpt *expt) {
   if (did_init) return OK;
 
   components.push_back(new hamcTgtSlab(
-     "aluminum", 0, 0.0014, 0.0014, 0.089, 14, 13, 25.3, 2.7));
+     "aluminum", 0, 0.00014, 0.00014, 0.089, 27, 13, 25.3, 2.7));
   components.push_back(new hamcTgtSlab(
-     "hydrogen", 1, 0.2, 0.2, 8.66, 1, 1, 0.938, 0.0708));
+     "hydrogen", 1, 0.25, 0.25, 8.66, 1, 1, 0.938, 0.0708));
   components.push_back(new hamcTgtSlab(
-     "aluminum", 2, 0.00178, 0.00178, 0.089, 14, 13, 25.3, 2.7));
+     "aluminum", 2, 0.000178, 0.000178, 0.089, 27, 13, 25.3, 2.7));
 
   expt->inout->AddToNtuple("zscat",&zscatt);
  
