@@ -33,7 +33,7 @@ class hamcPhyHAPPEX : public hamcPhysics {
      Float_t GAp8(Float_t Q_sqr);
      Float_t GAp_dipol(Float_t Q_sqr);
      Float_t asym_H(Float_t theta, Float_t Q2);
-
+     Int_t Drate(Float_t anum, Float_t tdens,Float_t tlen, Float_t crsec);
 
   protected:
 

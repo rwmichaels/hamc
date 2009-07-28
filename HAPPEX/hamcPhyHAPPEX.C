@@ -64,6 +64,14 @@ Int_t hamcPhyHAPPEX::Generate(hamcExpt *expt) {
 // Compute the PV asymmetry 
    asymmetry = asym_H(theta, qsq);
 
+// Compute the differential rate
+   Float_t anum = expt->target->GetAscatt();
+   Int_t mtl_idx = expt->target->GetMtlIndex();
+   Float_t tdens = expt->target->GetMtlDensity(mtl_idx);  // tgt density (g/cm^3)
+   Float_t tlen = expt->target->GetMtlLen(mtl_idx);  // tgt len (m)
+
+   Drate(anum, tdens, tlen, crsec); //Hz/uA
+
    return OK;
 }
 
@@ -186,4 +194,13 @@ Float_t hamcPhyHAPPEX::asym_H(Float_t theta, Float_t Q2)
 	  );
 
   return asym;
+}
+
+Int_t hamcPhyHAPPEX::Drate(Float_t anum, Float_t tdens,Float_t tlen, Float_t crsec) {
+
+  tlen = tlen*100;   // need cm
+  //cout<<"tlen="<<tlen<<", tdens = "<<tdens<<", anum="<<anum<<", crsec = "<<crsec<<endl;
+  Float_t avg_omega = 0.0059;
+  drate = 6.25e12 * crsec * 0.602 * tlen * tdens * avg_omega / anum; //Hz/uA
+  return 1;
 }
