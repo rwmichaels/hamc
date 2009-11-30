@@ -55,11 +55,15 @@ Int_t hamcExptPREX::Init(string sfile) {
   prex_xy2 = new TH2F("prex_xy2","XY at det (A_T hole)",100,-0.7,0.2,100,-0.1,0.1);
   prex_xy3 = new TH2F("prex_xy3","XY at det (A_T and in Y band)",
             100,-0.7,0.2,100,-0.1,0.1);
+  prex_xy4 = new TH2F("prex_xy4","XY in main detector",100,-0.7,0.2,100,-0.1,0.1);
 
   prex_x1  = new TH1F("prex_x1","X at det (not in A_T)",200,-0.7,0.2);
   prex_x2  = new TH1F("prex_x2","X at det (from A_T)",200,-0.7,0.2);
   prex_x3  = new TH1F("prex_x3","X at det (A_T and Y band)",
             200,-0.7,0.2);
+
+  prex_theta = new TH1F("prex_theta","Theta generated",600,2,8);
+  prex_indet = new TH1F("prex_indet","Theta in detector",600,2,8);
 
   sumr_pc1 = 0;
   xcnt_pc1 = 0;
@@ -77,6 +81,15 @@ void hamcExptPREX::EventAnalysis() {
 // Update Mar 21. The dE/dX loss is done in the event processing now.
 
   Float_t atrl = GetSpectrom(0)->collim2_radlen1; // A_T hole rad.len.
+
+// Cuts to define main detector
+
+  Float_t xmain_lo, xmain_hi, ymain_lo, ymain_hi;
+  xmain_lo = -0.07;
+  xmain_hi = 0.04;
+  ymain_lo = -0.06;
+  ymain_hi = 0.07;
+
 
 // Cuts to define location of A_T detector
 
@@ -100,7 +113,11 @@ void hamcExptPREX::EventAnalysis() {
   Float_t ph = event->trackout[0]->phtrans;
   Float_t z = physics->GetCrossSection();
 
-// Extrapolate to Z of detector (42.5 cm from focal plane)
+  Float_t th_deg = (180.0/PI) * event->trackout[0]->GetTheta();
+
+  prex_theta->Fill(th_deg);
+
+// Extrapolate to Z of A_T detector (42.5 cm from focal plane)
   Float_t zextr = 0.425;
   Float_t xextr = x + th*zextr;
   Float_t yextr = y + ph*zextr;
@@ -157,11 +174,25 @@ void hamcExptPREX::EventAnalysis() {
       }
 
     }
+
+    // In focal plane, now demand in main detector
+
+    if (xextr > xmain_lo && xextr < xmain_hi && 
+        yextr > ymain_lo && yextr < ymain_hi) {
+
+         prex_xy4->Fill(xextr,yextr,z);
+         prex_indet->Fill(th_deg);
+
+    }
+
+
+
   }
+
 }
 void hamcExptPREX::RunSummary(Int_t iteration) {
 
-  cout << "hamcExptPREX:: summary "<<endl;
+  cout << "hamcExptPREX:: summary (v4.1) "<<endl;
   cout << "iteration "<<iteration<<"   "<<numiter<<endl;
   cout << "A_t detector RL "<<GetSpectrom(0)->collim2_radlen1<<endl;
   cout << "A_t detector boundary "<<xdetlo<<"  "<<xdethi<<"  "<<ydetlo<<"  "<<ydethi<<endl;
@@ -175,8 +206,8 @@ void hamcExptPREX::RunSummary(Int_t iteration) {
   
 
 
-  Float_t sum_rate, sum_asy, sum_omega;
-  Float_t rate, asy, avg_asy, rawasy, avg_rawasy, avg_omega;
+  Float_t sum_rate, sum_asy;
+  Float_t rate, asy, avg_asy, rawasy, avg_rawasy;
   Float_t xcnt, asy_err;
   Float_t omega;
   Float_t pol = event->beam->polarization;
@@ -191,7 +222,6 @@ void hamcExptPREX::RunSummary(Int_t iteration) {
 
     sum_rate = 0;
     sum_asy = 0;
-    sum_omega=0;
     for (Int_t idx = 0; idx < num_mtl; idx++) {
 
       acc[imodel*num_mtl + idx]->RunSummary();
@@ -212,23 +242,29 @@ void hamcExptPREX::RunSummary(Int_t iteration) {
           cout << "<A>_phys = "<<asy<<endl;
           cout << "<A>_raw = "<<rawasy<<endl;
           cout << "omega "<<omega<<"  str "<<endl;
+          acc[imodel*num_mtl + idx]->Print();
       }
 
       sum_asy += rate * asy;
       sum_rate += rate;
-      sum_omega += rate * omega;
 
 // Here it's assumed diamond gets subtracted.
 // Evaluate sensitivity for lead (only) 
 
-      if (target->GetMtlName(idx) == "lead") {
+      if ( (target->GetMtlName(idx) == "lead") ||
+            (target->GetMtlName(idx) == "calcium") ||
+  	     (target->GetMtlName(idx) == "tin") ) {
+
         if (imodel==0) asy0 = asy;
-        xcnt = rate * run_time * 3600;
+// For 2 HRS:
+        xcnt = 2.0 * rate * run_time * 3600;
         asy_err = 0;   
         if (xcnt != 0) asy_err = 1e6 / TMath::Sqrt(xcnt);
         daa = asy_err / rawasy;
-        cout << endl<<"+++++++++++++  LEAD +++++++++++++"<<endl;
-        cout << "Num of counts "<<xcnt<<endl;
+        cout << endl<<"+++++++++++++  MAIN TARGET +++++++++++++"<<endl;
+        cout << "Material = "<<target->GetMtlName(idx)<<endl;
+        cout << "Rate in 1 HRS "<<rate<<endl;
+        cout << "Num of counts (sum of 2 HRS)  "<<xcnt<<endl;
         cout << "Stat error = "<<100*daa<<" % "<<endl;
         if (imodel==1) {
           asy1 = asy;
@@ -242,7 +278,7 @@ void hamcExptPREX::RunSummary(Int_t iteration) {
           blowup = 1;
           if (daa != 0) blowup = (TMath::Sqrt(polerr*polerr + daa*daa))/daa;
           drrtot = drr * blowup;
-          cout << "Sensitivity for lead  "<<100*sensi<<" %"<<endl;
+          cout << "Sensitivity =  "<<100*sensi<<" %"<<endl;
           cout << "dR/R = "<<drr<<endl;
           cout << "blowup factor "<<blowup<<endl;
           cout << "total dR/R = "<<drrtot<<endl;
@@ -260,8 +296,8 @@ void hamcExptPREX::RunSummary(Int_t iteration) {
      } else {
        avg_asy = sum_asy / sum_rate;     // target-averaged physics asymmetry
        avg_rawasy = avg_asy * pol;       // raw asymmetry
-       avg_omega = sum_omega / sum_rate; // target-averaged solid angle
-       xcnt = sum_rate * run_time * 3600;
+ // For 2 HRS
+       xcnt = 2.0 * sum_rate * run_time * 3600;
        asy_err = 0;   
        if (xcnt != 0) asy_err = 1e6 / TMath::Sqrt(xcnt);
        daa = asy_err / avg_rawasy;
@@ -269,9 +305,7 @@ void hamcExptPREX::RunSummary(Int_t iteration) {
        cout << "<A>_phy = "<<avg_asy;
        cout << endl << "Raw measured <A>_raw = "<<avg_rawasy;
        cout << " +/- "<<asy_err<<"   ppm "<<endl;
-       cout << "<omega> = "<<avg_omega<<endl;
-
-       cout << "Num of counts "<<xcnt<<endl;
+       cout << "Num of counts (2 HRS summed) : "<<xcnt<<endl;
        cout << "Stat precision "<<daa<<endl;
        cout << "using polarization = "<<pol<<endl;
        cout << "Total rate "<<sum_rate<<"  Hz "<<endl;

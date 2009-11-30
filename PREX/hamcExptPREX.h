@@ -29,6 +29,7 @@ class hamcExptPREX : public hamcSingles {
 
      TH2F *prex_xy1, *prex_xy2, *prex_xy3, *prex_xy4, *prex_xy5;
      TH1F *prex_x1, *prex_x2, *prex_x2a, *prex_x3;
+     TH1F *prex_theta, *prex_indet;
 
      Float_t sumr_pc1, xcnt_pc1, sumr_pc2, xcnt_pc2;
      Float_t solid_athole;
