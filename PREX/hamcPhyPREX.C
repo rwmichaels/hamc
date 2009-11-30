@@ -59,6 +59,10 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
 
   hamcPhysics::Init(expt);
 
+  expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "Asy0",
+	      "Asymmetry (accepted, weighted)",
+                          &asy0,200,-2e-7,2e-6);
+
   THaString strin;
   vector<string> sdata; 
   sdata = expt->inout->GetStrVect("PREX_model");
@@ -68,6 +72,18 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
       cout << "Using HORPB (original) model from Horowitz "<<endl;
       cout << "With stretching of R_N by 1%"<<endl;
       whichmodel = HORPB;
+      num_models = 2;
+    }
+    if (strin.CmpNoCase("horca")==0) {
+      cout << "Using Calcium 48 model from Horowitz "<<endl;
+      cout << "With stretching of R_N by 1%"<<endl;
+      whichmodel = HORCA;
+      num_models = 2;
+    }
+    if (strin.CmpNoCase("horsn")==0) {
+      cout << "Using Tin 120 model from Horowitz "<<endl;
+      cout << "With stretching of R_N by 1%"<<endl;
+      whichmodel = HORSN;
       num_models = 2;
     }
     if (strin.CmpNoCase("si")==0) {
@@ -112,13 +128,15 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
   LoadFiles();  // Load the lookup files
   didinit = kTRUE;
 
+
   if (histo_test) {
 
-    hpph1 = new TH1F("hpph1","Horowitz Lookup Crsec  vs  Mott*FF",2000,3,9);
+    hpph1 = new TH1F("hpph1","Horowitz Lookup Crsec  vs  angle",2000,3,9);
     hpph2 = new TH1F("hpph2","Mott * FF (1.05 GeV)",2000,3,9);
     hpph3 = new TH1F("hpph3","Cross Section (0.2482 GeV)",2000,17,95);
     hpph4 = new TH1F("hpph4","Cross Section (0.502 GeV)",2000,12,42);
     hpph5 = new TH2F("hpph5","Percent diff vs angle",100,3,9,100,-10,2);
+    hpph6 = new TH1F("hpph6","Asymmmetry  vs  angle",2000,3,9); 
 
     Float_t energy[4];
     energy[0] = 1.05;
@@ -136,6 +154,7 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
       theta_rad = 3.1415926*theta_degr/180.0;
 
       CrossSection(energy[iene],theta_rad,0);
+      Asymmetry(energy[iene],theta_rad,0);
 
       Float_t frecoil = 1 + (energy[iene]/195.)*(1-TMath::Cos(theta_rad));
       Float_t eprime = energy[iene]/frecoil;
@@ -146,6 +165,7 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
       if (iene==1) hpph2->Fill(theta_degr,crsec2);
       if (iene==2) hpph3->Fill(theta_degr,crsec2);
       if (iene==3) hpph4->Fill(theta_degr,crsec2);
+      if (iene==0) hpph6->Fill(theta_degr,asy0); 
       if (iene==1 && theta_degr>3 && theta_degr<9) {
 	Float_t diff = crsec2 - crsec;
         if (crsec != 0) {
@@ -160,7 +180,190 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
 
     }
     }
+
   }
+
+  if (accept_test) {
+    FILE *fd;
+    char schar[200]; 
+    fd=fopen("./PREX/accept.dat", "r");
+    Double_t weisum=0;
+    Double_t crcsum=0;
+    Double_t asyavg;    
+    if (fd==NULL) {
+      printf("hamcPhyPREX:: trying to test acceptance model.\n");
+      printf("  but cant find input.\n");
+    } else {
+      Float_t theta_degr, ene, xacc;
+      ene = 1.05;  // GeV 
+      while(fgets(schar,100,fd)!=NULL) {
+        sscanf(schar, "%f  %f", &theta_degr, &xacc);
+
+        theta_rad = 3.1415926*theta_degr/180.0;
+        CrossSection(ene,theta_rad,0);
+        Asymmetry(ene,theta_rad,0);
+
+        weisum += xacc * crsec * asy0 * 1e6;
+        crcsum += xacc * crsec;        
+
+	//        cout << "Check accept "<<theta_degr<<"  "<<xacc<<"  "<<crsec<<"  "<<asy0<<endl;
+       
+
+      }
+
+      asyavg = 0; 
+      if (crcsum > 0) asyavg = weisum / crcsum;
+      printf("Acc-avg asy (approx) = %7.5f \n",asyavg);
+
+    }
+
+  }
+
+  if (quick_check) { // code exists after this
+
+    Float_t theta_degr, theta_rad, ene;
+
+    for (Int_t itry=0; itry<10; itry++) {
+
+      theta_degr = 5.0;
+      ene = 1.05;
+
+      if (itry==1) {
+	theta_degr = 3.51;
+        ene = 1.2;
+      }
+      if (itry==2) {
+	theta_degr = 4.0;
+        ene = 1.2;
+      }
+      if (itry==3) {
+	theta_degr = 4.6;
+        ene = 1.25;
+      }
+      if (itry==4) {
+	theta_degr = 4.2;
+        ene = 1.3;
+      }
+      if (itry==5) {
+	theta_degr = 4.6;
+        ene = 1.3;
+      }
+      if (itry==6) {
+	theta_degr = 5;
+        ene = 1.4;
+      }
+      if (itry==7) {
+	theta_degr = 3.8;
+        ene = 1.2;
+      }
+      if (itry==8) {
+	theta_degr = 3.8;
+        ene = 1.1;
+      }
+      if (itry==9) {
+	theta_degr = 4.2;
+        ene = 1.0;
+      }
+
+      theta_rad = 3.1415926*theta_degr/180.0;
+      CrossSection(ene,theta_rad,0);
+      Asymmetry(ene,theta_rad,0);
+      Asymmetry(ene,theta_rad,1);
+
+      cout << "CHECK :  energy "<<ene<<"  theta "<<theta_degr<<endl;
+      cout << "crsec  "<<crsec<<"    A0= "<<asy0<<"  A1= "<<asy1<<endl;
+      cout << endl << "-------------------------------------------- "<<endl;
+
+    }
+
+    exit(0);
+  }
+
+
+
+  if (quick_feasibility) {  // code exits after this
+
+    Int_t itgt = 0;
+    if (whichmodel == HORPB) itgt = 1;
+
+    Float_t tdens = expt->target->GetMtlDensity(itgt);  // tgt density (g/cm^3)
+    Float_t tlen = expt->target->GetMtlEffLen(itgt);  // tgt len (m)
+    tlen = tlen*100;                        // need cm
+    Float_t current = expt->event->beam->beam_current;  // microAmps (uA)
+    current = current * 6.25e12;    // 100 uA = 6.25e14 e- / sec
+    Float_t anum = expt->target->GetAscatt();    // atomic num.
+
+    cout << "Check feasibility "<<endl;
+    cout << "Tgt  A = "<<anum<<"    tdens = "<<tdens<<"   tlen = "<<tlen<<endl;
+    cout << "Current = "<<current<<endl;
+
+    FILE *fd;
+    char schar[200]; 
+    fd=fopen("./PREX/accept.dat", "r");
+    Double_t weisum=0;
+    Double_t crcsum=0;
+    Double_t asyavg;    
+    if (fd==NULL) {
+      printf("hamcPhyPREX:: Acceptance function not found !\n");
+      exit(0);
+    } else {
+
+      Float_t theta_degr, ene, xacc;
+      Float_t daa, rate, asyavg, domega, fom;
+      Float_t daasum, ratesum, asysum, xnorm;
+      domega = 0.0037;
+
+      for (Int_t iene=0; iene < 30; iene++) {
+ 
+        ene = 0.6 + 0.05*((Float_t)iene); // GeV
+
+        ratesum = 0;
+        xnorm=0;
+        asysum = 0;
+        daasum = 0;
+
+        fclose(fd);
+        fd=fopen("./PREX/accept.dat", "r");
+
+        while(fgets(schar,100,fd)!=NULL) {
+          sscanf(schar, "%f  %f", &theta_degr, &xacc);
+
+          theta_rad = 3.1415926*theta_degr/180.0;
+          CrossSection(ene,theta_rad,0);
+          Asymmetry(ene,theta_rad,0);
+          Asymmetry(ene,theta_rad,1);
+          daa = 0;
+   	  if (asy0 != 0) daa = (asy1-asy0)/asy0;
+          rate = xacc * current * crsec * 0.602 * tlen * tdens * domega / anum;
+          ratesum += rate;  
+          daasum += daa * rate;
+          asysum += asy0 * rate;
+          xnorm += xacc;
+	  if (ene > 1.2 && ene < 1.1) { 
+	     cout << "energy "<<ene<<"  theta "<<theta_degr<<endl;
+	     cout << "accept  "<<xacc<<"  A= "<<asy0<<"  "<<asy1<<"  daa = "<<daa<<endl;
+	     cout << "crsec  "<<crsec<<endl;
+	     cout << "rate "<<rate<<"  "<<ratesum<<"  cnt = "<<xnorm<<endl;
+	  }
+	}
+        if (ratesum > 0) {        
+          asyavg = asysum / ratesum;
+          daa = daasum / ratesum;
+          rate = ratesum / xnorm;
+          fom = 1e9 * rate * (asyavg*asyavg) * (daa*daa);
+	} else {
+          asyavg=0; daa=0; rate=0; fom=0;
+	}
+        cout << "E= "<<ene<<"   <A> = "<<1e6*asyavg<<" ppm";
+        cout << "  rate = "<<rate<<" Hz     daa = "<<daa<<"   fom = "<<fom<<endl;
+        
+
+      }
+    }
+
+    exit(0);   // done
+
+  }  // quick_feasibility
     
 
   return 1;
@@ -170,6 +373,7 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
 Int_t hamcPhyPREX::Generate(hamcExpt *expt) {
 
    Int_t ldebug=0;
+   static int lentry=0;
 
    Float_t energy = kine->energy;    // GeV
    Float_t theta = kine->theta;      // radians
@@ -180,6 +384,7 @@ Int_t hamcPhyPREX::Generate(hamcExpt *expt) {
    Int_t mtl_idx = expt->target->GetMtlIndex();
    Float_t tdens = expt->target->GetMtlDensity(mtl_idx);  // tgt density (g/cm^3)
    Float_t tlen = expt->target->GetMtlLen(mtl_idx);  // tgt len (m)
+   Float_t tefflen = expt->target->GetMtlEffLen(itgt);  // eff. tgt len (m)
 
    if (anum == 12) {
      crsec = CalculateCrossSection(1, energy, theta*180/PI);
@@ -199,7 +404,7 @@ Int_t hamcPhyPREX::Generate(hamcExpt *expt) {
    if (num_models > 1) Asymmetry(energy, theta,1);  // stretched
    Asymmetry(energy, theta,0);  // unstretched (call this last)
 
-   Drate(anum, tdens, tlen, crsec); //Hz/uA
+   Drate(anum, tdens, tefflen, crsec); //Hz/uA
 
    return OK;
 }
@@ -241,8 +446,6 @@ Int_t hamcPhyPREX::CrossSection(Float_t energy, Float_t angle_rad, Int_t stretch
   if (indxAngle <= 0) return -1; 
 
   Int_t indxEnergy = FindEnergyIndex(energy);
-  
-  if (debug) cout << "crsec indices "<<energy<<"  "<<angle<<"  "<<indxAngle<<" "<<indxEnergy<<endl;
 
   if (indxEnergy <= 0) return -1;
 
@@ -252,13 +455,15 @@ Int_t hamcPhyPREX::CrossSection(Float_t energy, Float_t angle_rad, Int_t stretch
   Float_t angle_upper =angle_row[indxAngle];
   Float_t angle_lower = angle_row[indxAngle-1];
 
-  crsc1 = crsc_tables[stretch][indxEnergy][indxAngle+1]; /*get the cross section value for angle value larger than the actual*/
-  crsc2 = crsc_tables[stretch][indxEnergy][indxAngle+2]; //get the cross section value for energy value one below the actual
+  crsc1 = crsc_tables[stretch][indxEnergy][indxAngle]; /*get the cross section value for angle value larger than the actual*/
+  crsc2 = crsc_tables[stretch][indxEnergy][indxAngle+1]; //get the cross section value for energy value one below the actual
     // }
+
   crsec = Interpolate(angle_lower, angle_upper, angle, crsc1, crsc2)/1000;  
 
   if (debug) {
      cout << "\n LEAD Cross section : "<<endl;
+     cout << "stretch "<<stretch<<"   indices "<<indxEnergy<<"   "<<indxAngle+1<<endl;
      cout << "energy " << energy << " GeV " << "angle " << angle << endl;
      cout <<"Interpolation of crsec "<<crsc1/1000 <<" "<<crsc2/1000<<" "<<crsec<<endl;
   }
@@ -290,9 +495,9 @@ Int_t hamcPhyPREX::Asymmetry(Float_t energy, Float_t angle_rad, Int_t stretch) {
   Float_t asymmetry1, asymmetry2;
   Float_t angle_upper =angle_row[indxAngle] ;
   Float_t angle_lower = angle_row[indxAngle-1];
-  
-  asymmetry1 = asymmetry_tables[stretch][indxEnergy][indxAngle+1];
-  asymmetry2 = asymmetry_tables[stretch][indxEnergy][indxAngle+2];
+
+  asymmetry1 = asymmetry_tables[stretch][indxEnergy][indxAngle];
+  asymmetry2 = asymmetry_tables[stretch][indxEnergy][indxAngle+1];
   asymmetry = Interpolate(angle_lower, angle_upper, angle, asymmetry1, asymmetry2);
 
   if (stretch == 0) asy0 = asymmetry;
@@ -302,9 +507,12 @@ Int_t hamcPhyPREX::Asymmetry(Float_t energy, Float_t angle_rad, Int_t stretch) {
 
   if (debug) {
     cout<<"angle  "<<angle<<endl;
-    cout << "Lead Asymmetries"<<asymmetry1 << " "<<asymmetry2 <<" " <<asymmetry<<endl;   
-    Float_t calcasy = CalculateAsymmetry(0);
-    cout << "Calculated lead asy "<<calcasy<<endl;
+    cout << "Indices "<<indxAngle<<"  "<<indxEnergy<<"   "<<stretch<<endl;
+    cout << "Lead Asymmetries  "<<asymmetry1 << " "<<asymmetry2 <<" " <<asymmetry<<endl;   
+    //    Float_t calcasy = CalculateAsymmetry(0);
+    //    cout << "Calculated lead asy "<<calcasy<<endl;
+    cout << "stretch "<<stretch<<"  "<<asy0<<"  "<<asy1<<endl;
+    cout << "size = "<<asymmetry_tables.size()<<endl;
   }
 
   return 1;
@@ -313,6 +521,7 @@ Int_t hamcPhyPREX::Asymmetry(Float_t energy, Float_t angle_rad, Int_t stretch) {
 Int_t hamcPhyPREX::Drate(Float_t anum, Float_t tdens,Float_t tlen, Float_t crsec) {
 
   tlen = tlen*100;   // need cm
+  
   //cout<<"tlen="<<tlen<<", tdens = "<<tdens<<", anum="<<anum<<", crsec = "<<crsec<<endl;
   Float_t avg_omega = 0.004671;
   drate = 6.25e12 * crsec * 0.602 * tlen * tdens * avg_omega / anum; //Hz/uAww
@@ -330,9 +539,15 @@ Int_t hamcPhyPREX::FindAngleIndex(Float_t angle){
 
 Int_t hamcPhyPREX::FindEnergyIndex(Float_t energy){
   
-  Float_t rounded_energy = round(energy*20)/20;
+  // Adjust energy up 4.5% (the acceptance) to be closer to right value
+  // and to not over-estimate the rate.  (Problem is 50 MeV steps)
+  Float_t rounded_energy = round(1.045*energy*20)/20;
   
   vector<Float_t>::const_iterator iterEnergy  = lower_bound(energy_row.begin(), energy_row.end(), rounded_energy); //search for the first value of energy which is larger or equal than actual 
+
+  UInt_t isize = energy_row.size();
+  
+  if (rounded_energy > energy_row[isize-1]) return -1;
 
   return iterEnergy - energy_row.begin()-1; //indexing in vectors starts from 0, therefore -1
 }
@@ -355,7 +570,7 @@ Float_t hamcPhyPREX::Interpolate(Float_t min, Float_t max, Float_t mid, Float_t 
 }
 
 Int_t hamcPhyPREX::LoadFiles() {
-  /* Loading Horowitch tables in memory. Data is saved in 3D vector( aVector[stretch][energy][angle]*/
+  /* Loading Horowitz tables in memory. Data is saved in 3D vector( aVector[stretch][energy][angle]*/
 
   int stretch = 0;
 
@@ -369,7 +584,9 @@ Int_t hamcPhyPREX::LoadFiles() {
   crsc_table_temp.clear();
   asymmetry_table_temp.clear();
 
-  if (whichmodel == HORPB) {  
+  if (whichmodel == HORPB ||
+      whichmodel == HORCA ||
+      whichmodel == HORSN ) {  
     stretch = 1; 
     LoadHorowitzTable(crsc_table_temp, asymmetry_table_temp,stretch);
     crsc_tables.push_back(crsc_table_temp);
@@ -381,6 +598,7 @@ Int_t hamcPhyPREX::LoadFiles() {
   LoadC12FormFactorTable();
   
   cout<< "hamcPhyPREX:  Tables loaded" <<endl;
+
 
   return 1;
 }
@@ -545,10 +763,12 @@ Int_t hamcPhyPREX::LoadFormFactorTable(){
 
 Int_t hamcPhyPREX::LoadHorowitzTable(vector<vector<Float_t> >& crsc_table, vector< vector<Float_t> >& asymmetry_table, Int_t stretch){
 
-/*This function reads Horowitchs tables into two 2D vectors, one for crossection, another for asymmetry*/
+/*This function reads Horowitz's tables into two 2D vectors, one for crossection, another for asymmetry*/
 
   vector<float> crsc_row;  //temporary variables
   vector<float> asymmetry_row;
+
+  Int_t debug = 0;
 
   energy_row.clear();
   asymmetry_row.clear();
@@ -568,6 +788,20 @@ Int_t hamcPhyPREX::LoadHorowitzTable(vector<vector<Float_t> >& crsc_table, vecto
        filename="./PREX/horpb1.dat";
      }
   }
+  if (whichmodel == HORCA) {
+     if (stretch==0) {
+       filename="./PREX/ca48.dat";
+     }  else {
+       filename="./PREX/ca48s.dat";
+     }
+  }
+  if (whichmodel == HORSN) {
+     if (stretch==0) {
+       filename="./PREX/sn120.dat";
+     }  else {
+       filename="./PREX/sn120s.dat";
+     }
+  }
   if (whichmodel == SI) filename = "./PREX/si.dat";
   if (whichmodel == NL3P06) filename = "./PREX/nl3p06.dat";
   if (whichmodel == SLY4) filename = "./PREX/sly4.dat";
@@ -576,7 +810,8 @@ Int_t hamcPhyPREX::LoadHorowitzTable(vector<vector<Float_t> >& crsc_table, vecto
   if (whichmodel == NL3) filename = "./PREX/nl3.dat";
   if (whichmodel == NL3M05) filename = "./PREX/nl3m05.dat";
 
-  cout << "PREX: using lookup file = "<<whichmodel<<"  "<<filename<<endl;
+  cout << "PREX : using model "<<whichmodel<<"  stretch = ";
+  cout << stretch << "    filename = "<< filename<<endl;
 
   fd=fopen(filename, "r");
   if (fd==NULL) {
@@ -615,12 +850,17 @@ Int_t hamcPhyPREX::LoadHorowitzTable(vector<vector<Float_t> >& crsc_table, vecto
 	angle_row.push_back(angle);	
       }
       crsc_row.push_back(cross_section);
+
       asymmetry_row.push_back(asymmetry);
+      if (debug) {
+       cout << "Loading  ... E = "<<energy<<"  "<<cross_section<<"  "<<crsc_row.size()<<"   "<<asymmetry<<"  "<<asymmetry_row.size()<<endl;
+      }
     }
   }
   crsc_table.push_back(crsc_row);
   asymmetry_table.push_back(asymmetry_row);
-
+  //  cout << "crsc_table size "<<crsc_table.size()<<"    asym tab size "<<asymmetry_table.size()<<endl;
+  
   fclose(fd);
 
   return 1;

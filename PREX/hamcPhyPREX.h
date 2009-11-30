@@ -14,13 +14,15 @@
 
 #define NOMODEL  0
 #define HORPB    1
-#define SI       2
-#define NL3P06   3
-#define SLY4     4
-#define SIII     5
-#define FSU      6
-#define NL3      7
-#define NL3M05   8
+#define HORCA    2
+#define HORSN    3
+#define SI       4
+#define NL3P06   5
+#define SLY4     6
+#define SIII     7
+#define FSU      8
+#define NL3      9
+#define NL3M05  10
 
 using namespace std;
 
@@ -97,10 +99,12 @@ class hamcPhyPREX : public hamcPhysics {
      vector<Float_t> angle_row;  //to save the angle values of Horowitch table
      vector<Float_t> energy_row; //to save the energy values 
 
-     TH1F *hpph1,*hpph2,*hpph3,*hpph4;
+     TH1F *hpph1,*hpph2,*hpph3,*hpph4,*hpph6;
      TH2F *hpph5;
-     static const Int_t histo_test=1; // to test(1) or not(0) this code
-
+     static const Int_t histo_test=0; // to test(1) or not(0) this code
+     static const Int_t accept_test=0; // to test(1) or not(0) this acceptance
+     static const Int_t quick_feasibility=0; 
+     static const Int_t quick_check=0; 
 
 #ifndef NODICT
 ClassDef (hamcPhyPREX, 0)   // PREX physics
