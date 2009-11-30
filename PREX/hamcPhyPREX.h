@@ -71,6 +71,8 @@ class hamcPhyPREX : public hamcPhysics {
 
      Float_t qsq;
      Float_t asy0, asy1;  // unstretched and streteched R_N asymmetries 
+     
+     Float_t drate;
 
      // Now considering 8 models.
      // The first one is "old" (~10 years)

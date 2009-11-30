@@ -384,7 +384,7 @@ Int_t hamcPhyPREX::Generate(hamcExpt *expt) {
    Int_t mtl_idx = expt->target->GetMtlIndex();
    Float_t tdens = expt->target->GetMtlDensity(mtl_idx);  // tgt density (g/cm^3)
    Float_t tlen = expt->target->GetMtlLen(mtl_idx);  // tgt len (m)
-   Float_t tefflen = expt->target->GetMtlEffLen(itgt);  // eff. tgt len (m)
+   Float_t tefflen = expt->target->GetMtlEffLen(mtl_idx);  // eff. tgt len (m)
 
    if (anum == 12) {
      crsec = CalculateCrossSection(1, energy, theta*180/PI);
