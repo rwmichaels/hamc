@@ -26,7 +26,7 @@ ClassImp(hamcTrackOut)
 hamcTrackOut::hamcTrackOut() : hamcTrack("electron"),thetamin(0),thetamax(0),phimin(0),phimax(0),which_hrs(0)
 {
   did_init = kFALSE;
-  det_dist = 1.2; // meters
+  det_dist= 0; // meters
   trktype = "out";
   tvect_guido = 0;
   xgui = 0; ygui = 0; thgui = 0; phgui = 0; 
@@ -118,7 +118,7 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 //                           ^   care-acc?   ^     hist id
 //                           ^      ^        ^       ^
    expt->inout->BookHisto(kFALSE, kFALSE, ITARGET, "th1", 
-	        "Theta Generated", &theta, 120,0.8*thetamin,1.2*thetamax);
+	        "Theta Generated", &theta, nbin,0.8*thetamin,1.2*thetamax);
 //                  ^                ^      ^         ^           ^
 //                title           variable  nbin     x-low     x-high
 //                               (pointer)
@@ -131,7 +131,17 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
                 &theta, nbin, 0.8*thetamin,1.2*thetamax);
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "th4", 
 		"Theta at focal plane weighted by crsec, in accept", 
+                &theta, 200, 0.05,0.15);
+   expt->inout->BookHisto(kFALSE, kTRUE, IFOCAL, "th5", 
+		"Theta at focal plane (unweighted, in accept)", 
                 &theta, nbin, 0.8*thetamin,1.2*thetamax);
+
+// To measure acceptance function
+   expt->inout->BookHisto(kFALSE, kFALSE, ITARGET, "hthin", 
+	        "Theta Generated", &theta_deg, 600,2.0,8.0);
+   expt->inout->BookHisto(kFALSE, kTRUE, IFOCAL, "hthacc", 
+	        "Theta Accepted", &theta_deg, 600,2.0,8.0);
+
 
    expt->inout->BookHisto(kFALSE, kFALSE, ITARGET, "ph", 
 		"Phi at target", &phi, nbin, -0.2,1.2*phimax);
@@ -217,10 +227,6 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
    htp = new TH2F("htp","Generated Theta-Phi",
               100,-0.3,0.3,100,-0.3,0.3);
 
-   xyb4trans = new TH2F("xyb4trans", "X-Y before transport", 100, -0.08, 0.08, 100, -0.008, 0.008);
-   tpb4trans = new TH2F("tpb4trans", "theta-phi before transport", 100, -0.3, 0.3, 100, -0.3, 0.3);
-   dpb4trans = new TH1F("dpb4trans", "dp before transport", 100, -0.1, 0.1);
-
 
    Float_t xbox = 0.8;
    Float_t ybox = 0.8;
@@ -262,12 +268,13 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 
    expt->inout->BookHisto(kFALSE, kFALSE, IQ1EXIT, "xyq1", 
 		      "Transport X-Y at Q1 exit", 
-                            &ytrans, nbin,-xbox,xbox,
-                            &xtrans, nbin,-ybox,ybox);
+                            &ytrans, nbin,-0.3,0.3,
+                            &xtrans, nbin,-0.3,0.3);
+
    expt->inout->BookHisto(kFALSE, kTRUE, IQ1EXIT, "xyq1a", 
 		   "Transport X-Y inside Q1 acceptance", 
-                            &ytrans, nbin,-xbox,xbox,
-                            &xtrans, nbin,-ybox,ybox);
+                            &ytrans, nbin,-0.3,0.3,
+                            &xtrans, nbin,-0.3,0.3);
 
    expt->inout->BookHisto(kFALSE, kFALSE, IDIPIN, "xydipi", 
 		      "Transport X-Y at dipole entrance", 
@@ -342,12 +349,32 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "xyfoc6", 
 		      "Weighted X-Y at focal plane (X on X-axis)", 
                             &xtrans, nbin,-1,1,
-                            &ytrans, nbin,-0.2,0.2);
+                            &ytrans, nbin,-0.25,0.25);
 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "xyfoc6z", 
 		      "Weighted X-Y at focal plane (X on X-axis)", 
-                            &xtrans, nbin,-0.1,0.08,
-                            &ytrans, nbin,-0.08,0.07);
+                            &xtrans, nbin,-0.2,0.1,
+                            &ytrans, nbin,-0.1,0.1);
+
+    expt->inout->BookHisto(kTRUE, kTRUE, IPLANE1, "xyfoc7", 
+		      "Weighted X-Y at 1.0 m (X on X-axis)", 
+                            &xtrans, nbin,-1,1,
+                            &ytrans, nbin,-0.25,0.25);
+
+    expt->inout->BookHisto(kTRUE, kTRUE, IPLANE1, "xyfoc7z", 
+		      "Weighted X-Y at 1.0 m (X on X-axis)", 
+                            &xtrans, nbin,-0.2,0.1,
+                            &ytrans, nbin,-0.1,0.1);
+
+    expt->inout->BookHisto(kTRUE, kTRUE, IPLANE2, "xyfoc8", 
+		      "Weighted X-Y at 1.48 m (X on X-axis)", 
+                            &xtrans, nbin,-1,1,
+                            &ytrans, nbin,-0.25,0.25);
+
+    expt->inout->BookHisto(kTRUE, kTRUE, IPLANE2, "xyfoc8z", 
+		      "Weighted X-Y at 1.48 m (X on X-axis)", 
+                            &xtrans, nbin,-0.2,0.1,
+                            &ytrans, nbin,-0.1,0.1);
 
 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "xfoc",
@@ -364,7 +391,7 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "qsq",
 			   "Qsq (weighted, in accept)",
-			   &qsq, 200,  0, 1);
+			   &qsq, 200,  0.0, 0.02);
 
 
     // Add some variables to the event ntuple
@@ -418,34 +445,12 @@ Int_t hamcTrackOut::Generate(hamcExpt *expt) {
   xfpd  = 0;
   yfpd  = 0;
 
-  hamcBeam *beam = expt->event->beam;
-
-// Initial tvect X,Y,Z is tied to the beam
-// X is vertical up, Y is horizontal, positive to right.
-// tvect units are meters.  
-// (And the "angles" are actually tan(theta), tan(phi),
-//    so those are approximately radians).
-
-  if (beam) {
-    Float_t xb,xt,yb,yt,zb,zt;
-    xb = beam->GetTransX();  
-    yb = beam->GetTransY();
-    zb = beam->GetTransZ();
-    xt = xb;
-    yt = yb * TMath::Cos(theta_central);
-    zt = zb * TMath::Cos(theta_central) + yb * TMath::Sin(theta_central); 
-    tvect->PutX(xt);
-    tvect->PutY(yt);
-    tvect->PutZ(zt);
-  } else {
-    tvect->Clear();
-  }
-
-  if (expt->physics->kine->Generate(expt) == -1)
-    return -1;
+  expt->physics->kine->Generate(expt);
 
   theta = expt->physics->kine->theta;
   phi = expt->physics->kine->phi;
+  theta_deg = theta * 180.0/PI;
+  phi_deg = phi * 180.0/PI;
   energy = expt->physics->kine->eprime;
   qsq = expt->physics->kine->qsq;
 
@@ -458,7 +463,7 @@ Int_t hamcTrackOut::Generate(hamcExpt *expt) {
 
   tvect->PutDpp(dpp);
 
-  LabToTrans();     // Get TRANSPORT angles.
+  LabToTrans(expt);     // Get TRANSPORT position and angles.
   UpdateTrans();
   ComputePvect();   
 
@@ -500,7 +505,7 @@ Int_t hamcTrackOut::UpdateGuidoFocal(hamcSpecHRS *spec) {
 
 }
 
-Int_t hamcTrackOut::LabToTrans() {
+Int_t hamcTrackOut::LabToTrans(hamcExpt *expt) {
 
 // Convert lab angles to TRANSPORT.
 // In lab, beam is along Z.
@@ -515,15 +520,50 @@ Int_t hamcTrackOut::LabToTrans() {
 // for L-HRS positive phi_t is away from beam
 
   Int_t ldebug=0;
+  Int_t useold_test = 0;
 
-  Float_t stc, ctc, ttc, sts, cts, sps, cps;
+  Float_t stc, ctc, ttc, sts, cts, tts, sps, cps;
   stc = TMath::Sin(theta_central);
   ctc = TMath::Cos(theta_central);
   ttc = TMath::Tan(theta_central);
   sts = TMath::Sin(theta);
   cts = TMath::Cos(theta);
+  tts = TMath::Tan(theta);
   sps = TMath::Sin(phi);
   cps = TMath::Cos(phi);
+
+  hamcBeam *beam = expt->event->beam;
+
+// Initial tvect X,Y,Z is tied to the beam
+// X is vertical up, Y is horizontal, positive to right.
+// tvect units are meters.  
+// (And the "angles" are actually tan(theta), tan(phi),
+//    so those are approximately radians).
+
+  if (beam) {
+    Float_t xb,xt,yb,yt,zb,zt;
+    xb = beam->GetTransX();  
+    yb = beam->GetTransY();
+    zb = beam->GetTransZ();
+    xt = xb - (yb * sts * cps * stc + zb * sts * cps * ctc)/(cts * ctc + sts * sps * stc);
+    yt = ( yb - zb * tts * sps * sps)/(ctc + tts * sps * stc);
+    zt = zb;  // actually irrelevant
+
+    if (useold_test) {
+
+       xt = xb;
+       yt = yb * 20; // TMath::Cos(theta_central);
+       zt = zb * TMath::Cos(theta_central) + yb * TMath::Sin(theta_central); 
+  
+    }
+
+
+    tvect->PutX(xt);
+    tvect->PutY(yt);
+    tvect->PutZ(zt);
+  } else {
+    tvect->Clear();
+  }
 
   Float_t xsign = 1.0;
   if (which_hrs == LEFTHRS) xsign = -1.0;  // sign convention, see above
@@ -617,20 +657,6 @@ void hamcTrackOut::ComputeQsqToTrack(const hamcTrack *trk) {
 
 }
 
-Float_t hamcTrackOut::GetDetSpot(Int_t i) {
 
-  if (i == 0)
-    return xfpd;
-  else if (i == 1)
-    return thfpd;
-  else if (i == 2)
-    return yfpd;
-  else if (i == 3)
-    return phfpd;
-  else {
-    cout<<"ERROR: error in hamcTrackOut->GetDetSpot(Int_t i), i should be 0 to 3"<<endl;
-    return -999;
-  }
-}
 
    

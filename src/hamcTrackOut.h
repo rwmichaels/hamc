@@ -14,6 +14,7 @@
 
 class hamcBeam;
 class hamcSpecHRS;
+class hamcExpt;
 
 class hamcTrackOut : public hamcTrack {
 
@@ -36,12 +37,14 @@ class hamcTrackOut : public hamcTrack {
      TH1F *dpb4trans;
      Int_t UpdateGuidoFocal(hamcSpecHRS *spec);  // using Guido's focal plane variables
 
+
+
   protected:
 
   private: 
 
      void ComputePvect();
-     Int_t LabToTrans();
+     Int_t LabToTrans(hamcExpt *expt);
  
 // Qsq between this track and input track 'trk'
      void ComputeQsqToTrack(const hamcTrack *trk);  

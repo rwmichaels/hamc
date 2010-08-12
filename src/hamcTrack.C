@@ -178,7 +178,7 @@ void hamcTrack::MultScatt(Float_t radlen, Int_t where) {
 // Resets track origin to present location.
 // The transport model must provide transport from this new origin.
 
-  Int_t use_resol = 1;
+  Int_t use_resol = 0;
   Int_t use_mscat = 1;
 
 
@@ -197,6 +197,7 @@ void hamcTrack::MultScatt(Float_t radlen, Int_t where) {
   } else {
     dtheta = theta_sigma * gRandom->Gaus();
   }
+
   if (use_mscat) tvect->AddToTheta(dtheta);
 
   prob = gRandom->Rndm();
@@ -205,6 +206,7 @@ void hamcTrack::MultScatt(Float_t radlen, Int_t where) {
   } else {
     dtheta = theta_sigma * gRandom->Gaus();
   }
+
   if (use_mscat) tvect->AddToPhi(dtheta);
 
   *tvect_orig = *tvect;
