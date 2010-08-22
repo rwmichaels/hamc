@@ -106,7 +106,7 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
 
 
 // Weight by cross section (optionally used for some histograms)
-     Float_t weight = expt->physics->GetCrossSection();
+     Float_t weight = 1e5*expt->physics->GetCrossSection();
  
      expt->inout->SetWeight(weight);
 
@@ -115,14 +115,14 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
      Float_t xb4trans = track->GetTransX();
      Float_t yb4trans = track->GetTransY();
      //    cout<<"xb4trans="<<xb4trans<<"yb4trans="<<yb4trans<<endl;
-     track->xyb4trans->Fill(yb4trans, xb4trans);
+     //     track->xyb4trans->Fill(yb4trans, xb4trans);
 
      Float_t tb4trans = track->GetTransTheta();
      Float_t pb4trans = track->GetTransPhi();
-     track->tpb4trans->Fill(tb4trans,pb4trans);
+     //     track->tpb4trans->Fill(tb4trans,pb4trans);
 
      Float_t Dpb4trans = track->GetTransDp();
-     track->dpb4trans->Fill(Dpb4trans);
+     //     track->dpb4trans->Fill(Dpb4trans);
 
 
 // Loop over break points in spectrometer
