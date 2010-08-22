@@ -189,7 +189,7 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "xyfpd",
 			  "X-Y at focal plane detector",
-			  &xfpd, nbin, -1, 1,
+			  &xfpd, nbin, -1, 0.4,
                           &yfpd, nbin, -0.2, 0.2);
 
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "th0",
@@ -379,19 +379,27 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "xfoc",
                          "X at focal plane",
-			   &xtrans, nbin, -0.5, 0.1);
+			   &xtrans, nbin, -1, 0.5);
 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "yfoc",
                          "Y at focal plane",
 			   &ytrans, nbin, -0.1, 0.1);
 
+    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "thfoc",
+                         "Theta trans at focal plane",
+			   &thtrans, nbin, -0.2,0.2);
+
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "xdet",
                          "X (det. frame)",
 			   &xdet, nbin, -1.2, 1.);
 
+    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "phfoc",
+                         "Theta trans at focal plane",
+			   &phtrans, nbin, -0.2,0.2);
+
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "qsq",
 			   "Qsq (weighted, in accept)",
-			   &qsq, 200,  0.0, 0.02);
+			   &qsq, 200,  0.3, 1.0);
 
 
     // Add some variables to the event ntuple
