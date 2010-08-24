@@ -49,8 +49,8 @@ Int_t hamcExptHAPPEX::Init(string sfile) {
 
   qsq1 = new TH1F("qsq1","Qsq (weighted, in accept)",200,0.3,1.0);
   qsq2 = new TH1F("qsq2","Qsq (weighted, in accept, det accept cut)",200,0.3,1.0);
-  qsq3 = new TH1F("qsq3","Qsq with cut1 ",200,0.3,1.0);
-  qsq4 = new TH1F("qsq4","Qsq with cut1 ",200,0.3,1.0);
+  qsq3 = new TH1F("qsq3","Qsq alternative ",200,0.3,1.0);
+  qsq4 = new TH1F("qsq4","Qsq alternative with cuts ",200,0.3,1.0);
   hxy1 = new TH2F("hxy1","X vs Y in focal plane",100,-0.7,0.3,100,-0.06,0.06);
   hxy2 = new TH2F("hxy2","X vs Y in focal plane (det accept cut)",100,-0.7,0.3,100,-0.06,0.06);
   hxy3 = new TH2F("hxy3","X vs Y in focal plane, unweighted",100,-0.7,0.3,100,-0.06,0.06);
@@ -62,7 +62,6 @@ Int_t hamcExptHAPPEX::Init(string sfile) {
 void hamcExptHAPPEX::EventAnalysis() {
 
 // Fill some histograms for diagnostic purposes.
-// THIS IS JUST AN EXAMPLE for now.
 
   Int_t lprint = 0;  // to turn on(1) or off(0) local print
 
@@ -82,6 +81,7 @@ void hamcExptHAPPEX::EventAnalysis() {
   Float_t th = event->trackout[0]->thtrans;
   Float_t y = event->trackout[0]->ytrans;
   Float_t ph = event->trackout[0]->phtrans;
+  Float_t pmom = event->trackout[0]->GetPmom();
 
   // cuts to define detector location
   // (just an example; actually should make a trapezoid cut in the plane)
@@ -108,11 +108,27 @@ void hamcExptHAPPEX::EventAnalysis() {
   Float_t crsec = physics->GetCrossSection();
   Float_t wt = 1e5*crsec;
 
+  Float_t theta_central = PI * GetSpectrom(0)->GetScattAngle() / 180;
+  Int_t which_hrs = GetSpectrom(0)->which_spectrom;             // affects angle convention
+  Float_t xsign = 1.0;
+  if (which_hrs == LEFTHRS) xsign = -1.0;  // sign convention for L,R HRS.
+
+  Float_t ebeam = event->beam->GetEnergy();  // energy of the beam right before scattering (contains Elosses)
+
+  // Alternative Q^2 using the angles at the target.  Note the sign convention (xsign)
+  Float_t qsq_alt = 2*ebeam*pmom*(1-((TMath::Cos(theta_central)+(xsign*(TMath::Sin(theta_central))*ph0))/(TMath::Sqrt(1+th0*th0+ph0*ph0))));
+
+  // At this point you can define multiple versins of qsq_alt, corresponding to different shifts of ph0
+
   if (lprint) {
-    cout << "Angles at target "<<th0<<"  "<<ph0<<endl;
+    cout << "\n\nAngles at target "<<th0<<"  "<<ph0<<endl;
     cout << "Transport vector at focal plane "<<x<<"  "<<y<<"  "<<th<<"  "<<ph<<endl;
     cout << "Qsq "<<qsq<<endl;
-    cout << "Cross section "<<crsec<<endl<<endl;
+    cout << "Cross section "<<crsec<<endl;
+    cout << "qsq_alt "<<qsq_alt<<"  compared to regular qsq "<<qsq<<endl;
+    cout << "inputs :  theta_central "<<theta_central<<"    Ebeam = "<<ebeam<<endl;
+    cout << "angles at target  "<<ph0<<"  "<<th0<<"   Momentum "<<pmom<<endl;
+    if (pmom > ebeam) cout << "Hmmm.  This should not happen ! "<<endl;
   }
 
   // You might want to make sure X,Y are extrapolated to the right plane.
@@ -121,13 +137,15 @@ void hamcExptHAPPEX::EventAnalysis() {
 
     hxy1->Fill(x,y,crsec);
     qsq1->Fill(qsq,wt);
-    
+    qsq3->Fill(qsq_alt,wt);
+
     hxy3->Fill(x,y);
 
     if (x > xlo && x < xhi && y > ylo && y < yhi) {  // track in detector
       
       hxy2->Fill(x,y,crsec);
       qsq2->Fill(qsq,wt);
+      qsq4->Fill(qsq_alt,wt);
 
       hxy4->Fill(x,y);
     }
