@@ -25,7 +25,7 @@ class hamcExptHAPPEX : public hamcSingles {
      hamcExptHAPPEX& operator=(const hamcExptHAPPEX& expt);
 
      TH1F *qsq1, *qsq2, *qsq3, *qsq4;
-     TH2F *hxy1, *hxy2;
+     TH2F *hxy1, *hxy2, *hxy3, *hxy4;
 
 
 #ifndef NODICT
