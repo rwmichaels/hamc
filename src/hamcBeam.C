@@ -12,7 +12,6 @@
 #include "Rtypes.h"
 #include <string>
 #include <vector>
-#include "TH1F.h"
 
 using namespace std;
 
@@ -80,7 +79,6 @@ Int_t hamcBeam::Init(hamcExpt *expt) {
 
      cout << "Beam current "<<beam_current<<" uA "<<endl;
 
-
      dx_iter = 0;
      dy_iter = 0;
      dE_iter = 0;
@@ -99,7 +97,7 @@ Int_t hamcBeam::Init(hamcExpt *expt) {
      }
      if (parser.IsFound("E")){
        if (expt->inout->numiter > 1) dE_iter = parser.GetData();
-       cout << "Will iterate E by "<<dE_iter<<endl;
+       cout << "Will iterate E by "<<dE_iter<<"  GeV "<<endl;
      }
      if (parser.IsFound("theta")){
        if (expt->inout->numiter > 1) dtheta_iter = parser.GetData();
@@ -109,6 +107,7 @@ Int_t hamcBeam::Init(hamcExpt *expt) {
        if (expt->inout->numiter > 1) dphi_iter = parser.GetData();
        cout<< "Will iterate the beam incident angle phi by "<<dphi_iter<<" radians"<<endl;
      }
+
 
      if (E0 > mass) P0 = TMath::Sqrt(E0*E0 - mass*mass);
 
@@ -159,6 +158,9 @@ Int_t hamcBeam::Generate(hamcExpt *expt) {
 
   Float_t x_position, y_position;
 
+  tvect->Clear();
+
+
   if (IsRastered()) { 
      x_position = -0.5*xrast + xrast*gRandom->Rndm(1);
      y_position = -0.5*yrast + yrast*gRandom->Rndm(1);
@@ -175,7 +177,7 @@ Int_t hamcBeam::Generate(hamcExpt *expt) {
   } else {
     tvect->Clear();
   }
-  
+
   tvect->PutZ(expt->target->GetZScatt());
 
   energy = E0 + E0sigma*gRandom->Gaus();
@@ -185,49 +187,69 @@ Int_t hamcBeam::Generate(hamcExpt *expt) {
   Radiate(expt);  // modifies the energy
 
   if (energy < mass) energy = mass;  // extrema of rad tail
-  
-  pmom = TMath::Sqrt(energy*energy - mass*mass);
-  
-  if (expt->iteration == 1) {
-  if (dtheta_iter > 1.E-8){
-    
-    plab_x = pmom*TMath::Sin(dtheta_iter);
-    plab_y = 0;
-    plab_z = pmom*TMath::Cos(dtheta_iter);
-  }
-  
-  else if (dphi_iter > 1.E-8) {
-    
-    plab_x = 0;
-    plab_y = pmom*TMath::Sin(dphi_iter);
-    plab_z = pmom*TMath::Cos(dphi_iter);
-  }
-  
-  }
 
-  else{
+  pmom = TMath::Sqrt(energy*energy - mass*mass);
+
+  if (expt->iteration == 1) {
+
+    if (dtheta_iter > 1.E-8){
+    
+      pnoms_x = pmom*TMath::Sin(dtheta_iter);
+      pnoms_y = 0;
+      pnoms_z = pmom*TMath::Cos(dtheta_iter);
+  
+   } else if (dphi_iter > 1.E-8) {
+    
+      pnoms_x = 0;
+      pnoms_y = pmom*TMath::Sin(dphi_iter);
+      pnoms_z = pmom*TMath::Cos(dphi_iter);
+    }
+  
+  } else {
+
     // Assume the beam is along the Z axis.
     
-    plab_x = 0;
-    plab_y = 0;
-    plab_z = pmom;
+    pnoms_x = 0;
+    pnoms_y = 0;
+    pnoms_z = pmom;
   }
+
+ // Apply multiple scattering
+
+  Float_t radlen;
+  Float_t tlen =  expt->target->GetLength();  // "L" of target
+// zscat varies from -L/2 to +L/2
+  Float_t zscat = expt->target->GetZScatt();
+  Float_t x0rad = expt->target->GetRadLength();
+  radlen = 0;
+  if (x0rad != 0) radlen = (((tlen/2)+zscat)/tlen) * x0rad;
+
+  //  cout << "\n ******* Calling Mult Scatt in beam "<<endl;
+  MultScatt(radlen, ITARGET);    // this modifies/updates plab (momentum)
+                                 // Note, MultScatt is a member of hamcTrack
+                                 // and hamcBeam inherits from hamcTrack.
+
+  //  cout << "Beam Pmom "<<endl;
+  //  cout << "No MS "<<pnoms_x<<"   "<<pnoms_y<<"   "<<pnoms_z<<endl;
+  //  cout << "With MS "<<plab_x<<"   "<<plab_y<<"   "<<plab_z<<endl;
+
+
   return OK;
 }
 
 Int_t hamcBeam::Radiate(hamcExpt* expt) {
-  
-  // The internal is for 1/2 t_equivalent, so it's
-  // what to subtract before and after scattering.
-  
+
+// The internal is for 1/2 t_equivalent, so it's
+// what to subtract before and after scattering.
+
   Float_t dE = expt->physics->eloss->GetDeExternIn() + 
-    expt->physics->eloss->GetDeIntern() +
-    expt->physics->eloss->GetDeIonIn();
-  
+               expt->physics->eloss->GetDeIntern() +
+               expt->physics->eloss->GetDeIonIn();
+
   energy = energy - dE;
-  
+
   return 0;
-  
+
 }
 
 

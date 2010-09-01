@@ -121,9 +121,15 @@ Int_t hamcTransLerWarmSeptum::TransForm(hamcTrack *trk, Int_t where) const {
         xout[3]=p_sp_sex__(xtrans,&dimen);
         break;
 
+      case ICOLLIM3: 
+
+	trk->tvect->Load(xtrans);
+        Drift(0.797, trk);  // 79.7 cm to sieve.
+        return OK;
+
       case ICOLLIM: 
       case ICOLLIM2: 
- 
+
         xout[0]=x_sp_col__(xtrans,&dimen);
         xout[1]=t_sp_col__(xtrans,&dimen);
         xout[2]=y_sp_col__(xtrans,&dimen);
@@ -172,14 +178,34 @@ Int_t hamcTransLerWarmSeptum::TransForm(hamcTrack *trk, Int_t where) const {
         break;
 
       case IFOCAL:
-      case IPLANE1:
-      case IPLANE2:
 
         xout[0]=x_sp_fp__(xtrans,&dimen);
         xout[1]=t_sp_fp__(xtrans,&dimen);
         xout[2]=y_sp_fp__(xtrans,&dimen);
         xout[3]=p_sp_fp__(xtrans,&dimen);
         break;
+
+      case IPLANE1:
+
+	xout[0]=x_sp_fp__(xtrans,&dimen);
+        xout[1]=t_sp_fp__(xtrans,&dimen);
+        xout[2]=y_sp_fp__(xtrans,&dimen);
+        xout[3]=p_sp_fp__(xtrans,&dimen);
+
+        trk->tvect->Load(xout);
+        Drift(1.0, trk);  // 1 meter
+        return OK;
+
+      case IPLANE2:
+
+	xout[0]=x_sp_fp__(xtrans,&dimen);
+        xout[1]=t_sp_fp__(xtrans,&dimen);
+        xout[2]=y_sp_fp__(xtrans,&dimen);
+        xout[3]=p_sp_fp__(xtrans,&dimen);
+
+        trk->tvect->Load(xout);
+        Drift(1.48, trk);  // 1.48 m
+        return OK;
 
       default:
 
@@ -189,7 +215,7 @@ Int_t hamcTransLerWarmSeptum::TransForm(hamcTrack *trk, Int_t where) const {
 
   }
   
-  if (origin == ICOLLIM || origin == ICOLLIM2) {
+  if (origin == ICOLLIM || origin == ICOLLIM2 || origin == ICOLLIM3) {
 
     switch(where) {
 
@@ -234,14 +260,34 @@ Int_t hamcTransLerWarmSeptum::TransForm(hamcTrack *trk, Int_t where) const {
         break;
 
       case IFOCAL:
-      case IPLANE1:
-      case IPLANE2:
 
         xout[0]=x_sp_cfp__(xtrans,&dimen);
         xout[1]=t_sp_cfp__(xtrans,&dimen);
         xout[2]=y_sp_cfp__(xtrans,&dimen);
         xout[3]=p_sp_cfp__(xtrans,&dimen);
         break;
+
+      case IPLANE1:
+
+	xout[0]=x_sp_cfp__(xtrans,&dimen);
+        xout[1]=t_sp_cfp__(xtrans,&dimen);
+        xout[2]=y_sp_cfp__(xtrans,&dimen);
+        xout[3]=p_sp_cfp__(xtrans,&dimen);
+
+        trk->tvect->Load(xout);
+        Drift(1.0, trk);  // 1 meter
+        return OK;
+
+      case IPLANE2:
+
+	xout[0]=x_sp_cfp__(xtrans,&dimen);
+        xout[1]=t_sp_cfp__(xtrans,&dimen);
+        xout[2]=y_sp_cfp__(xtrans,&dimen);
+        xout[3]=p_sp_cfp__(xtrans,&dimen);
+
+        trk->tvect->Load(xout);
+        Drift(1.48, trk);  // 1.48 m
+        return OK;
 
       default:
 

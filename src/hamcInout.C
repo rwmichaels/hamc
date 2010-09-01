@@ -28,7 +28,7 @@ ClassImp(hamcInout)
 #endif
 
 
-hamcInout::hamcInout() : numiter(0),did_init(kFALSE),root_disable(kFALSE),weight(1),setupfile("hamc.dat"),hFile(0),fntup(0) {
+  hamcInout::hamcInout() : numiter(0),did_init(kFALSE),root_disable(kFALSE),ntup_disable(kFALSE),weight(1),setupfile("hamc.dat"),hFile(0),fntup(0) {
   ntup  = 0;
   sntup = "";
 }
@@ -71,6 +71,14 @@ Int_t hamcInout::Init(hamcExpt *expt) {
      if (strin.CmpNoCase("disable")==0) {
        cout << "Disabling ROOT output for this run !"<<endl;
        root_disable=kTRUE;
+     }
+   }
+   sdata = GetStrVect("hamc_inout");
+   if (sdata.size() >= 1) {
+     strin = sdata[0];
+     if (strin.CmpNoCase("nontup")==0) {
+       cout << "Disabling Ntuple output for this run !"<<endl;
+       ntup_disable=kTRUE;
      }
    }
 
@@ -333,6 +341,11 @@ Int_t hamcInout::AddToNtuple(std::string var, Float_t* dptr) {
 Int_t hamcInout::BookNtuple() {
 
 // Call this after all calls to "AddToNtuple", normally done in hamcEvent
+
+  if (ntup_disable) { 
+    cout << "Will not book an ntuple, ntup = "<<ntup<<endl;
+    return OK;
+  }
 
   if (fntptr.size() == 0) return OK;
 

@@ -181,15 +181,22 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 			  &th0,nbin,-0.3,0.3);
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "thphawz",
 	  "Theta-Phi at target (accepted, weighted, zoom)",
-                          &ph0,nbin,-0.04,0.04,
-			  &th0,nbin,-0.08,0.08);
+                          &ph0,100,-0.032,0.032,
+			  &th0,100,-0.067,0.067);
+   expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "thphawzms",
+	  "Theta-Phi at target (accepted, weighted, zoom, mult scatt)",
+                          &phtgt,200,-0.032,0.032,
+			  &thtgt,200,-0.067,0.067);
+//                          &ph_ms,200,-0.032,0.032,
+//			  &th_ms,200,-0.067,0.067);
+
    expt->inout->BookHisto(kFALSE, kFALSE, IFOCAL, "dpp",
 			  "dp/p generated ",
                           &dpp0,nbin,-0.007,0.002);
 
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "xyfpd",
 			  "X-Y at focal plane detector",
-			  &xfpd, nbin, -1, 0.4,
+			  &xfpd, nbin, -1, 1,
                           &yfpd, nbin, -0.2, 0.2);
 
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "th0",
@@ -379,27 +386,27 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "xfoc",
                          "X at focal plane",
-			   &xtrans, nbin, -1, 0.5);
+			   &xtrans, nbin, -0.5, 0.1);
 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "yfoc",
                          "Y at focal plane",
 			   &ytrans, nbin, -0.1, 0.1);
 
-    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "thfoc",
-                         "Theta trans at focal plane",
-			   &thtrans, nbin, -0.2,0.2);
-
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "xdet",
                          "X (det. frame)",
 			   &xdet, nbin, -1.2, 1.);
 
-    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "phfoc",
-                         "Theta trans at focal plane",
-			   &phtrans, nbin, -0.2,0.2);
-
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "qsq",
 			   "Qsq (weighted, in accept)",
-			   &qsq, 200,  0.3, 1.0);
+			   &qsq, 200,  0.0, 0.02);
+
+    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "qsq_obs",
+			   "Qsq (weighted, in accept)",
+			   &qsq_obs, 200,  0.0, 0.02);
+
+    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "qsq_atrk",
+			   "Qsq (weighted, in accept)",
+			   &qsq_atrk, 200,  0.0, 0.02);
 
 
     // Add some variables to the event ntuple
@@ -408,6 +415,8 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
     expt->inout->AddToNtuple("pmom",&pmom);
     expt->inout->AddToNtuple("dpp",&dpp);
     expt->inout->AddToNtuple("qsq",&qsq);
+    expt->inout->AddToNtuple("qsq_obs",&qsq_obs);
+    expt->inout->AddToNtuple("qsqfr",&qsqfr);
     expt->inout->AddToNtuple("theta",&theta);
     expt->inout->AddToNtuple("phi",&phi);
     expt->inout->AddToNtuple("xfoc",&xtrans);
@@ -423,7 +432,7 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
     expt->inout->AddToNtuple("thtgt",&thtgt);  
     expt->inout->AddToNtuple("phtgt",&phtgt);
     
-    //    expt->inout->AddToNtuple("thchk",&thchk);
+    expt->inout->AddToNtuple("thchk",&thchk);
 
     if (use_guido) {
       expt->inout->AddToNtuple("xgui",&xgui);
@@ -474,6 +483,29 @@ Int_t hamcTrackOut::Generate(hamcExpt *expt) {
   LabToTrans(expt);     // Get TRANSPORT position and angles.
   UpdateTrans();
   ComputePvect();   
+
+  return OK;
+
+}
+
+Int_t hamcTrackOut::GenerateOut(hamcExpt *expt) {
+
+// It's assumed that multiple scattering in the target
+// has now been applied in hamcEvent
+
+  if ( did_init == kFALSE ) {
+    cout << "hamcTrackOut::ERROR: uninitialized !"<<endl;
+    return ERROR;
+  }
+
+// Generate the outgoing track (after scattering), i
+// including "observed" Qsq = qsq_obs.  
+
+  expt->physics->kine->GenerateOut(expt);
+
+  qsq_obs = expt->physics->kine->qsq_obs;
+  qsq_atrk = expt->physics->kine->qsq_atrk;
+  qsqfr = expt->physics->kine->qsqfr;
 
   return OK;
 
@@ -548,23 +580,23 @@ Int_t hamcTrackOut::LabToTrans(hamcExpt *expt) {
 // (And the "angles" are actually tan(theta), tan(phi),
 //    so those are approximately radians).
 
+  Float_t xsign = 1.0;
+  if (which_hrs == LEFTHRS) xsign = -1.0;  // sign convention, see above
+
   if (beam) {
     Float_t xb,xt,yb,yt,zb,zt;
     xb = beam->GetTransX();  
     yb = beam->GetTransY();
     zb = beam->GetTransZ();
-    xt = xb - (yb * sts * cps * stc + zb * sts * cps * ctc)/(cts * ctc + sts * sps * stc);
+    xt = xb  - (yb * sts * cps * stc + zb * sts * cps * ctc)/(cts * ctc + sts * sps * stc);
     yt = ( yb - zb * tts * sps * sps)/(ctc + tts * sps * stc);
     zt = zb;  // actually irrelevant
 
     if (useold_test) {
-
        xt = xb;
-       yt = yb * 20; // TMath::Cos(theta_central);
+       yt = yb * TMath::Cos(theta_central);
        zt = zb * TMath::Cos(theta_central) + yb * TMath::Sin(theta_central); 
-  
     }
-
 
     tvect->PutX(xt);
     tvect->PutY(yt);
@@ -573,8 +605,12 @@ Int_t hamcTrackOut::LabToTrans(hamcExpt *expt) {
     tvect->Clear();
   }
 
-  Float_t xsign = 1.0;
-  if (which_hrs == LEFTHRS) xsign = -1.0;  // sign convention, see above
+  Int_t flip_phi = 0;
+  if (expt->GetSpectrom(0)->IsWarmSeptum()) {
+// Use R-HRS for transport, but flip ph0 for comparing to real data
+    if (which_hrs == LEFTHRS) flip_phi = 1;
+    xsign = 1.0;  
+  }
 
 // The following 3 lines are from D. Wang (new, June 2009)
 // tanphprime is slightly different and correct now.
@@ -583,14 +619,20 @@ Int_t hamcTrackOut::LabToTrans(hamcExpt *expt) {
   Float_t tanphi_t = xsign * ( ttc - tanphprime)/(1 + ttc * tanphprime); 
   Float_t tantheta_t = -1. *  (sts * cps) * TMath::Sqrt( 1 + tanphi_t * tanphi_t)/(TMath::Sqrt(cts * cts + sts*sts*sps*sps));
 
+  ph0 = tanphi_t;
+  if (flip_phi) ph0 = -1.0*tanphi_t;
+  th0 = tantheta_t;
+  ph_ms = tanphi_t;
+  th_ms = tantheta_t;
+
   tvect->PutTheta(tantheta_t);
   tvect->PutPhi(tanphi_t);      
 
 // Check of scattering angle
-  Float_t scat_angle = TMath::ACos(( ctc + xsign*fabs(stc)*tanphi_t)/(TMath::Sqrt(1 + tanphi_t * tanphi_t + tantheta_t * tantheta_t)));
+  thchk = TMath::ACos(( ctc + xsign*fabs(stc)*tanphi_t)/(TMath::Sqrt(1 + tanphi_t * tanphi_t + tantheta_t * tantheta_t)));
 
-  th0 = tvect->GetTheta();
-  ph0 = tvect->GetPhi();
+  //  cout << "Origin theta, phi "<<th0<<"   "<<ph0<<endl;
+ 
   x0  = tvect->GetX();
   y0  = tvect->GetY();
   z0  = tvect->GetZ();
@@ -612,9 +654,9 @@ Int_t hamcTrackOut::LabToTrans(hamcExpt *expt) {
     cout << "Transport angles "<<endl;
     cout << "tan(theta) = "<<tantheta_t<<endl;
     cout << "tan(phi)   = "<<tanphi_t<<endl;
-    cout << "Scat angle chk = "<<theta<<"  "<<scat_angle<<endl;
+    cout << "Scat angle chk = "<<theta<<"  "<<thchk<<endl;
     cout << "Scat angle (degr) = "<<180*theta/PI<<"  ";
-    cout << 180*scat_angle/PI<<endl;
+    cout << 180*thchk/PI<<endl;
     cout << endl<<"LabToTrans print"<<endl;
     tvect->Print();
   }
@@ -635,14 +677,23 @@ void hamcTrackOut::ComputePvect() {
   sps = TMath::Sin(phi);
   cps = TMath::Cos(phi);
 
-  plab_x = sps*sts * pmom;
-  plab_y = cps*sts * pmom;
-  plab_z = cts * pmom;
+  pnoms_x = sps*sts * pmom;
+  pnoms_y = cps*sts * pmom;
+  pnoms_z = cts * pmom;
+
+// Initially, plab is the momentum without multiple scattering.
+// This may be update later after Mult. Scatt. in
+// hamcTrack::MultScatt called by the event loop in hamcEvent 
+
+  plab_x = pnoms_x;   
+  plab_y = pnoms_x;
+  plab_z = pnoms_x;
 
 }
 
 void hamcTrackOut::ComputeQsqToTrack(const hamcTrack *trk) {
 
+// Obsolete method.
 // Could compute Qsq of *this to *trk, but dont really need
 // this method because hamcKine does it for you.
 

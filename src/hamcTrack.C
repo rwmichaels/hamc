@@ -81,6 +81,33 @@ Int_t hamcTrack::Eloss(const hamcExpt *expt, const hamcAperture *aperture, Int_t
 
 }
 
+Int_t hamcTrack::UpdateFourMom(Float_t newE) {
+
+// Update the four-momentum given an overall energy change.
+
+  Float_t x1,x2,escale;
+ 
+  x1 = TMath::Sqrt(energy*energy - mass*mass);
+
+  if (newE < mass || x1 == 0) {
+    cout << "Error: hamcTrack::UpdateFourMom: "<<newE<<"  "<<x1<<endl;
+    return -1;
+  }
+
+  x2 = TMath::Sqrt(newE*newE - mass*mass);
+
+  escale = x2/x1;
+
+  energy = newE;
+  plab_x = escale * plab_x;
+  plab_y = escale * plab_y;
+  plab_z = escale * plab_z;
+
+  pmom = TMath::Sqrt(plab_x*plab_x + plab_y*plab_y + plab_z*plab_z);
+
+  return 1;
+
+}
 
 
 Int_t hamcTrack::Init() {
@@ -128,13 +155,13 @@ Int_t hamcTrack::Transport(const hamcTrans *trans, Int_t where) {
 
 Bool_t hamcTrack::InAccept(const hamcAperture *aperture) {
 	
-  if (!aperture) {   // no acceptance cut
+   if (!aperture) {   // no acceptance cut
     inaccept = kTRUE;
     return OK;  
   }
 
-  inaccept = aperture->CheckAccept(tvect->GetX(), tvect->GetY());
-
+  inaccept = aperture->CheckAccept(this);  
+ 
   return inaccept;
 
 }
@@ -143,7 +170,7 @@ void hamcTrack::MultScatt(const hamcExpt *expt, Int_t where) {
 
   Float_t radlen;
 
-  if (where == ITARGET) {  // only choice so far
+  if (where == ITARGET) {  
 
     Float_t tlen =  expt->target->GetLength();  // "L" of target
     // zscat varies from -L/2 to +L/2
@@ -151,7 +178,15 @@ void hamcTrack::MultScatt(const hamcExpt *expt, Int_t where) {
     Float_t x0rad = expt->target->GetRadLength();
     radlen = 0;
     if (x0rad != 0) radlen = (((tlen/2)-zscat)/tlen) * x0rad;
-    MultScatt(radlen, ITARGET);     
+
+    MultScatt(radlen, where);     
+
+  }
+
+  if (where == ITARGET_FULL) {  
+
+    Float_t x0rad = expt->target->GetRadLength();
+    MultScatt(x0rad, where);     
 
   }
 
@@ -178,8 +213,17 @@ void hamcTrack::MultScatt(Float_t radlen, Int_t where) {
 // Resets track origin to present location.
 // The transport model must provide transport from this new origin.
 
-  Int_t use_resol = 0;
+// Ideally these variables should NOT be here; it makes the class opaque.  
+// Should fix this later.
+
+  Int_t use_resol = 1;
+
   Int_t use_mscat = 1;
+
+  Float_t vresol,hresol,vkick,hkick;
+
+  vresol = 0.002;        // resolution of the HRS in vertical angle
+  hresol = 0.0006;       // ditton, horizontal
 
 
   if (P0 == 0) {   
@@ -189,40 +233,52 @@ void hamcTrack::MultScatt(Float_t radlen, Int_t where) {
 
   Float_t theta_sigma = (0.0136/P0) * TMath::Sqrt(radlen);
 
-  Float_t dtheta, prob;
+  Float_t dtheta1, dtheta2, prob;
 
   prob = gRandom->Rndm();
   if (prob < 0.02) {
-    dtheta = 5 * theta_sigma * gRandom->Rndm();  // flat tail
+    dtheta1 = 5 * theta_sigma * gRandom->Rndm();  // flat tail
   } else {
-    dtheta = theta_sigma * gRandom->Gaus();
+    dtheta1 = theta_sigma * gRandom->Gaus();
   }
 
-  if (use_mscat) tvect->AddToTheta(dtheta);
+  if (use_mscat) tvect->AddToTheta(dtheta1);
 
   prob = gRandom->Rndm();
   if (prob < 0.02) {
-    dtheta = 5 * theta_sigma * gRandom->Rndm();  // flat tail
+    dtheta2 = 5 * theta_sigma * gRandom->Rndm();  // flat tail
   } else {
-    dtheta = theta_sigma * gRandom->Gaus();
+    dtheta2 = theta_sigma * gRandom->Gaus();
   }
 
-  if (use_mscat) tvect->AddToPhi(dtheta);
+  if (use_mscat) tvect->AddToPhi(dtheta2);
 
   *tvect_orig = *tvect;
-  origin = where;
+
+  if (ITARGET == ITARGET_FULL) origin = ITARGET;
 
   if (where == ICOLLIM2) ms_collim=1;
 
-  if (where == ITARGET) {
-    thtgt = tvect->GetTheta();
-    phtgt = tvect->GetPhi();
-    // Resolution smearing
+  vkick = 0; 
+  hkick = 0;
+  if (where == ITARGET || where == ITARGET_FULL) {
+     thtgt = tvect->GetTheta();
+     phtgt = tvect->GetPhi();
+    // Resolution smearing -- affects thtgt and phtgt variables.
     if (use_resol) {
-      thtgt = thtgt + 0.001*gRandom->Gaus();
-      phtgt = phtgt + 0.001*gRandom->Gaus();
-    }
+       vkick = vresol*gRandom->Gaus();
+       hkick = hresol*gRandom->Gaus();
+       thtgt = thtgt + vkick;
+       phtgt = phtgt + hkick;
+     }
   }
+
+  th_ms = tvect->GetTheta();
+  ph_ms = tvect->GetPhi();
+
+  plab_x = pnoms_x + pmom * (dtheta1 + hkick);
+  plab_y = pnoms_y + pmom * (dtheta2 + vkick) ;
+  plab_z = TMath::Sqrt(pmom*pmom - plab_x*plab_x - plab_y*plab_y);
 
 }
 

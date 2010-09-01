@@ -9,11 +9,13 @@
 //
 //  R. Michaels  June 2008
 
+
+
 #include "Rtypes.h"
-#include "hamcExpt.h"
 #include <string>
 #include <iostream>
 #include <vector>
+#include "hamcDefine.h"
 
 class hamcExpt;
 class hamcTrans;
@@ -98,6 +100,8 @@ class hamcTrack {
      Float_t xtrans, thtrans, ytrans, phtrans, dpptrans, ztrans;
 // The following transport right after scattering.
      Float_t x0,th0,y0,ph0,dpp0,z0;
+// The following are theta, phi after multiple scattering applied to present location
+     Float_t th_ms, ph_ms;
 
 // Index for track origin
      Int_t origin;     // ITARGET, ICOLLIM, etc.(def'n in hamcSpecHRS.h)
@@ -106,6 +110,11 @@ class hamcTrack {
      virtual Float_t GetEnergy() const { return energy; };
      virtual Float_t GetE0() const { return E0; };
      virtual Float_t GetPmom() const { return pmom; };
+
+     virtual Float_t GetNoMsPx() const { return pnoms_x; };
+     virtual Float_t GetNoMsPy() const { return pnoms_y; };
+     virtual Float_t GetNoMsPz() const { return pnoms_z; };
+
      virtual Float_t GetPx() const { return plab_x; };
      virtual Float_t GetPy() const { return plab_y; };
      virtual Float_t GetPz() const { return plab_z; };
@@ -138,8 +147,12 @@ class hamcTrack {
 // Apply energy loss (elsewhere from target)
      Int_t Eloss(const hamcExpt *expt, const hamcAperture *aperture, Int_t where);
 
+     Int_t UpdateFourMom(Float_t E);
+
 
      Int_t ms_collim;      // mult. scatt. in collim ? (1/0)
+
+     Float_t thtgt,phtgt;  // theta, phi at target after mult. scatt.
 
 
   protected:
@@ -159,10 +172,10 @@ class hamcTrack {
      Float_t theta, phi;   // polar angles (rad)
      Float_t theta_deg, phi_deg; // polar angles (degr)
      Float_t dP0_iter;     // offset in P0 (% of P0, for iteration)
+     Float_t pnoms_x, pnoms_y, pnoms_z;   // Pmom components in lab with no Mult. Scatt.
      Float_t plab_x, plab_y, plab_z;   // Pmom components in lab
      Float_t xdet, ydet;   // detector frame vars. (in focal plane)
-     Float_t thtgt,phtgt;  // theta, phi at target after mult. scatt.
-
+ 
      Bool_t did_init, inaccept;     
       
      static const Int_t debug=0;

@@ -36,12 +36,12 @@ class hamcAccAvg {
      Float_t GetTheta(Int_t icell);
      Float_t GetPhi(Int_t icell);
      Float_t GetNum(Int_t icell);
-
+     Int_t GetCellCnt() { return numcell; };
 
      void Print();
 
      static const Int_t numcell = 80;  // 80 is ~ok for 500K evts
-     Int_t ncellcut; 
+     Int_t ncellcut;                   // 500 needs 20M events, I think.  (check!)
 
   private:
 

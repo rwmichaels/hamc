@@ -23,6 +23,7 @@ ClassImp(hamcEvent)
  
 hamcEvent::hamcEvent() 
 {
+  evnum = 0;
   beam = new hamcBeam();
   did_init = kFALSE;
 }
@@ -57,6 +58,8 @@ Int_t hamcEvent::Init(hamcExpt* expt) {
   expt->inout->AddToNtuple("inaccept",&inaccept);
   expt->inout->AddToNtuple("xcol",&xcol);
   expt->inout->AddToNtuple("ycol",&ycol);
+  expt->inout->AddToNtuple("thcol",&thcol);
+  expt->inout->AddToNtuple("phcol",&phcol);
   expt->inout->AddToNtuple("xsep",&xsep);
   expt->inout->AddToNtuple("ysep",&ysep);
 
@@ -75,6 +78,8 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
      return OK;
    }
 
+   evnum++;
+
 // Weight initially 1 (used by histograms)
    expt->inout->SetWeight(1);  
 
@@ -82,11 +87,11 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
 
    if (expt->physics->Radiate(expt) == -1) return 1;
 
-   if (beam)
-     beam->Generate(expt);
+   if (beam) beam->Generate(expt);
 
    inaccept = 1;
    xcol = -999;  ycol = -999;
+   thcol = -999; phcol = -999;
    xsep = -999;  ysep = -999;
 
 // Loop over spectrometers
@@ -97,33 +102,20 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
      hamcTrackOut *track = trackout[ispect]; // Assumes 1 track per spectrom.
      if (!track) continue;
 
-     if (track->Generate(expt)==-1) {
-       //       cout<<"no good dis event generated"<<endl;
-       return OK;
-     }
+     track->Generate(expt);
+
+     track->MultScatt(expt, ITARGET_FULL);
+
+     track->GenerateOut(expt);
 
      expt->physics->Generate(expt); 
 
-
 // Weight by cross section (optionally used for some histograms)
-     Float_t weight = 1e5*expt->physics->GetCrossSection();
+// The 100 is just for convenience.
+
+     Float_t weight = 100.*expt->physics->GetCrossSection(); 
  
      expt->inout->SetWeight(weight);
-
-     track->MultScatt(expt, ITARGET);
-
-     Float_t xb4trans = track->GetTransX();
-     Float_t yb4trans = track->GetTransY();
-     //    cout<<"xb4trans="<<xb4trans<<"yb4trans="<<yb4trans<<endl;
-     //     track->xyb4trans->Fill(yb4trans, xb4trans);
-
-     Float_t tb4trans = track->GetTransTheta();
-     Float_t pb4trans = track->GetTransPhi();
-     //     track->tpb4trans->Fill(tb4trans,pb4trans);
-
-     Float_t Dpb4trans = track->GetTransDp();
-     //     track->dpb4trans->Fill(Dpb4trans);
-
 
 // Loop over break points in spectrometer
 
@@ -145,6 +137,7 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
 // is in one or the other).  Note, if we MultScatt (it only
 // happens if radlen !=0) we reset the origin of the track.
 
+
          if ( track->InAccept(spect->Aperture(ibrk))  )  { // Track is in acceptance
 
            track->MultScatt(spect->Aperture(ibrk), brkpoint);
@@ -157,10 +150,21 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
 	 }
 
 // Things to do for specific break points
-         if (brkpoint == ICOLLIM || brkpoint == ICOLLIM2) {
+         if (brkpoint == ICOLLIM || brkpoint == ICOLLIM2 || brkpoint == ICOLLIM3 ) {
 	   xcol = track->GetTransX();
 	   ycol = track->GetTransY();
-	 }
+           thcol = track->GetTransTheta();
+           phcol = track->GetTransPhi();
+           Float_t xcut = 0.043; 
+           Float_t ycut = 0.0175;
+           Float_t zzz = 0.83;
+           Float_t xchk = zzz*track->th0;
+	   Float_t ychk = zzz*track->ph0;
+	   // This is just a check.  You may also do this in the ntuple.
+	   //     cout << "Extrap. from tgt:  "<<zzz<<"  "<<track->th0<<"  "<<track->ph0<<"  "<<xchk<<"  "<<ychk<<endl;
+	   //           if (xchk < -1*xcut || xchk > xcut) inaccept = 0;
+	   //           if (ychk < -1*ycut || ychk > ycut) inaccept = 0;
+ 	 }
          if (brkpoint == ICOLLIM2) {
            track->Eloss(expt, spect->Aperture(ibrk), brkpoint);
 	 }
@@ -169,8 +173,8 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
 	   ysep = track->GetTransY();
 	 }
          if (brkpoint == IFOCAL) {
-	   if (spect->IsGuidoTrans()) {
-	     track->UpdateGuidoFocal(spect);
+           if (spect->IsGuidoTrans()) {
+	      track->UpdateGuidoFocal(spect);
 	   }
            track->UpdateAtDet();
 	 }

@@ -13,6 +13,7 @@
 #include "hamcEvent.h"
 #include "hamcTarget.h"
 #include "hamcInout.h"
+#include "hamcSpecHRS.h"
 #include "TRandom.h"
 #include "Rtypes.h"
 #include <string>
@@ -56,7 +57,7 @@ Int_t hamcKine::Init(hamcExpt* expt) {
   Float_t thetamin, thetamax, phimin, phimax, emin, emax;
 
   string process = expt->physics->GetProcess();
-  Float_t ebeam = expt->event->beam->GetEnergy();
+  Float_t ebeam = expt->event->beam->GetEnergy();  // this may change later (Eloss)
 // theta_central, converted to radians, only for single-arm.
   Float_t theta = PI * expt->GetSpectrom(0)->GetScattAngle() / 180;
   Float_t masst = expt->target->GetMass();
@@ -89,26 +90,6 @@ Int_t hamcKine::Init(hamcExpt* expt) {
    if (parser.IsFound("phimax")) {
      phimax = PI*parser.GetData()/180; 
    }
-
-//   dP0_iter = 0;
-//   dtheta_iter = 0;
-//   dphi_iter = 0;
-
-//   parser.Load(expt->inout->GetStrVect("kick:track"));
-//   parser.Print();
-//   if (parser.IsFound("P0")) {
-//     if (expt->inout->numiter > 1) dP0_iter = parser.GetData();  
-//     cout << "Will iterate P0 by "<<100*dP0_iter<<" %"<<endl;
-//   }   
-//   if (parser.IsFound("theta")){
-//     if (expt->inout->numiter > 1) dtheta_iter = parser.GetData();
-//     cout << "Will iterate theta by "<<100*dtheta_iter<<" % of its range"<<endl;
-//   }
-//   if (parser.IsFound("phi")){
-//     if (expt->inout->numiter > 1) dphi_iter = parser.GetData();
-//     cout << "Will iterate phi by "<<100*phi<<" % of its range"<<endl;
-//   }
-
 
 // For DIS, obtain the min and max output energies
 // and the cuts on x, qsq, and wsq that define DIS.
@@ -202,6 +183,7 @@ Int_t hamcKine::Generate(hamcExpt *expt) {
 // It's assumed the beam was already generated if it exists.
 
   beam = expt->event->beam;
+  track = expt->event->trackout[0];
   Float_t eb,E0;
   if (beam) {
     eb = beam->GetEnergy();  // beam energy this event
@@ -213,29 +195,22 @@ Int_t hamcKine::Generate(hamcExpt *expt) {
   }
 
   hamcEloss *eloss = expt->physics->eloss;
-  Float_t dE = 0;
+  dE_int = 0;
 
 // The internal is for t_equivalent, so it's
 // what to subtract before and after scattering.
+// Note, if you use the "beam" energy it already
+// has had eloss applied.
 
-  if (eloss) dE = eloss->GetDeIntern() 
-                + eloss->GetDeExternOut() 
-                + eloss->GetDeIonOut();
-
-// Add kick if we are iterating on energy
-//   iteration = expt->iteration;
-//   if (iteration == 1) {
-//       dE = dE - dP0_iter*E0;
-//   }
+  if (eloss) dE_int = eloss->GetDeIntern(); 
 
   iteration = expt->iteration;  
 
-  if(Generate(eb, dE) == -1) {  //no dis event found.
+  if(Generate(eb, dE_int) == -1) {  //no dis event found.
     //    cout<<"no dis event found"<<endl;
     return -1;
   }
-  if(energy <= (eprime+dE_after)) {     //physicslly not acceptable.
-
+  if(energy <= (eprime+dE_int)) {     //physicslly not acceptable.
     //   cout<<"physically unacceptable"<<endl;
     return -1;
   }
@@ -251,8 +226,12 @@ Int_t hamcKine::Generate(Float_t eb, Float_t dE) {
   Clear();
   CheckInit();
 
-  ebeam = eb;    energy = ebeam;
-  dE_after = dE;
+  ebeam = eb;    
+  energy = ebeam;
+
+  // FIXME: the following is redundant.  
+  // dE, which is passed as an argument of this method, is ALREADY dE_int, a member of the class
+  dE_int = dE;
 
   if (iproc == proc_dis && energy*energy < wsqlo) return -1;
 
@@ -315,6 +294,7 @@ Int_t hamcKine::GenerateElastic() {
   
 
   if (iteration == 0)
+
     eprime = ebeam / ( 1 + ((ebeam/mass_tgt) * 
 			    (1 - TMath::Cos(theta))) );
 
@@ -340,11 +320,85 @@ Int_t hamcKine::GenerateElastic() {
   
   ComputeKine();
 
-// subtract radiative loss after scattering.
-  eprime = eprime - dE_after;  
+// Subtract radiative loss after scattering.
+// (the beam already had it's energy subtracted, and further subtraction will happen
+//  on the weay out of the target in GenerateOut called by hamcEvent)
+
+   eprime = eprime - dE_int;  
 
   return 1;
 }
+
+Int_t hamcKine::GenerateOut(hamcExpt *expt) {
+
+  // Computes the qsq observed.
+
+  Float_t px1,py1,pz1,px2,py2,pz2;
+  Float_t dE;
+
+  beam = expt->event->beam;
+  track = expt->event->trackout[0];
+  hamcEloss *eloss = expt->physics->eloss;
+
+  if (!beam || !track) {
+    cout << "Error in hamcKine::GenerateOut "<<beam<<"  "<<track<<endl;
+    return -1;
+  }
+
+// Subtract energy losses on the way out of the target
+
+  if (eloss) dE = eloss->GetDeExternOut() 
+                + eloss->GetDeIonOut();
+
+  eprime = eprime - dE;
+
+  track->UpdateFourMom(eprime);
+
+  ebeam = beam->GetEnergy();  
+  px1 = beam->GetNoMsPx();  // Want to use the no-Mult-Scatt variable for true Qsq
+  py1 = beam->GetNoMsPy();  // since scatt angle was generated relative to Z-beam.
+  pz1 = beam->GetNoMsPz();
+
+  px2 = track->GetPx();
+  py2 = track->GetPy();
+  pz2 = track->GetPz();
+
+  // The following is the "observed" qsq.
+  // The incoming beam is assumed to go along Z axis (that's what Podd assumes).
+  // But there are Elosses in the beam.
+  // The outgoing track has all mult scattering and all Elosses
+
+  qsq_obs = -1.0*((ebeam-eprime)*(ebeam-eprime)-((px1-px2)*(px1-px2)+(py1-py2)*(py1-py2)+(pz1-pz2)*(pz1-pz2)));
+  Float_t mcph = track->ph0;
+  Float_t mcth = track->th0;
+  Float_t mcp  = track->GetPmom();
+
+  Float_t theta = PI * expt->GetSpectrom(0)->GetScattAngle() / 180;
+  Int_t which_hrs = expt->GetSpectrom(0)->which_spectrom;             // affects angle convention
+  Float_t xsign = 1.0;
+  if (which_hrs == LEFTHRS) xsign = -1.0;  // sign convention, see above
+
+  Float_t bene = expt->event->beam->GetEnergy();  // microAmps (uA)
+
+  qsq_atrk = 2*bene*mcp*(1-((TMath::Cos(theta)+(xsign*(TMath::Sin(theta))*mcph))/(TMath::Sqrt(1+mcth*mcth+mcph*mcph))));
+
+// In Podd, this would be qsq_atrk for left HRS (L) with xsign = -1.  (For R-HRS, xsign = +1).
+//T->Draw("EK_L.Q2:2*(3.484)*(L.gold.p)*(1-((TMath::Cos(14.0*3.14159/180))+(xsign*(TMath::Sin(14.0*3.14159/180.))*L.gold.ph))/(TMath::Sqrt(1+L.gold.th*L.gold.th+L.gold.ph*L.gold.ph)))>>hqlc",ccut);
+
+  //   cout << "\n\nObserved Qsq "<<endl;
+  //   cout << "Beam "<<ebeam<<"  "<<px1<<"  "<<py1<<"  "<<pz1<<endl;
+  //   cout << "Track "<<eprime<<"  "<<px2<<"  "<<py2<<"  "<<pz2<<endl;
+  //   cout << "Qsq_obs  = "<<qsq_obs<<"   diff "<<qsq_obs-qsq<<endl;
+
+  qsqfr = -1;
+  if (qsq != 0) {
+    qsqfr = (qsq_obs-qsq)/qsq;
+    //   cout << "Fractional "<<qsqfr <<endl;
+  }
+
+  return 1;
+}
+
 
 Int_t hamcKine::GenerateDis() {
 
@@ -359,7 +413,9 @@ Int_t hamcKine::GenerateDis() {
 
     ComputeKine();
 
-    eprime = eprime - dE_after;
+ // Comment: probably don't want to subtract dE_int here, see comment above
+    eprime = eprime - dE_int;
+
     //    eprime_gen->Fill(eprime);
     //    return 1;
 
@@ -380,7 +436,6 @@ Int_t hamcKine::GenerateDis() {
  
 Int_t hamcKine::ComputeKine() {
 
-  //  qsq = 2*ebeam*eprime*(1 - TMath::Cos(scat_ang));
 
   Float_t px1,py1,pz1,px2,py2,pz2;
   Float_t sts, cts, sps, cps;
@@ -388,32 +443,39 @@ Int_t hamcKine::ComputeKine() {
   Float_t theta1 = beam->dtheta_iter;
   Float_t phi1 = beam->dphi_iter;
 
-  px1 = beam->GetPx();
-  py1 = beam->GetPy();
-  pz1 = beam->GetPz();
+  px1 = beam->GetNoMsPx();  // Want to use the no-Mult-Scatt variable for true Qsq
+  py1 = beam->GetNoMsPy();  // since scatt angle was generated relative to Z-beam.
+  pz1 = beam->GetNoMsPz();
 
-  sts = TMath::Sin(theta);
-  cts = TMath::Cos(theta);
-  sps = TMath::Sin(phi);
-  cps = TMath::Cos(phi);
+  sts  = TMath::Sin(theta);
+  cts  = TMath::Cos(theta);
+  sps  = TMath::Sin(phi);
+  cps  = TMath::Cos(phi);
   sts1 = TMath::Sin(theta1);
   cts1 = TMath::Cos(theta1);
   sps1 = TMath::Sin(phi1);
   cps1 = TMath::Cos(phi1);
 
-
   pprime = TMath::Sqrt(eprime*eprime - mass_electron*mass_electron);
 
   //  cout<<"pprime:"<<pprime<<endl;
+
+// This is again the no-mult-scatt version of the outgoing momentum.
 
   px2 = pprime*cps*sts;
   py2 = pprime*sps*sts;
   pz2 = pprime*cts;
 
+  // This is the "physical" qsq.
+  // It has no mult scattering (see comment above) but the Eloss on
+  // the beam was applied, yet no Eloss on the outgoing particle.
+
   qsq = -1.0*((ebeam-eprime)*(ebeam-eprime)-((px1-px2)*(px1-px2)+(py1-py2)*(py1-py2)+(pz1-pz2)*(pz1-pz2)));
-
-
-  //   cout<<qsq<<"  "<<qsq1<<endl;
+  
+  //  cout << "\n\nTrue Qsq "<<endl;
+  // cout << "Beam "<<ebeam<<"  "<<px1<<"  "<<py1<<"  "<<pz1<<endl;
+  // cout << "Track "<<pprime<<"  "<<px2<<"  "<<py2<<"  "<<pz2<<endl;
+  // cout << "Qsq = "<<qsq<<endl;
 
   Float_t mass = mass_tgt;
   if (iproc == proc_dis) mass = mass_proton;

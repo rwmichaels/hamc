@@ -51,6 +51,11 @@ void hamcSpecHRS::UsePaulColl(void) {
   collim_choice = paul_coll;
 }
 
+void hamcSpecHRS::UseAngleColl(void) {
+  // Empirical angle cut.
+  collim_choice = angle_coll;
+}
+
 void hamcSpecHRS::UseHRSOnly() {
   sept_choice = noseptum;
 }
@@ -107,6 +112,10 @@ Int_t hamcSpecHRS::Init(hamcExpt *expt) {
    if (parser.IsFound("usepaulcollim")) {
      cout << "hamcSpecHRS: Using Paul's composite collimator"<<endl;
      UsePaulColl();
+   }   
+   if (parser.IsFound("useempiricalangle")) {
+     cout << "hamcSpecHRS: Using empirical angle collimation"<<endl;
+     UseAngleColl();
    }   
    if (parser.IsFound("usematrix")) {
      cout << "hamcSpecHRS: Using matrix transport"<<endl;
@@ -165,8 +174,12 @@ Int_t hamcSpecHRS::BuildSpectrom() {
      if (IsCollimated()) {
         if (IsPaulCollim()) {
  	   AddBreakPoint(ICOLLIM2);
-        } else {
-           AddBreakPoint(ICOLLIM);
+	} else {
+	   if (IsAngleCollim()) {
+   	      AddBreakPoint(ICOLLIM3);
+	   } else {
+              AddBreakPoint(ICOLLIM);
+	   }
         }
      }
      AddBreakPoint(IFOCAL); 
@@ -192,13 +205,17 @@ Int_t hamcSpecHRS::BuildSpectrom() {
        AddBreakPoint(ISEPTOUT);  // setpum out
     }
         
-    if (IsCollimated()) {
+     if (IsCollimated()) {
         if (IsPaulCollim()) {
-    	      AddBreakPoint(ICOLLIM2);
-        } else {
+ 	   AddBreakPoint(ICOLLIM2);
+	} else {
+	   if (IsAngleCollim()) {
+   	      AddBreakPoint(ICOLLIM3);
+	   } else {
               AddBreakPoint(ICOLLIM);
+	   }
         }
-    }
+     }
 
     AddBreakPoint(IQ1EXIT);
     AddBreakPoint(IDIPIN);
@@ -206,6 +223,8 @@ Int_t hamcSpecHRS::BuildSpectrom() {
     AddBreakPoint(IQ3IN);
     AddBreakPoint(IQ3EXIT);
     AddBreakPoint(IFOCAL);
+    AddBreakPoint(IPLANE1);
+    AddBreakPoint(IPLANE2);
      
     return OK;
   }
@@ -250,11 +269,19 @@ void hamcSpecHRS::AddBreakPoint(Int_t where) {
       if (IsWarmSeptum()) { 
        break_point.push_back(new hamcSpecBrk(where, new hamcPaulCollim(
          0.032, 0.041,  0.20, 0.229,  // A_T hole (low, right, and R,C of arc)
-	 0.205, 0.145,  0.20, 0.229,     // outer, inner circles
+	 0.205, 0.145,  0.20, 0.229,  // outer, inner circles
          0.117, 0.04,       // top, right
          0.1474, -1.88)));  // Champhor line.
         idx = break_point.size()-1; 
         break_point[idx]->aperture->DefineRadLen(0,collim2_radlen1);
+      }
+      break;
+
+// Collim3 is the empirical angle collimation which is a tighter cut than COLLIM2.
+    case ICOLLIM3:
+      if (IsWarmSeptum()) { 
+	break_point.push_back(new hamcSpecBrk(where, new  hamcAngleCollim()));
+        idx = break_point.size()-1; 
       }
       break;
 
@@ -274,7 +301,6 @@ void hamcSpecHRS::AddBreakPoint(Int_t where) {
         break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-5.22, -4.98, -0.1924, -0.1924)));
         break;
       }
-      //      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, 0.149)));  // standard HRS
       break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, 0.0186)));  // standard HRS
       break;
 
@@ -283,9 +309,7 @@ void hamcSpecHRS::AddBreakPoint(Int_t where) {
         break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.462, 0.462, 0.125, -0.0161)));
         break;
       }
-      //      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, 0.149)));  // standard HRS
       break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, 0.0186)));  // standard HRS
-
       break;
 
     case IQ1EXIT:
@@ -301,6 +325,14 @@ void hamcSpecHRS::AddBreakPoint(Int_t where) {
       break;
 
     case IFOCAL:
+      break_point.push_back(new hamcSpecBrk(where));
+      break;
+
+    case IPLANE1:
+      break_point.push_back(new hamcSpecBrk(where));
+      break;
+
+    case IPLANE2:
       break_point.push_back(new hamcSpecBrk(where));
       break;
 
@@ -338,6 +370,7 @@ void hamcSpecHRS::Print() {
   cout << "P0 = "<<GetP0() << "    P0 sigma "<<GetP0Sigma()<<endl;
   cout << "Angle = "<<GetScattAngle()<<endl;
   cout << "Septum choice "<<sept_choice<<endl;
+  cout << "Collimator choice "<<collim_choice<<endl;
   cout << "Collim distance = "<<GetCollimDist()<<endl;
   cout << "Number of break points = "<<break_point.size();
   for (Int_t i=0; i<(Int_t)break_point.size(); i++) {

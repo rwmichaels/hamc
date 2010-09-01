@@ -26,18 +26,14 @@ class hamcTrackOut : public hamcTrack {
    
      Int_t Init(Int_t ispect, hamcExpt *expt);
      Int_t Generate(hamcExpt *expt);
+     Int_t GenerateOut(hamcExpt *expt);
      Float_t GetQsq() { return qsq; };
      Float_t Getthetamin() const {return thetamin;};
      Float_t Getthetamax() const {return thetamax;};
      Float_t Getphimin() const {return phimin;};
      Float_t Getphimax() const {return phimax;};
      Int_t UpdateAtDet();
-     Float_t GetDetSpot(Int_t i); //for pvdis use
-     TH2F *xyb4trans, *tpb4trans;
-     TH1F *dpb4trans;
      Int_t UpdateGuidoFocal(hamcSpecHRS *spec);  // using Guido's focal plane variables
-
-
 
   protected:
 
@@ -53,7 +49,7 @@ class hamcTrackOut : public hamcTrack {
      Float_t thetamin, thetamax, phimin, phimax;
      Float_t tgt_mass;
      Float_t theta_iteration;
-     Float_t dpp,qsq;
+     Float_t dpp,qsq,qsq_obs,qsq_atrk,qsqfr;
      Int_t which_hrs;
      Float_t xfpd,yfpd,thfpd,phfpd;
      Float_t xgui,ygui,thgui,phgui;  // Guido's focal plane variables.

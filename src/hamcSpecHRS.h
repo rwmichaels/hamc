@@ -12,19 +12,21 @@
 #include <map>
 
 // mnemonic constants
-#define ITARGET      0
-#define ICOLLIM      1
-#define ICOLLIM2     2
-#define ISEPTIN      3
-#define ISEPTOUT     4
-#define IQ1EXIT      5
-#define IDIPIN       6
-#define IDIPEXIT     7
-#define IQ3IN        8
-#define IQ3EXIT      9
-#define IFOCAL      10
-#define IPLANE1     11
-#define IPLANE2     12
+#define ITARGET       0
+#define ITARGET_FULL 21
+#define ICOLLIM       1
+#define ICOLLIM2      2
+#define ICOLLIM3     20
+#define ISEPTIN       3
+#define ISEPTOUT      4
+#define IQ1EXIT       5
+#define IDIPIN        6
+#define IDIPEXIT      7
+#define IQ3IN         8
+#define IQ3EXIT       9
+#define IFOCAL       10
+#define IPLANE1      11
+#define IPLANE2      12
 
 #define LEFTHRS      1
 #define RIGHTHRS     2
@@ -76,6 +78,7 @@ public:
       if (wh == ITARGET ) return "target";
       if (wh == ICOLLIM ) return "collimator";
       if (wh == ICOLLIM2) return "2nd collimator";
+      if (wh == ICOLLIM3) return "empirical angle collimator";
       if (wh == ISEPTIN ) return "septum input";
       if (wh == ISEPTOUT) return "septum output";
       if (wh == IQ1EXIT ) return "Q2 exit ";
@@ -119,6 +122,7 @@ class hamcSpecHRS {
 
      void UseCollimator();   // To use the front-end collmator 
      void UsePaulColl();     // To use Paul's 2-piece collimator.
+     void UseAngleColl();     // To use empirically derived angle collimation
 
      void UseHRSOnly();      // HRS without septum
      void UseWarmSeptum();   // To use with the Warm Septum
@@ -133,6 +137,7 @@ class hamcSpecHRS {
 
      Bool_t IsCollimated() { return collim_choice!=nocollim; };
      Bool_t IsPaulCollim() { return collim_choice==paul_coll; };
+     Bool_t IsAngleCollim() { return collim_choice==angle_coll; };
      Bool_t IsColdSeptum()  { return sept_choice==coldsept; };
      Bool_t IsWarmSeptum()  { return sept_choice==warmsept; };
      Bool_t IsMatrixTrans() { return trans_choice==tmatrix; };
@@ -156,14 +161,15 @@ class hamcSpecHRS {
      Float_t collim_distance;
 
      Int_t sept_choice, trans_choice, collim_choice;
-     static const Int_t noseptum =0;
-     static const Int_t warmsept =1;
-     static const Int_t coldsept =2;
-     static const Int_t tmatrix  =1;
-     static const Int_t tlerose  =2;
-     static const Int_t nocollim =0;
-     static const Int_t reg_coll =1;
-     static const Int_t paul_coll=2;
+     static const Int_t noseptum  =0;
+     static const Int_t warmsept  =1;
+     static const Int_t coldsept  =2;
+     static const Int_t tmatrix   =1;
+     static const Int_t tlerose   =2;
+     static const Int_t nocollim  =0;
+     static const Int_t reg_coll  =1;
+     static const Int_t paul_coll =2;
+     static const Int_t angle_coll=3;
      Bool_t use_guido;
 
      Int_t BuildSpectrom();

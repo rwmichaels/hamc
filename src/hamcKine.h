@@ -14,6 +14,7 @@
 #include "TH1F.h"
 #include <map>
 #include "hamcBeam.h"
+#include "hamcTrackOut.h"
 
 class hamcExpt;
 
@@ -34,17 +35,20 @@ class hamcKine {
           Float_t epmin=0, Float_t epmax=0);
 
      void SetDisDef(Float_t xlo, Float_t xhi, Float_t qsqlo, Float_t wsqlo);
-     Int_t Generate(hamcExpt *expt);  // event generator
+     Int_t Generate(hamcExpt *expt);     // event generator
+     Int_t GenerateOut(hamcExpt *expt);  // modify track for MS and Eloss, update Qsq.
      Int_t Generate(Float_t ebeam, Float_t deafter); 
      void Print();
 
 // Event variables.
      Float_t energy, theta, phi;
      Float_t eprime, qsq, wsq, y, x, bigy;
-     Float_t pprime, erecoil, dE_after;
+     Float_t qsq_obs, qsq_atrk, qsqfr;
+     Float_t pprime, erecoil, dE_int;
      Float_t theta_trans, phi_trans;
      Float_t scat_ang;
      hamcBeam *beam;
+     hamcTrackOut *track;
      TH1F *eprime_gen;
 
   private:
@@ -68,7 +72,6 @@ class hamcKine {
      Float_t thmin, thmax, phmin, phmax, epmin, epmax;
      Float_t xbjlo, xbjhi, qsqlo, wsqlo;
 
-     //     Float_t iteration, dP0_iter, dtheta_iter, dphi_iter;
      Float_t iteration;
 
      hamcKine(const hamcKine& kine);
