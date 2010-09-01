@@ -68,6 +68,7 @@ class hamcPhyPREX : public hamcPhysics {
      Int_t FindAngleIndex(Float_t);
      Int_t FindEnergyIndex(Float_t);
      Float_t Interpolate(Float_t min, Float_t max, Float_t mid, Float_t val1, Float_t val2);
+     Float_t InterpAsym(Float_t ene, Float_t angle_rad);
 
      Float_t qsq;
      Float_t asy0, asy1;  // unstretched and streteched R_N asymmetries 
@@ -101,12 +102,16 @@ class hamcPhyPREX : public hamcPhysics {
      vector<Float_t> angle_row;  //to save the angle values of Horowitch table
      vector<Float_t> energy_row; //to save the energy values 
 
-     TH1F *hpph1,*hpph2,*hpph3,*hpph4,*hpph6;
+     TH1F *hpph1,*hpph2,*hpph3,*hpph4,*hpph6,*hd1;
+     TH1F *hfom1,*hfom2,*hfom3,*hfom4,*hfom5, *hfom6;
+     TH1F *hfom7, *hfom8, *hfom9, *hfom10, *hfom11, *hfom12, *hfom13;
      TH2F *hpph5;
      static const Int_t histo_test=0; // to test(1) or not(0) this code
      static const Int_t accept_test=0; // to test(1) or not(0) this acceptance
      static const Int_t quick_feasibility=0; 
      static const Int_t quick_check=0; 
+     static const Int_t quick_fom=0; 
+     static const Int_t power_integ=0; 
 
 #ifndef NODICT
 ClassDef (hamcPhyPREX, 0)   // PREX physics

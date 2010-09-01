@@ -5,6 +5,7 @@
 #include "hamcExpt.h"
 #include "hamcSingles.h"
 #include "hamcEvent.h"
+#include "hamcKine.h"
 #include "hamcTrackOut.h"
 #include "hamcTrack.h"
 #include "hamcBeam.h"
@@ -13,6 +14,7 @@
 #include "hamcTgtPREX.h"
 #include "hamcPhyPREX.h"
 #include "hamcInout.h"
+#include "THaString.h"
 #include "Rtypes.h"
 #include <string>
 #include <vector>
@@ -25,7 +27,7 @@ using namespace std;
 
  hamcExptPREX::hamcExptPREX() : hamcSingles("PREX")
 {
-  dpp_cut = 0.003;
+  dpp_cut = 0.006;
   solid_athole = 3.6e-5;  // ~1% of total solid angle.
   inatdet = 0;
   physics = new hamcPhyPREX();
@@ -62,8 +64,71 @@ Int_t hamcExptPREX::Init(string sfile) {
   prex_x3  = new TH1F("prex_x3","X at det (A_T and Y band)",
             200,-0.7,0.2);
 
+  // Notation:  slices are 1,2,3...  hthXY if X=phi, Y = theta
+  // and if X or Y = 0 it means integrate over that.
+
+  hqsq00 = new TH1F("hqsq00","MC Qsq for all slices",200,  0.0, 0.02);
+  hth00 = new TH1F("hth00","MC theta for all slices",120,-0.067,0.067);
+  hph00 = new TH1F("hph00","MC phi for all slices",120,-0.04,0.04);
+
+  hqsq10 = new TH1F("hqsq10","MC Qsq for phi slice 1 and all th",200,  0.0, 0.02);
+  hqsq20 = new TH1F("hqsq20","MC Qsq for phi slice 2 and all th",200,  0.0, 0.02);
+  hqsq30 = new TH1F("hqsq30","MC Qsq for phi slice 3 and all th",200,  0.0, 0.02);
+  hqsq40 = new TH1F("hqsq40","MC Qsq for phi slice 4 and all th",200,  0.0, 0.02);
+  hqsq50 = new TH1F("hqsq50","MC Qsq for phi slice 5 and all th",200,  0.0, 0.02);
+  hqsq60 = new TH1F("hqsq60","MC Qsq for phi slice 6 and all th",200,  0.0, 0.02);
+  hqsq70 = new TH1F("hqsq70","MC Qsq for phi slice 7 and all th",200,  0.0, 0.02);
+
+  hth10 = new TH1F("hth10","MC theta for phi slice 1",120,-0.067,0.067);
+  hth20 = new TH1F("hth20","MC theta for phi slice 2",120,-0.067,0.067);
+  hth30 = new TH1F("hth30","MC theta for phi slice 3",120,-0.067,0.067);
+  hth40 = new TH1F("hth40","MC theta for phi slice 4",120,-0.067,0.067);
+  hth50 = new TH1F("hth50","MC theta for phi slice 5",120,-0.067,0.067);
+  hth60 = new TH1F("hth60","MC theta for phi slice 6",120,-0.067,0.067);
+  hth70 = new TH1F("hth70","MC theta for phi slice 7",120,-0.067,0.067);
+
+  // cross check
+  hth01 = new TH1F("hth01","MC theta for th slice 1",120,-0.067,0.067);
+  hth02 = new TH1F("hth02","MC theta for th slice 2",120,-0.067,0.067);
+  hth03 = new TH1F("hth03","MC theta for th slice 3",120,-0.067,0.067);
+  hth04 = new TH1F("hth04","MC theta for th slice 4",120,-0.067,0.067);
+  hth05 = new TH1F("hth05","MC theta for th slice 5",120,-0.067,0.067);
+  hth06 = new TH1F("hth06","MC theta for th slice 6",120,-0.067,0.067);
+  hth07 = new TH1F("hth07","MC theta for th slice 7",120,-0.067,0.067);
+
+  hqsq01 = new TH1F("hqsq01","MC Qsq for all phi and and th slice 1",200,  0.0, 0.02);
+  hqsq02 = new TH1F("hqsq02","MC Qsq for all phi and and th slice 2",200,  0.0, 0.02);
+  hqsq03 = new TH1F("hqsq03","MC Qsq for all phi and and th slice 3",200,  0.0, 0.02);
+  hqsq04 = new TH1F("hqsq04","MC Qsq for all phi and and th slice 4",200,  0.0, 0.02);
+  hqsq05 = new TH1F("hqsq05","MC Qsq for all phi and and th slice 5",200,  0.0, 0.02);
+  hqsq06 = new TH1F("hqsq06","MC Qsq for all phi and and th slice 6",200,  0.0, 0.02);
+  hqsq07 = new TH1F("hqsq07","MC Qsq for all phi and and th slice 7",200,  0.0, 0.02);
+
+  hph01 = new TH1F("hph01","MC phi for theta slice 1",120,-0.04,0.04);
+  hph02 = new TH1F("hph02","MC phi for theta slice 2",120,-0.04,0.04);
+  hph03 = new TH1F("hph03","MC phi for theta slice 3",120,-0.04,0.04);
+  hph04 = new TH1F("hph04","MC phi for theta slice 4",120,-0.04,0.04);
+  hph05 = new TH1F("hph05","MC phi for theta slice 5",120,-0.04,0.04);
+  hph06 = new TH1F("hph06","MC phi for theta slice 6",120,-0.04,0.04);
+  hph07 = new TH1F("hph07","MC phi for theta slice 7",120,-0.04,0.04);
+
+  // cross check
+  hph10 = new TH1F("hph10","MC phi for phi slice 1",120,-0.04,0.04);
+  hph20 = new TH1F("hph20","MC phi for phi slice 2",120,-0.04,0.04);
+  hph30 = new TH1F("hph30","MC phi for phi slice 3",120,-0.04,0.04);
+  hph40 = new TH1F("hph40","MC phi for phi slice 4",120,-0.04,0.04);
+  hph50 = new TH1F("hph50","MC phi for phi slice 5",120,-0.04,0.04);
+  hph60 = new TH1F("hph60","MC phi for phi slice 6",120,-0.04,0.04);
+  hph70 = new TH1F("hph70","MC phi for phi slice 7",120,-0.04,0.04);
+
+  hqsqmid = new TH1F("hqsqmid","MC Qsq for theta,phi in middle",200,  0.0, 0.02);
+
+  hpx1 = new TH1F("hpx1","X at detector",200,-0.8,0.2);
+
   prex_theta = new TH1F("prex_theta","Theta generated",600,2,8);
   prex_indet = new TH1F("prex_indet","Theta in detector",600,2,8);
+
+  qsqf = new TH1F("qsqf","Qsq (MC) for events in detector",200,0,0.02);
 
   sumr_pc1 = 0;
   xcnt_pc1 = 0;
@@ -77,6 +142,132 @@ void hamcExptPREX::EventAnalysis() {
 
   hamcSingles::EventAnalysis();
 
+// Qsq pinhole study
+
+  Float_t qsqloc = physics->kine->qsq;
+
+  Float_t th0 = event->trackout[0]->th0;
+  Float_t ph0 = event->trackout[0]->ph0;
+
+  Float_t x = event->trackout[0]->xtrans;
+  Float_t th = event->trackout[0]->thtrans;
+  Float_t y = event->trackout[0]->ytrans;
+  Float_t ph = event->trackout[0]->phtrans;
+  Float_t z = physics->GetCrossSection();
+
+  Float_t th_deg = (180.0/PI) * event->trackout[0]->GetTheta();
+
+//  Float_t thphr = TMath::Sqrt(ph0*ph0 + th0*th0);
+
+  if (event->inaccept == 1) {
+
+    hpx1->Fill(x, z);
+
+    if (x > -0.07) { // 7 cm = 6 MeV (12.4 cm/%)
+
+      hqsq00->Fill(qsqloc, z);
+      hth00->Fill(th0, z);
+      hph00->Fill(ph0, z);
+
+      if (ph0 > -0.008 && ph0 < 0.010 && th0 > -0.035 && th0 < 0.035) {
+	hqsqmid->Fill(qsqloc, z);
+      }
+
+
+// tg_th slices here
+
+      if (th0 > -0.06 && th0 < -0.035) {
+        hqsq01->Fill(qsqloc, z);
+        hth01->Fill(th0, z);
+        hph01->Fill(ph0, z);
+      }
+
+      if (th0 > -0.035 && th0 < -0.025) {
+        hqsq02->Fill(qsqloc, z);
+        hth02->Fill(th0, z);
+        hph02->Fill(ph0, z);
+      }
+
+      if (th0 > -0.025 && th0 < -0.010) {
+        hqsq03->Fill(qsqloc, z);
+        hth03->Fill(th0, z);
+        hph03->Fill(ph0, z);
+      }
+
+      if (th0 > -0.010 && th0 < 0.010) {
+        hqsq04->Fill(qsqloc, z);
+        hth04->Fill(th0, z);
+        hph04->Fill(ph0, z);
+      }
+
+      if (th0 > 0.01 && th0 < 0.025) {
+        hqsq05->Fill(qsqloc, z);
+        hth05->Fill(th0, z);
+        hph05->Fill(ph0, z);
+      }
+
+      if (th0 > 0.025 && th0 < 0.035) {
+        hqsq06->Fill(qsqloc, z);
+        hth06->Fill(th0, z);
+        hph06->Fill(ph0, z);
+      }
+
+      if (th0 > 0.035 && th0 < 0.06) {
+        hqsq07->Fill(qsqloc, z);
+        hth07->Fill(th0, z);
+        hph07->Fill(ph0, z);
+      }
+
+// tg_ph slices here
+
+      if (ph0 > -0.02 && ph0 < -0.010) {
+        hqsq10->Fill(qsqloc, z);
+        hth10->Fill(th0, z);
+        hph10->Fill(ph0, z);
+      }
+
+      if (ph0 > -0.01 && ph0 < -0.008) {
+        hqsq20->Fill(qsqloc, z);
+        hth20->Fill(th0, z);
+        hph20->Fill(ph0, z);
+      }
+
+      if (ph0 > -0.008 && ph0 < -0.004) {
+        hqsq30->Fill(qsqloc, z);
+        hth30->Fill(th0, z);
+        hph30->Fill(ph0, z);
+      }
+
+      if (ph0 > -0.004 && ph0 < 0.004) {
+        hqsq40->Fill(qsqloc, z);
+        hth40->Fill(th0, z);
+        hph40->Fill(ph0, z);
+      }
+
+      if (ph0 > 0.004 && ph0 < 0.010) {
+        hqsq50->Fill(qsqloc, z);
+        hth50->Fill(th0, z);
+        hph50->Fill(ph0, z);
+      }
+
+      if (ph0 > 0.01 && ph0 < 0.015) {
+        hqsq60->Fill(qsqloc, z);
+        hth60->Fill(th0, z);
+        hph60->Fill(ph0, z);
+      }
+
+      if (ph0 > 0.015 ) {
+        hqsq70->Fill(qsqloc, z);
+        hth70->Fill(th0, z);
+        hph70->Fill(ph0, z);
+      }
+
+
+    }
+  }
+  
+
+
 // Update Mar 14, 2009: there is only 1 A_T hole at the moment.  (X1)
 // Update Mar 21. The dE/dX loss is done in the event processing now.
 
@@ -85,17 +276,17 @@ void hamcExptPREX::EventAnalysis() {
 // Cuts to define main detector
 
   Float_t xmain_lo, xmain_hi, ymain_lo, ymain_hi;
-  xmain_lo = -0.07;
-  xmain_hi = 0.04;
-  ymain_lo = -0.06;
-  ymain_hi = 0.07;
+  xmain_lo = -0.1;
+  xmain_hi = 9999;
+  ymain_lo = -9999;
+  ymain_hi = 9999;
 
 
 // Cuts to define location of A_T detector
 
   Float_t xmid;
-  if (atrl > 0.04 && atrl < 0.045) {
-    xmid = -0.095;
+  if (atrl > 0.08 && atrl < 0.09) {
+    xmid = -0.12;
     xdetlo = xmid - 0.04;
     xdethi = xmid + 0.04;
   } else { 
@@ -107,13 +298,6 @@ void hamcExptPREX::EventAnalysis() {
   ydetlo = -0.042;  // can be -0.042 or -0.019
   ydethi = 0.004;   // can be -0.019 or +0.004
 
-  Float_t x = event->trackout[0]->xtrans;
-  Float_t th = event->trackout[0]->thtrans;
-  Float_t y = event->trackout[0]->ytrans;
-  Float_t ph = event->trackout[0]->phtrans;
-  Float_t z = physics->GetCrossSection();
-
-  Float_t th_deg = (180.0/PI) * event->trackout[0]->GetTheta();
 
   prex_theta->Fill(th_deg);
 
@@ -177,9 +361,11 @@ void hamcExptPREX::EventAnalysis() {
 
     // In focal plane, now demand in main detector
 
+
     if (xextr > xmain_lo && xextr < xmain_hi && 
         yextr > ymain_lo && yextr < ymain_hi) {
 
+         qsqf->Fill(qsqloc,z);
          prex_xy4->Fill(xextr,yextr,z);
          prex_indet->Fill(th_deg);
 
@@ -283,7 +469,7 @@ void hamcExptPREX::RunSummary(Int_t iteration) {
           cout << "blowup factor "<<blowup<<endl;
           cout << "total dR/R = "<<drrtot<<endl;
 // "Bottom line" printout (GeV, degrees, GHz, ppm, 4* %)
-	  printf("\nBL:  %4.3f  %2.0f  %5.4f  %5.4f  %4.3f  %4.3f  %4.3f  %4.3f\n",event->beam->GetE0(),GetSpectrom(0)->GetScattAngle(),1e-9*rate,rawasy,100*daa,100*sensi,100*drr,100*drrtot);
+	  printf("\nBL:  %4.3f  %4.1f  %5.4f  %5.4f  %4.3f  %4.3f  %4.3f  %4.3f\n",event->beam->GetE0(),GetSpectrom(0)->GetScattAngle(),1e-9*rate,rawasy,100*daa,100*sensi,100*drr,100*drrtot);
           cout << "++++++++++++++++++++++++++++++++++++++++++"<<endl;
 	}
       }

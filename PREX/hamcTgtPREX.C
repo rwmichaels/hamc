@@ -31,23 +31,40 @@ Int_t hamcTgtPREX::Init(hamcExpt *expt) {
 
   THaString strin;
   vector<string> sdata; 
-  sdata = expt->inout->GetStrVect("PREX_model");
+
   Int_t islead=1;
+  Int_t isthinc12=0;
+
+  sdata = expt->inout->GetStrVect("PREX_target");
+  if (sdata.size()>=1) {
+    strin = sdata[0];
+    if (strin.CmpNoCase("thinc12")==0) {
+       cout << "hamcTgtPREX:: Using the thin C12 target only !"<<endl;
+       components.push_back(new hamcTgtSlab(
+           "diamond", 0, 0.0005, 0.00005, 0.0188, 12, 6, 11.25, 3.52));
+
+       islead = 0;
+       isthinc12 = 1;
+    }
+  }
+
+  
+  sdata = expt->inout->GetStrVect("PREX_model");
   if (sdata.size()>=1) {
     strin = sdata[0];
     if (strin.CmpNoCase("horca")==0) {
       cout << "Using a Calcium Target "<<endl;
       // need to check RL and density
-     components.push_back(new hamcTgtSlab(
+     if (!isthinc12) components.push_back(new hamcTgtSlab(
 	  // 10% of RL = 0.66; Teff = 0.37*T (RL loss)
-       "calcium", 0, 0.0066, 0.0024, 6.6, 48, 20, 45, 1.6));
+          "calcium", 0, 0.0066, 0.0024, 6.6, 48, 20, 45, 1.6));
      islead=0;
     }
     if (strin.CmpNoCase("horsn")==0) {
-      cout << "Using a Tin Target "<<endl;
-      // need to check RL and density
-     components.push_back(new hamcTgtSlab(
-       "tin", 0, 0.0016, 0.00059, 1.6, 120, 50, 112, 5.8));
+       cout << "Using a Tin Target "<<endl;
+       // need to check RL and density
+       if (!isthinc12) components.push_back(new hamcTgtSlab(
+          "tin", 0, 0.0016, 0.00059, 1.6, 120, 50, 112, 5.8));
      islead=0;
     }
   }
@@ -55,7 +72,7 @@ Int_t hamcTgtPREX::Init(hamcExpt *expt) {
   // Tgt_eff = 0.37 * Tgt_Len, accounts for radiative tail
   // not already in hamc event generation.
   
-  if (islead) {
+  if (islead && !isthinc12) {
     components.push_back(new hamcTgtSlab(
       "diamond", 0, 0.00015, 0.000056, 0.0188, 12, 6, 11.25, 3.52));
     components.push_back(new hamcTgtSlab(
