@@ -382,7 +382,9 @@ Float_t hamcEloss::GetDeDx(Float_t radlen, Int_t where) {
  
   if (where != ICOLLIM2) return 0;  // only for 2nd collimator -- Be plug
 
-  Float_t dE = 0.1023*radlen;  // GeV per fraction
+  // For Be the fraction is 0.1023
+  // For C12 it is 0.0733
+  Float_t dE = 0.0733*radlen;  // GeV per fraction
  // e.g. 1.5 cm Be = 4.3 % RL = 0.043 -> 0.0044 GeV = 4.4 MeV
 
   return dE;
