@@ -1,4 +1,4 @@
- #ifndef ROOT_hamcAperture
+#ifndef ROOT_hamcAperture
 #define ROOT_hamcAperture
 
 //  hamcAperture   -- aperture defining the acceptance
@@ -9,6 +9,7 @@
 #include "TMath.h"
 #include <vector>
 #include <iostream>
+#include "hamcTrack.h"
 
 class hamcAperture {  // an aperture that defines the acceptance
 public:
@@ -19,6 +20,10 @@ public:
     }
     void SetCenter(Float_t x, Float_t y) { xcent=x; ycent=y; };
     virtual Bool_t CheckAccept(Float_t x, Float_t y) const { return kTRUE; };
+    virtual Bool_t CheckAccept(hamcTrack *trk) const { 
+      if (!trk) return kFALSE;
+      return CheckAccept(trk->tvect->GetX(), trk->tvect->GetY());
+    };
 // An aperture may have material (degrader) or multiple materials.
     void DefineRadLen(Int_t idx, Float_t rl) { 
       if (idx < (Int_t)radlen.size()) {
@@ -40,6 +45,7 @@ public:
       if (radlen.size()>0) return radlen[0];
       return 0;
     }
+    virtual void FlipPhi() { };
 protected:
     std::vector<Float_t> radlen;
     Float_t xcent,ycent;
@@ -177,7 +183,8 @@ public:
     rad2 = r2; ycent2 = c2;
     vtop = ytp;  vright = xrgt;
     yline1 = x1; slope1 = m1;
-  }
+    ysign = 1.0; 
+ }
   ~hamcPaulCollim() { };
   void Print() const { 
     std::cout<<"Paul's collimator with inner, outer radii"<<std::endl;
@@ -197,7 +204,7 @@ public:
   Int_t WhichBox(Float_t x, Float_t y) const {
     Int_t debug=0;
     Float_t xdif = x-xcent;
-    Float_t ydif = y-ycent;
+    Float_t ydif = ysign*(y-ycent);  
     Float_t xtrial,ytrial,xtmp;
     if (debug) std::cout << "\n\n X, Y = "<<x<<"  "<<y<<std::endl;
     ytrial = ydif-atc;
@@ -226,7 +233,7 @@ public:
     }
     if (x > vtop) return -1;       // above upper line
     if (x < -1.0*vtop) return -1;  // beneath lower line
-    if (y > vright) return -1;     // beyond right border
+    if (ydif > vright) return -1;     // beyond right border
     xtrial = slope1*ydif + yline1; // Champhor line
     if (x > xtrial) return -1;     // above upper line
     if (x < -1.0*xtrial) return -1;// below lower line
@@ -241,15 +248,153 @@ public:
     if (idx != -1) return kTRUE;
     return kFALSE;
   }
+  virtual void FlipPhi() { 
+      ysign = -1;  
+  };
 private:
   Float_t x, atxlo, atyhi, atr, atc;
   Float_t rad1, ycent1, rad2, ycent2;
   Float_t yline1, slope1;
   Float_t vtop, vright;
+  Float_t ysign;
 #ifndef NODICT
 ClassDef (hamcPaulBox, 0)   // Paul's semicircular, really complicated box.
 #endif
 };
+
+class hamcAngleCollim : public hamcAperture {  
+// This is a purely empirical collimation for the HRS.
+// The target angles tg_th and tg_ph (called th0 and phi0 in hamc)
+// are checked to see if they are inside or outside a polygon
+// defined by points hpt[],vpt[] where "h" means the horizontal
+// angle (tg_ph) and "v" means vertical.
+public:
+  hamcAngleCollim() : hamcAperture() {
+    npts = 0;
+    blowup = 1.0;   
+    infty = 999999;
+    debug = 0;
+    Init();
+  }
+  ~hamcAngleCollim() { };
+  void Init() {
+    std::cout <<" Into AngleCollim init"<<std::endl;
+    // These points must be in the order of the polygon (going CCW for example).
+    // Units are radians.  "v" is vertical.
+
+#ifdef TEST1
+    hpt.push_back(0);   vpt.push_back(-0.01);  
+    hpt.push_back(0);   vpt.push_back(0.01);   
+    hpt.push_back(0.005);   vpt.push_back(0.03);
+    hpt.push_back(0.02);   vpt.push_back(0.01); 
+    hpt.push_back(0.02);   vpt.push_back(-0.01);
+    hpt.push_back(0.005);   vpt.push_back(-0.03);
+#endif
+
+    hpt.push_back(-0.0096);  vpt.push_back(0.);    
+    hpt.push_back(-0.010);   vpt.push_back(0.007); 
+    hpt.push_back(-0.0113);  vpt.push_back(0.0165);
+    hpt.push_back(-0.0130); vpt.push_back(0.023);  
+    hpt.push_back(-0.013);  vpt.push_back(0.029);  
+    hpt.push_back(-0.0114); vpt.push_back(0.035);  
+    hpt.push_back(-0.0081); vpt.push_back(0.0405); 
+    hpt.push_back(-0.004);  vpt.push_back(0.048);  
+    hpt.push_back(0);       vpt.push_back(0.049);  
+    hpt.push_back(0.005);   vpt.push_back(0.048);  
+    hpt.push_back(0.01);    vpt.push_back(0.049);  
+    hpt.push_back(0.0141);  vpt.push_back(0.0405); 
+    hpt.push_back(0.0182);  vpt.push_back(0.031);  
+    hpt.push_back(0.0208);  vpt.push_back(0.0275); 
+    hpt.push_back(0.0240);  vpt.push_back(0.017);  
+    hpt.push_back(0.0258);  vpt.push_back(0.008);  
+    hpt.push_back(0.0266);  vpt.push_back(0.0);    
+    hpt.push_back(0.0256);  vpt.push_back(-0.0095);
+    hpt.push_back(0.024);   vpt.push_back(-0.0196);
+    hpt.push_back(0.0209);  vpt.push_back(-0.030); 
+    hpt.push_back(0.0182);  vpt.push_back(-0.040); 
+    hpt.push_back(0.0142);  vpt.push_back(-0.0495);
+    hpt.push_back(0.010);   vpt.push_back(-0.050); 
+    hpt.push_back(0.005);   vpt.push_back(-0.049); 
+    hpt.push_back(0.0);     vpt.push_back(-0.050); 
+    hpt.push_back(-0.004);  vpt.push_back(-0.049); 
+    hpt.push_back(-0.008);  vpt.push_back(-0.040); 
+    hpt.push_back(-0.0113);  vpt.push_back(-0.037);
+    hpt.push_back(-0.0134);  vpt.push_back(-0.032);
+    hpt.push_back(-0.0122);  vpt.push_back(-0.023);
+    hpt.push_back(-0.010);   vpt.push_back(-0.013);
+
+   
+    npts = vpt.size();
+  
+    Float_t osign = -1;  // +1 for L-HRS, -1 for R-HRS
+    ohmin = 99999;
+    ohmax = -99999;
+    ovmin = 99999;
+    ovmax = -99999;
+
+    Float_t hshift = 0.0;
+
+    for (Int_t i = 0; i < npts; i++) {
+  // Possible Sign flip for an HRS (compared to hamc)
+        hpt[i] = osign*hpt[i] + hshift;
+        hpt[i] = blowup * hpt[i];
+        vpt[i] = blowup * vpt[i];
+        if (hpt[i] < ohmin) ohmin = hpt[i];
+        if (hpt[i] > ohmax) ohmax = hpt[i];
+        if (vpt[i] < ovmin) ovmin = vpt[i];
+        if (vpt[i] > ovmax) ovmax = vpt[i];
+
+	//	std::cout << "Emp. angle "<<i<<"  "<<hpt[i]<<"  "<<vpt[i]<<"  signs "<<hsign[i]<<"   "<<vsign[i]<<std::endl;
+    }
+
+     Print();
+  }
+  void Print() const { 
+    std::cout<<"Empirical angle collimation. **** Num points = "<<npts<<std::endl;
+    for (Int_t i = 0; i < npts; i++) {
+      std::cout << "Pt "<<i<<"  "<<hpt[i]<<"  "<<vpt[i];
+     }
+    hamcAperture::Print();
+  }
+  Int_t WhichBox(Float_t vert, Float_t horiz) const {
+ // Check angles from target.  Units are radians.
+ // Here, horiz is horizontal angle, vert = vertical
+
+    if (debug) std::cout << "Into WhichBox vert,horiz =  "<<vert<<"  "<<horiz<<std::endl;
+    if (horiz < ohmin || horiz > ohmax) return -1;
+    if (vert < ovmin || vert > ovmax) return -1;
+
+    Int_t i, j, c = 0;
+    for (i = 0, j = npts-1; i < npts; j = i++) {
+      if ( ((vpt[i]>vert) != (vpt[j]>vert)) &&
+	   (horiz < (hpt[j]-hpt[i]) * (vert-vpt[i]) / (vpt[j]-vpt[i]) + hpt[i]) )
+	c = !c;
+    }
+    if (c == 0) return -1;
+    return 1;
+
+  }
+  Bool_t CheckAccept(hamcTrack *trk) const {
+    if (!trk) return kFALSE;
+    Float_t theta = trk->tvect->GetTheta();
+    Float_t phi = trk->tvect->GetPhi();
+    Int_t idx = WhichBox(theta,phi);
+    if (idx == 1) return kTRUE;
+    return kFALSE;
+  }
+private:
+  Int_t npts;
+  Int_t debug;
+  Float_t blowup, infty;
+  Float_t ohmin, ohmax; 
+  Float_t ovmin, ovmax; 
+  std::vector<Float_t> vpt,hpt;
+
+#ifndef NODICT
+ClassDef (hamcAngleCollim, 0)   // Empirical angle collimation.
+#endif
+};
+
 
 
 #endif
