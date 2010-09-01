@@ -30,7 +30,8 @@ private:
 
      Bool_t did_init;
      static const Int_t debug=0;
-     Float_t xcol, ycol, xsep, ysep;
+     Float_t xcol, ycol, thcol, phcol, xsep, ysep;
+     Int_t evnum;
  
      hamcEvent(const hamcEvent& evt);
      hamcEvent& operator=(const hamcEvent& evt);
