@@ -139,8 +139,8 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
     hpph6 = new TH1F("hpph6","Asymmmetry  vs  angle",2000,3,9); 
 
     Float_t energy[4];
-    energy[0] = 1.05;
-    energy[1] = 1.05; 
+    energy[0] = 1.063;
+    energy[1] = 1.063; 
     energy[2] = 0.2482;
     energy[3] = 0.502;
 
@@ -173,7 +173,7 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
 	} else {
           diff = -5;
 	}
-	//        cout << "crsec "<<"  "<<theta_degr<<"  "<<crsec<<"  "<<crsec2<<"  "<<diff<<endl;
+        cout << "Energy "<<energy[iene]<<"     theta "<<theta_degr<<"     Crsec:   "<<crsec<<"          "<<crsec2<<"    "<<diff<<endl;
 
         hpph5->Fill(theta_degr,diff);
       }
@@ -221,48 +221,89 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
 
   if (quick_check) { // code exists after this
 
-    Float_t theta_degr, theta_rad, ene;
+    Float_t theta_degr, theta_rad, ene, crsec2;
 
-    for (Int_t itry=0; itry<10; itry++) {
+    for (Int_t itry=0; itry<20; itry++) {
 
-      theta_degr = 5.2;
-      ene = 1.063;
+      theta_degr = 5.0;
+      Float_t E0nom = 1.05;
+      ene = E0nom;
 
       if (itry==1) {
-	theta_degr = 3.51;
-        ene = 1.2;
+	theta_degr = 3.5;
+        ene = E0nom;
       }
       if (itry==2) {
 	theta_degr = 4.0;
-        ene = 1.2;
+        ene = E0nom;
       }
       if (itry==3) {
-	theta_degr = 4.6;
-        ene = 1.25;
+	theta_degr = 4.2;
+        ene = E0nom;
       }
       if (itry==4) {
-	theta_degr = 4.2;
-        ene = 1.3;
+	theta_degr = 4.4;
+        ene = E0nom;
       }
       if (itry==5) {
 	theta_degr = 4.6;
-        ene = 1.3;
+        ene = E0nom;
       }
       if (itry==6) {
-	theta_degr = 5;
-        ene = 1.4;
+	theta_degr = 4.8;
+        ene = E0nom;
       }
       if (itry==7) {
-	theta_degr = 3.8;
-        ene = 1.2;
+	theta_degr = 5.0;
+        ene = E0nom;
       }
       if (itry==8) {
-	theta_degr = 3.8;
-        ene = 1.1;
+	theta_degr = 5.2;
+        ene = E0nom;
       }
       if (itry==9) {
-	theta_degr = 4.2;
-        ene = 1.0;
+	theta_degr = 5.4;
+        ene = E0nom;
+      }
+      if (itry==10) {
+	theta_degr = 5.6;
+        ene = E0nom;
+      }
+      if (itry==11) {
+	theta_degr = 5.8;
+        ene = E0nom;
+      }
+      if (itry==12) {
+	theta_degr = 6.0;
+        ene = E0nom;
+      }
+      if (itry==13) {
+	theta_degr = 6.2;
+        ene = E0nom;
+      }
+      if (itry==14) {
+	theta_degr = 6.4;
+        ene = E0nom;
+      }
+      if (itry==15) {
+	theta_degr = 6.6;
+        ene = E0nom;
+      }
+      if (itry==16) {
+	theta_degr = 6.8;
+        ene = E0nom;
+      }
+      if (itry==17) {
+	theta_degr = 7.0;
+        ene = E0nom;
+      }
+      if (itry==18) {
+	theta_degr = 5.0;
+        ene = 1.055;
+      }
+      if (itry==19) {
+	theta_degr = 5.0;
+        ene = 1.050;
       }
 
       theta_rad = 3.1415926*theta_degr/180.0;
@@ -270,8 +311,19 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
       Asymmetry(ene,theta_rad,0);
       Asymmetry(ene,theta_rad,1);
 
+      Float_t frecoil = 1 + (ene/195.)*(1-TMath::Cos(theta_rad));
+      Float_t eprime = ene/frecoil;
+      qsq = 2*ene*eprime*(1-TMath::Cos(theta_rad));
+
       cout << "CHECK :  energy "<<ene<<"  theta "<<theta_degr<<endl;
       cout << "crsec  "<<crsec<<"    A0= "<<asy0<<"  A1= "<<asy1<<endl;
+// Warning: CalculateCrossSection needs qsq, a variable member of this class.
+      crsec2 = CalculateCrossSection(0, ene, theta_degr);  
+
+      cout << "crsec2 = "<<crsec2<<endl;
+      Float_t xdif = (crsec - crsec2)/crsec;
+      cout << "Rel. diff  = "<<xdif<<"   ratio = "<<crsec/crsec2<<endl;
+
       cout << endl << "-------------------------------------------- "<<endl;
 
     }
@@ -652,7 +704,7 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
 
 Float_t hamcPhyPREX::InterpAsym(Float_t ene, Float_t theta_rad) {
 
-   Int_t ldebug = 0;
+   Int_t ldebug = 1;
 
    Float_t daa = 1;
 
@@ -771,26 +823,48 @@ Int_t hamcPhyPREX::CrossSection(Float_t energy, Float_t angle_rad, Int_t stretch
   if (indxEnergy <= 0) return -1;
 
   Float_t crsc1, crsc2;
+  Float_t crsca1, crsca2;
+  Float_t e1, e2;
 
   //find the angles above and below the actual angle; used for interpolation
   Float_t angle_upper =angle_row[indxAngle];
   Float_t angle_lower = angle_row[indxAngle-1];
 
   crsc1 = crsc_tables[stretch][indxEnergy][indxAngle]; /*get the cross section value for angle value larger than the actual*/
-  crsc2 = crsc_tables[stretch][indxEnergy][indxAngle+1]; //get the cross section value for energy value one below the actual
-    // }
+  crsc2 = crsc_tables[stretch][indxEnergy][indxAngle+1]; //get the cross section value for nearby angle */
+  crsca1 = Interpolate(angle_lower, angle_upper, angle, crsc1, crsc2)/1000;  
 
-  crsec = Interpolate(angle_lower, angle_upper, angle, crsc1, crsc2)/1000;  
+  crsca2 = -1;
+
+  if (indxEnergy < energy_row.size()-2) {
+     crsc1 = crsc_tables[stretch][indxEnergy+1][indxAngle]; 
+     crsc2 = crsc_tables[stretch][indxEnergy+1][indxAngle+1]; 
+     crsca2 = Interpolate(angle_lower, angle_upper, angle, crsc1, crsc2)/1000;  
+  }
+
+  crsec = crsca1;
+
+  if (crsca2 > -1) {
+
+    e1 = energy_row[indxEnergy];
+    e2 = energy_row[indxEnergy+1];     
+    crsec = Interpolate(e1, e2, energy, crsca1, crsca2);  
+  }
 
   if (debug) {
      cout << "\n LEAD Cross section : "<<endl;
      cout << "stretch "<<stretch<<"   indices "<<indxEnergy<<"   "<<indxAngle+1<<endl;
      cout << "energy " << energy << " GeV " << "angle " << angle << endl;
-     cout <<"Interpolation of crsec "<<crsc1/1000 <<" "<<crsc2/1000<<" "<<crsec<<endl;
+     cout << "e1 "<<e1<<"    e2 "<<e2<<endl;
+     cout << "crsecs =  "<<crsca1<<"  "<<crsca2<<"  "<<crsec<<endl;
+     
   }
 
   Float_t calccrsec = CalculateCrossSection(0, energy, angle);
-  if (debug) cout <<"calculated lead cross section " << calccrsec <<endl;
+  if (debug) {
+       cout <<"calculated lead cross section " << calccrsec <<endl;
+       cout <<" fractional diff "<< (calccrsec - crsec)/crsec<<endl;
+  }
 
   return OK;
 }
@@ -813,13 +887,29 @@ Int_t hamcPhyPREX::Asymmetry(Float_t energy, Float_t angle_rad, Int_t stretch) {
 
   if (indxAngle <= 0 || indxEnergy <= 0) return -1;
 
-  Float_t asymmetry1, asymmetry2;
-  Float_t angle_upper =angle_row[indxAngle] ;
+  Float_t asymmetry1, asymmetry2, asyE1, asyE2, e1, e2;
+  Float_t angle_upper = angle_row[indxAngle] ;
   Float_t angle_lower = angle_row[indxAngle-1];
 
   asymmetry1 = asymmetry_tables[stretch][indxEnergy][indxAngle];
   asymmetry2 = asymmetry_tables[stretch][indxEnergy][indxAngle+1];
-  asymmetry = Interpolate(angle_lower, angle_upper, angle, asymmetry1, asymmetry2);
+  asyE1 = Interpolate(angle_lower, angle_upper, angle, asymmetry1, asymmetry2);
+
+  asyE2 = -1;
+
+  if (indxEnergy < energy_row.size()-2) {
+     asymmetry1 = asymmetry_tables[stretch][indxEnergy+1][indxAngle];
+     asymmetry2 = asymmetry_tables[stretch][indxEnergy+1][indxAngle+1];
+     asyE2 = Interpolate(angle_lower, angle_upper, angle, asymmetry1, asymmetry2);
+  }
+
+  asymmetry = asyE1;
+
+  if (asyE2 > -1) {
+    e1 = energy_row[indxEnergy];
+    e2 = energy_row[indxEnergy+1];     
+    asymmetry = Interpolate(e1, e2, energy, asyE1, asyE2);  
+  }
 
   if (stretch == 0) asy0 = asymmetry;
   if (stretch == 1) asy1 = asymmetry;
@@ -829,7 +919,10 @@ Int_t hamcPhyPREX::Asymmetry(Float_t energy, Float_t angle_rad, Int_t stretch) {
   if (debug) {
     cout<<"angle  "<<angle<<endl;
     cout << "Indices "<<indxAngle<<"  "<<indxEnergy<<"   "<<stretch<<endl;
-    cout << "Lead Asymmetries  "<<asymmetry1 << " "<<asymmetry2 <<" " <<asymmetry<<endl;   
+    cout << "Asym  "<<asymmetry1 << " "<<asymmetry2;
+    cout << "  asyE1 "<<asyE1<<"  asyE2 "<<asyE2<<"    Asy = "<<asymmetry<<endl;   
+    cout << "energies "<<e1<<"  "<<e2<<"   "<<energy<<endl;
+    
     //    Float_t calcasy = CalculateAsymmetry(0);
     //    cout << "Calculated lead asy "<<calcasy<<endl;
     cout << "stretch "<<stretch<<"  "<<asy0<<"  "<<asy1<<endl;
@@ -860,9 +953,8 @@ Int_t hamcPhyPREX::FindAngleIndex(Float_t angle){
 
 Int_t hamcPhyPREX::FindEnergyIndex(Float_t energy){
   
-  // Adjust energy up 4.5% (the acceptance) to be closer to right value
-  // and to not over-estimate the rate.  (Problem is 50 MeV steps)
-  Float_t rounded_energy = round(1.045*energy*20)/20;
+  // Round off the energy a bit to find the index.  (E is fixed later by interpolation)
+  Float_t rounded_energy = round(1.02*energy*20)/20;
   
   vector<Float_t>::const_iterator iterEnergy  = lower_bound(energy_row.begin(), energy_row.end(), rounded_energy); //search for the first value of energy which is larger or equal than actual 
 
@@ -943,7 +1035,7 @@ Float_t hamcPhyPREX::CalculateCrossSection(Int_t nuc, Float_t energy, Float_t an
   if (qsq == 0) {  // wasn't calculated yet.  (qsq is class member)
     qsq = 2*energy*energy*(1-TMath::Cos(angle*pi/180.));
   }
- 
+
   Float_t calcrsec, mott, form_factor;
 
   /*Mott cross section for point-like scattering = 
@@ -971,7 +1063,7 @@ Float_t hamcPhyPREX::CalculateCrossSection(Int_t nuc, Float_t energy, Float_t an
     if (indxQsq == 0) indxQsq = 1; // use the min.
 
     if (indxQsq <= 0 || indxQsq >= (Int_t)qsq_row.size()) return 0;
-    
+
     Float_t qsq1, qsq2, form_factor1, form_factor2;
     qsq1 =  qsq_row.at(indxQsq);
     qsq2 = qsq_row.at(indxQsq-1);
@@ -999,7 +1091,7 @@ Float_t hamcPhyPREX::CalculateCrossSection(Int_t nuc, Float_t energy, Float_t an
   }
 
   calcrsec = mott*form_factor; //result is in barn/seradians multiply by 1000 to compare with the value from Horowitchs table where it is milibars/stereadians 
-  
+
   return calcrsec;
 }
 
