@@ -36,6 +36,7 @@ hamcPhyPREX::hamcPhyPREX() : hamcPhysics()
   scatt_process = "elastic";
   whichmodel = HORPB;  // default
   do_radiate = kTRUE;
+  didWriteAngle = false;
   num_models = 2;  // if =2 we're considering stretched vs unstretched R_N
   qsq = 0;
 }
@@ -126,6 +127,10 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
   }
 
   LoadFiles();  // Load the lookup files
+ 
+  //  PrintAsymTable();
+
+
   didinit = kTRUE;
 
 
@@ -880,7 +885,7 @@ Int_t hamcPhyPREX::Asymmetry(Float_t energy, Float_t angle_rad, Int_t stretch) {
 
   Float_t angle = angle_rad * 180 / PI;
 
-  asymmetry = -9999;
+  asymmetry = 0;
 
   Int_t indxAngle = FindAngleIndex(angle);
   Int_t indxEnergy = FindEnergyIndex(energy);
@@ -895,6 +900,9 @@ Int_t hamcPhyPREX::Asymmetry(Float_t energy, Float_t angle_rad, Int_t stretch) {
   asymmetry2 = asymmetry_tables[stretch][indxEnergy][indxAngle+1];
   asyE1 = Interpolate(angle_lower, angle_upper, angle, asymmetry1, asymmetry2);
 
+  //  cout << "\n\nindices "<<stretch<<"  "<<indxEnergy<<"  "<<indxAngle<<"  "<<indxAngle+1<<endl;
+  //  cout << "asyE1 inputs "<<asymmetry1<<"  "<<asymmetry2<<"  "<<angle_lower<<"  "<<angle_upper<<"  "<<asyE1<<endl;
+
   asyE2 = -1;
 
   if (indxEnergy < energy_row.size()-2) {
@@ -902,6 +910,8 @@ Int_t hamcPhyPREX::Asymmetry(Float_t energy, Float_t angle_rad, Int_t stretch) {
      asymmetry2 = asymmetry_tables[stretch][indxEnergy+1][indxAngle+1];
      asyE2 = Interpolate(angle_lower, angle_upper, angle, asymmetry1, asymmetry2);
   }
+
+  //  cout << "asyE2 inputs "<<asymmetry1<<"  "<<asymmetry2<<"  "<<angle_lower<<"  "<<angle_upper<<"  "<<asyE2<<endl;
 
   asymmetry = asyE1;
 
@@ -917,7 +927,7 @@ Int_t hamcPhyPREX::Asymmetry(Float_t energy, Float_t angle_rad, Int_t stretch) {
   int debug=0;
 
   if (debug) {
-    cout<<"angle  "<<angle<<endl;
+    cout<<"angle  "<<angle<<"   "<<angle_lower<<"   "<<angle_upper<<endl;
     cout << "Indices "<<indxAngle<<"  "<<indxEnergy<<"   "<<stretch<<endl;
     cout << "Asym  "<<asymmetry1 << " "<<asymmetry2;
     cout << "  asyE1 "<<asyE1<<"  asyE2 "<<asyE2<<"    Asy = "<<asymmetry<<endl;   
@@ -945,9 +955,15 @@ Int_t hamcPhyPREX::Drate(Float_t anum, Float_t tdens,Float_t tlen, Float_t crsec
 
 Int_t hamcPhyPREX::FindAngleIndex(Float_t angle){
 
+  Int_t idx;
+
   vector<Float_t>::const_iterator iterAngle = upper_bound(angle_row.begin(), angle_row.end(), angle); //search for the first value of angle which is larger than actual
 
-  return iterAngle - angle_row.begin();
+  idx = iterAngle - angle_row.begin();
+
+  if (idx > angle_row.size()-2) idx = -1;
+
+  return idx;
   
 }
 
@@ -1242,7 +1258,6 @@ Int_t hamcPhyPREX::LoadHorowitzTable(vector<vector<Float_t> >& crsc_table, vecto
   }
 
   bool isFirst = true;
-  bool didWriteAngle = false;
   while(fgets(strin,100,fd)!=NULL) {
     if (strstr(strin, "E=")!=NULL) { //Line for energy
       sscanf(strin, "E=%f", &energy);
@@ -1280,7 +1295,7 @@ Int_t hamcPhyPREX::LoadHorowitzTable(vector<vector<Float_t> >& crsc_table, vecto
   }
   crsc_table.push_back(crsc_row);
   asymmetry_table.push_back(asymmetry_row);
-  //  cout << "crsc_table size "<<crsc_table.size()<<"    asym tab size "<<asymmetry_table.size()<<endl;
+  cout << "crsc_table size "<<crsc_table.size()<<"    asym tab size "<<asymmetry_table.size()<<endl;
   
   fclose(fd);
 
@@ -1322,4 +1337,22 @@ Int_t hamcPhyPREX::LoadC12FormFactorTable(){
   fclose(fd);
 
   return 1;
+}
+
+
+void hamcPhyPREX::PrintAsymTable() {
+
+  cout << "\n\n === Asymmetry Table ==== "<<endl;
+
+  for (int str = 0; str < 2; str++) {
+
+    for (int idxE = 0; idxE < 14; idxE++) {
+
+      for (int idxA = 0; idxA < 66; idxA++) {
+
+	cout << "a["<<str<<"]["<<idxE<<"]["<<idxA<<"] = "<< asymmetry_tables[str][idxE][idxA] <<endl;
+
+      }
+    }
+  }
 }
