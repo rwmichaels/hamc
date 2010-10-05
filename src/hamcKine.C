@@ -347,6 +347,7 @@ Int_t hamcKine::GenerateOut(hamcExpt *expt) {
 
 // Subtract energy losses on the way out of the target
 
+  dE = 0;
   if (eloss) dE = eloss->GetDeExternOut() 
                 + eloss->GetDeIonOut();
 
