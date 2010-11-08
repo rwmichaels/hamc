@@ -86,12 +86,21 @@ Int_t hamcTrack::UpdateFourMom(Float_t newE) {
 // Update the four-momentum given an overall energy change.
 
   Float_t x1,x2,escale;
- 
+
   x1 = TMath::Sqrt(energy*energy - mass*mass);
 
+// These are cases (~0.2 %) where the Eloss is large but also slightly
+// wrong since Eloss assumed initial energy = E0 but it might have been
+// less than E0 if it was after another Eloss or if after scattering.
+// Doesn't matter much; these are rejected by momentum acceptance.
+// To simply reject these events we set newE, pmom, and dP/P here.
+
   if (newE < mass || x1 == 0) {
-    cout << "Error: hamcTrack::UpdateFourMom: "<<newE<<"  "<<x1<<endl;
-    return -1;
+    newE = 0.001;
+    pmom = 0.001;
+    tvect->PutDpp(-0.999);   // lost nearly all energy --> reject
+    *tvect_orig = *tvect;   // reset the original tvect.
+    return -1; 
   }
 
   x2 = TMath::Sqrt(newE*newE - mass*mass);
@@ -104,6 +113,12 @@ Int_t hamcTrack::UpdateFourMom(Float_t newE) {
   plab_z = escale * plab_z;
 
   pmom = TMath::Sqrt(plab_x*plab_x + plab_y*plab_y + plab_z*plab_z);
+
+  if (P0 != 0) {
+    Float_t dpn = (pmom-P0)/P0;
+    tvect->PutDpp(dpn);
+    *tvect_orig = *tvect;   // reset the original tvect.
+  }
 
   return 1;
 
