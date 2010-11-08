@@ -165,14 +165,15 @@ Int_t hamcEloss::Init(hamcExpt* expt) {
 
 Int_t hamcEloss::InitRad() {
 
-  if (use_genercone) return OK;  // does not use this
-
   qsq = 2*E0*E0*(1-TMath::Cos(theta_central));
   Float_t alpha = (1./137.);
   Float_t bval = 4./3.;
   Float_t msq = 2.6112e-7;  // mass electron squared (GeV^2)
 // This is the equiv. radiator used for Internal Brehms.
   tequiv = (alpha/(bval*pi)) * (log(qsq/msq) - 1);
+
+  // moved below tequiv to generate non zero dE_IntBrehm for genercone
+  if (use_genercone) return OK;  // does not use this
 
   if (use_tf1) {
     Setup_tf1(0, tequiv, tgtZ, E0);  
@@ -355,9 +356,10 @@ Int_t hamcEloss::Generate(hamcExpt* expt) {
   dE_IonizeOut = 0;
   radin = expt->target->GetRadIn();   // variable of the class
   radout = expt->target->GetRadOut(); //  "    "     "
-  
+
   if (use_genercone) {
      Generate_gcone();
+     GenerateDeDx(expt);   // also generate dE/dx energy loses
      return 1;
   } 
 
@@ -372,6 +374,7 @@ Int_t hamcEloss::Generate(hamcExpt* expt) {
   }
 
   if (!use_numer) GenerateDeDx(expt);  
+
 
   return OK;
 
@@ -451,6 +454,8 @@ Int_t hamcEloss::GenerateDeDx(hamcExpt *expt) {
    
   }
 
+  //  cout << "dE_IonizeIn\t" << dE_IonizeIn <<"\tdE_IonizeOut\t" <<dE_IonizeOut << endl;
+
   return OK;
 
 }
@@ -462,15 +467,15 @@ Int_t hamcEloss::Generate_gcone() {
 //  radin = # radiation lengths coming in to scatter point
 //  radout = # rad  "    "  out "  "
 
-   dE_IntBrehm = gener_radlossint(E0,0.5*tequiv);
-   dE_ExtBrehmIn = gener_radlossext(E0, radin);
-   dE_ExtBrehmOut = gener_radlossext(E0, radout);
-   dE_Bsum = dE_IntBrehm + dE_ExtBrehmIn + dE_ExtBrehmOut;
-
-     //     cout << "Using Gener cone "<<E0<<"  "<<tequiv<<"  "<<"  "<<"  "<<radin<<"  "<<radout<<" / "<<endl<<dE_IntBrehm<<"  "<<dE_ExtBrehmIn<<"  "<<dE_ExtBrehmOut<<"  "<<dE_Bsum<<endl;
-
-     return 1;
-
+  dE_IntBrehm = gener_radlossint(E0,0.5*tequiv);
+  dE_ExtBrehmIn = gener_radlossext(E0, radin);
+  dE_ExtBrehmOut = gener_radlossext(E0, radout);
+  dE_Bsum = dE_IntBrehm + dE_ExtBrehmIn + dE_ExtBrehmOut;
+  
+  //  cout << "Using Gener cone "<<E0<<"  "<<tequiv<<"  "<<"  "<<"  "<<radin<<"  "<<radout<<" / "<<endl<<dE_IntBrehm<<"  "<<dE_ExtBrehmIn<<"  "<<dE_ExtBrehmOut<<"  "<<dE_Bsum<<endl;
+  
+  return 1;
+  
 }
 
 Int_t hamcEloss::Generate_tf1() {
