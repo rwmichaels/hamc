@@ -28,7 +28,9 @@ hamcSpecHRS::hamcSpecHRS(Int_t which, Float_t pmom, Float_t angle) : P0(pmom), c
   name = "HRS";
   desc = "Hall A High Resolution Spectrometer";
   P0_sigma = P0*1e-4;       // default resolution
-  collim_distance = 1.24;   // <- meters
+  //  collim_distance = 1.24;   // <- meters
+  //  collim_distance = 1.101;   // meters, collimator in
+  collim_distance = 1.181;   // meters, collimator out
   sept_choice   = noseptum; 
   trans_choice  = tmatrix;  
   collim_choice = nocollim;
@@ -258,7 +260,10 @@ void hamcSpecHRS::AddBreakPoint(Int_t where) {
 	  break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.30,-0.2156,-0.10,0.10)));  // cold septum
 	}
       } else { // HRS alone  collimator: (horiz)62.9 mm x  (vert)121.8 mm 
-	 break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.0609,0.0609,-0.03145,0.03145)));  
+	//	break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.0609,0.0609,-0.03145,0.03145)));  // collimator entrance
+	//	break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.06485,0.06485,-0.0334,0.0334)));  // collimator exit
+	break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.06485,0.06485,-0.0285,0.0334)));  // collimator exit, for PVDIS
+
       }
       idx = break_point.size()-1;
       break_point[idx]->aperture->SetCenter(0,0);
@@ -301,7 +306,12 @@ void hamcSpecHRS::AddBreakPoint(Int_t where) {
         break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-5.22, -4.98, -0.1924, -0.1924)));
         break;
       }
-      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, 0.0186)));  // standard HRS
+
+      //      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, 0.149)));  // standard HRS (slope wrong)
+      //      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, 0.0186)));  // standard HRS
+      //      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, 0.0)));  // test
+      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, -0.0186)));  // standard HRS
+
       break;
 
     case IDIPEXIT:
@@ -309,7 +319,12 @@ void hamcSpecHRS::AddBreakPoint(Int_t where) {
         break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.462, 0.462, 0.125, -0.0161)));
         break;
       }
-      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, 0.0186)));  // standard HRS
+
+      //      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, 0.149)));  // standard HRS
+      //      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, 0.0186)));  // standard HRS
+      //      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, -0.0186)));  // standard HRS
+      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.34, 0.34, 0.12, -0.05)));  // test, for PVDIS
+
       break;
 
     case IQ1EXIT:
@@ -317,11 +332,15 @@ void hamcSpecHRS::AddBreakPoint(Int_t where) {
       break;
 
     case IQ3IN:
+      //      break_point.push_back(new hamcSpecBrk(where, new hamcCircle(0.3)));
       break_point.push_back(new hamcSpecBrk(where, new hamcCircle(0.3)));
+
       break;
 
     case IQ3EXIT:
-      break_point.push_back(new hamcSpecBrk(where, new hamcCircle(0.3)));
+      //      break_point.push_back(new hamcSpecBrk(where, new hamcCircle(0.3)));
+      break_point.push_back(new hamcSpecBrk(where, new hamcCircle(0.29)));  //for PVDIS
+
       break;
 
     case IFOCAL:
