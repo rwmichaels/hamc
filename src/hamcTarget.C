@@ -28,6 +28,14 @@ hamcTarget::hamcTarget(string tgt_name) : name(tgt_name),did_init(kFALSE)
   mass=0.938;   // a default
   zscatt=0;
   material_index=0;
+
+  // Use zoffset to move the target along the central beam line to the dump
+  zoffset = 0.00; 
+  // below are happex III offset values, rupesh 13Dec10
+  // LHRS, need to move the target downstream along the central beam axis
+  //  zoffset = 0.004183; // in meters LHRS,  = 1.02/sin(0.2463) mm 
+  // RHRS, need to move the target upstream along the central beam axis
+  //zoffset = -0.013058; // in meters RHRS, = 3.09/sin(0.2389) mm
 }
 
 hamcTarget::~hamcTarget() {
@@ -69,7 +77,14 @@ Int_t hamcTarget::Setup() {
     }
 
     Float_t zpos;
-    zpos = -1 * overall_length/2;  // z=0 is center of overall target
+
+    // -ve is away from the spec.
+    // zoffset added to move target rel to the HRS, 14Oct10 
+    zpos = -1 * overall_length/2 + zoffset;  // z=0 is center of overall target
+
+    cout << "The target is offset from the hall center by \t" << zoffset << endl;
+//     cout << "overall_length\t" << overall_length << endl;
+//     cout << "zpos\t" << zpos << endl;
 
  // A "weighted radiation_length" is nonsense (this is not a mix),
  // so we do the following to get an approximate total radlength.
@@ -82,14 +97,15 @@ Int_t hamcTarget::Setup() {
     cout << "Weighted radiation length  "<<radiation_length<<endl;
 
     for (Int_t i=0; i<(Int_t)components.size(); i++) {
-
-       zpos += (components[i]->GetLen())/2;  // 1st half
-
-       components[i]->PutZloc(zpos);
-
-       zpos += (components[i]->GetLen())/2;  // 2nd half
-
-
+      //      cout << "zpos\t" << zpos << endl;
+      zpos += (components[i]->GetLen())/2;  // 1st half
+      //      cout << "zpos\t" << zpos << endl; 
+      components[i]->PutZloc(zpos);
+      //      cout << "zpos\t" << zpos << endl;
+      //      cout << "PutZloc(??)\t" << zpos << endl;
+      
+      zpos += (components[i]->GetLen())/2;  // 2nd half
+      //      cout << "zpos\t" << zpos << endl;
     }
 
     did_init = kTRUE;
@@ -106,10 +122,12 @@ Int_t hamcTarget::Setup() {
 
 Int_t hamcTarget::Zscatt() {
 
-   zscatt = overall_length * (-0.5 + gRandom->Rndm());
+  // zoffset added to move target rel to the HRS, 14Oct10 
+  zscatt = overall_length * (-0.5 + gRandom->Rndm()) + zoffset;
+  //  cout << "zoffset\t" << zoffset << endl;
+  //  cout << "zscatt\t" << zscatt << endl;
 
-   return FindMtlIndex(zscatt);
-
+  return FindMtlIndex(zscatt);
 }			      
 
 Float_t hamcTarget::GetRadIn() {
@@ -131,6 +149,10 @@ Float_t hamcTarget::GetRadIn() {
   zdist = zscatt - zloff;
   rlen += slab->GetFracRadLen() * zdist / slab->GetLen();
   if (rlen < 0) cout << "hamcRadIn::ERROR: negative rlen ?"<<endl;
+
+//   cout << "zlocation\t" << slab->GetZloc() << endl;
+//   cout << "zscatt\t" << zscatt << endl;
+
   return rlen;
 
 }   
@@ -211,11 +233,12 @@ Int_t hamcTarget::FindMtlIndex(Float_t zloc) {
          mass = slab->GetMass();
          return OK;
        }
+
     }
 
 
 // This would be a pretty serious error.  Should fix it if it happens
-    cout << "hamcTarget::FindMtlIndex:WARNING: No component found at this Z"<<endl;
+    cout << "hamcTarget::FindMtlIndex:WARNING: No component found at this Z " << zloc <<endl;
  
     return ERROR;
 
