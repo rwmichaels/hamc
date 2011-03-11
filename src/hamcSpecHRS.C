@@ -1,7 +1,6 @@
 //  hamcSpecHRS   -- HRS Spectrometer
 //  R. Michaels  June 2008
 
-
 #include "hamcSpecHRS.h"
 #include "hamcInout.h"
 #include "hamcExpt.h"
@@ -28,9 +27,13 @@ hamcSpecHRS::hamcSpecHRS(Int_t which, Float_t pmom, Float_t angle) : P0(pmom), c
   name = "HRS";
   desc = "Hall A High Resolution Spectrometer";
   P0_sigma = P0*1e-4;       // default resolution
-  //  collim_distance = 1.24;   // <- meters
-  //  collim_distance = 1.101;   // meters, collimator in
-  collim_distance = 1.181;   // meters, collimator out
+  collim_distance = 1.1825;   // <- meters, used to be 1.24
+
+  // set collim_distance (numbers from Kiad's pointing diagrams), 13Dec10, rupesh
+  // collim_distance below are for hapIII
+  if (which_spectrom == LEFTHRS) collim_distance = 1.1825;   // <- meters LHRS
+  else if(which_spectrom == RIGHTHRS) collim_distance = 1.1759;   // <- meters RHRS
+
   sept_choice   = noseptum; 
   trans_choice  = tmatrix;  
   collim_choice = nocollim;
@@ -38,6 +41,11 @@ hamcSpecHRS::hamcSpecHRS(Int_t which, Float_t pmom, Float_t angle) : P0(pmom), c
   transport = 0;
   tguido = 0;
 }
+
+// everything below is from Diancheng.
+// acceptance cuts have been fine tuned based on 
+// VDC x,y,theta,phi,dp  
+// 13Dec10, rupesh
 
 hamcSpecHRS::~hamcSpecHRS() {
   if (transport) delete transport;
@@ -51,11 +59,6 @@ void hamcSpecHRS::UseCollimator(void) {
 
 void hamcSpecHRS::UsePaulColl(void) {
   collim_choice = paul_coll;
-}
-
-void hamcSpecHRS::UseAngleColl(void) {
-  // Empirical angle cut.
-  collim_choice = angle_coll;
 }
 
 void hamcSpecHRS::UseHRSOnly() {
@@ -115,10 +118,6 @@ Int_t hamcSpecHRS::Init(hamcExpt *expt) {
      cout << "hamcSpecHRS: Using Paul's composite collimator"<<endl;
      UsePaulColl();
    }   
-   if (parser.IsFound("useempiricalangle")) {
-     cout << "hamcSpecHRS: Using empirical angle collimation"<<endl;
-     UseAngleColl();
-   }   
    if (parser.IsFound("usematrix")) {
      cout << "hamcSpecHRS: Using matrix transport"<<endl;
      UseMatrixTrans();
@@ -176,12 +175,8 @@ Int_t hamcSpecHRS::BuildSpectrom() {
      if (IsCollimated()) {
         if (IsPaulCollim()) {
  	   AddBreakPoint(ICOLLIM2);
-	} else {
-	   if (IsAngleCollim()) {
-   	      AddBreakPoint(ICOLLIM3);
-	   } else {
-              AddBreakPoint(ICOLLIM);
-	   }
+        } else {
+           AddBreakPoint(ICOLLIM);
         }
      }
      AddBreakPoint(IFOCAL); 
@@ -207,17 +202,13 @@ Int_t hamcSpecHRS::BuildSpectrom() {
        AddBreakPoint(ISEPTOUT);  // setpum out
     }
         
-     if (IsCollimated()) {
+    if (IsCollimated()) {
         if (IsPaulCollim()) {
- 	   AddBreakPoint(ICOLLIM2);
-	} else {
-	   if (IsAngleCollim()) {
-   	      AddBreakPoint(ICOLLIM3);
-	   } else {
+    	      AddBreakPoint(ICOLLIM2);
+        } else {
               AddBreakPoint(ICOLLIM);
-	   }
         }
-     }
+    }
 
     AddBreakPoint(IQ1EXIT);
     AddBreakPoint(IDIPIN);
@@ -225,8 +216,6 @@ Int_t hamcSpecHRS::BuildSpectrom() {
     AddBreakPoint(IQ3IN);
     AddBreakPoint(IQ3EXIT);
     AddBreakPoint(IFOCAL);
-    AddBreakPoint(IPLANE1);
-    AddBreakPoint(IPLANE2);
      
     return OK;
   }
@@ -262,7 +251,30 @@ void hamcSpecHRS::AddBreakPoint(Int_t where) {
       } else { // HRS alone  collimator: (horiz)62.9 mm x  (vert)121.8 mm 
 	//	break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.0609,0.0609,-0.03145,0.03145)));  // collimator entrance
 	//	break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.06485,0.06485,-0.0334,0.0334)));  // collimator exit
-	break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.06485,0.06485,-0.0285,0.0334)));  // collimator exit, for PVDIS
+	
+	// blank out Diancheng's collim below
+	//	break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.06485,0.06485,-0.0285,0.0334)));  // collimator exit
+
+	// tmpoffsets are offsets to collimator, used to move hapIII collimator
+	// correct signs now
+	// 13Oct10, rupesh
+	Float_t tmpoffsetx = 0.0, tmpoffsety=0.0 ;
+
+	// unblank below for hap III
+// 	// 0.67 mm towards beamline for LHRS
+// 	if (which_spectrom == LEFTHRS) tmpoffsetx = 0.00067;  //0.67mm
+// 	// 1.04 mm towards beamline for RHRS
+// 	else if (which_spectrom == RIGHTHRS) tmpoffsetx = -0.00104; //1.04mm
+	
+// 	cout << "The collimator offset in x is "<< tmpoffsetx << endl;
+
+        // tmpsizeoffset is used to change collim size for HRS acceptance tests for hapIII
+	Float_t tmpsizeoffset = 0.00;  // +0.005 changes collim size by - 5mm	
+
+        break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.0609+tmpoffsety+tmpsizeoffset,
+								 0.0609-tmpoffsety-tmpsizeoffset,
+								 -0.03145-tmpoffsetx+tmpsizeoffset
+								 ,0.03145-tmpoffsetx-tmpsizeoffset)));  
 
       }
       idx = break_point.size()-1;
@@ -274,19 +286,11 @@ void hamcSpecHRS::AddBreakPoint(Int_t where) {
       if (IsWarmSeptum()) { 
        break_point.push_back(new hamcSpecBrk(where, new hamcPaulCollim(
          0.032, 0.041,  0.20, 0.229,  // A_T hole (low, right, and R,C of arc)
-	 0.205, 0.145,  0.20, 0.229,  // outer, inner circles
+	 0.205, 0.145,  0.20, 0.229,     // outer, inner circles
          0.117, 0.04,       // top, right
          0.1474, -1.88)));  // Champhor line.
         idx = break_point.size()-1; 
         break_point[idx]->aperture->DefineRadLen(0,collim2_radlen1);
-      }
-      break;
-
-// Collim3 is the empirical angle collimation which is a tighter cut than COLLIM2.
-    case ICOLLIM3:
-      if (IsWarmSeptum()) { 
-	break_point.push_back(new hamcSpecBrk(where, new  hamcAngleCollim()));
-        idx = break_point.size()-1; 
       }
       break;
 
@@ -306,12 +310,10 @@ void hamcSpecHRS::AddBreakPoint(Int_t where) {
         break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-5.22, -4.98, -0.1924, -0.1924)));
         break;
       }
-
       //      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, 0.149)));  // standard HRS (slope wrong)
       //      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, 0.0186)));  // standard HRS
       //      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, 0.0)));  // test
       break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, -0.0186)));  // standard HRS
-
       break;
 
     case IDIPEXIT:
@@ -319,11 +321,11 @@ void hamcSpecHRS::AddBreakPoint(Int_t where) {
         break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.462, 0.462, 0.125, -0.0161)));
         break;
       }
-
       //      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, 0.149)));  // standard HRS
       //      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, 0.0186)));  // standard HRS
+      //      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, 0.0)));  // test
       //      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, -0.0186)));  // standard HRS
-      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.34, 0.34, 0.12, -0.05)));  // test, for PVDIS
+      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.34, 0.34, 0.12, -0.05)));  // test
 
       break;
 
@@ -339,7 +341,7 @@ void hamcSpecHRS::AddBreakPoint(Int_t where) {
 
     case IQ3EXIT:
       //      break_point.push_back(new hamcSpecBrk(where, new hamcCircle(0.3)));
-      break_point.push_back(new hamcSpecBrk(where, new hamcCircle(0.29)));  //for PVDIS
+      break_point.push_back(new hamcSpecBrk(where, new hamcCircle(0.29)));
 
       break;
 
@@ -347,19 +349,9 @@ void hamcSpecHRS::AddBreakPoint(Int_t where) {
       break_point.push_back(new hamcSpecBrk(where));
       break;
 
-    case IPLANE1:
-      break_point.push_back(new hamcSpecBrk(where));
-      break;
-
-    case IPLANE2:
-      break_point.push_back(new hamcSpecBrk(where));
-      break;
-
     default:
       cout << "hamcSpecHRS::WARNING: undefined location "<<where<<endl;
-
   }
-
 }
 
 hamcAperture* hamcSpecHRS::Aperture(Int_t idx) {
@@ -367,12 +359,9 @@ hamcAperture* hamcSpecHRS::Aperture(Int_t idx) {
   return break_point[idx]->aperture;
 }
 
-
 Int_t hamcSpecHRS::GetNumBrk() {
   return break_point.size();
 }
-
-
 
 Int_t hamcSpecHRS::ChkIdx(Int_t idx) {
   if (idx < 0 || idx > (Int_t)break_point.size()-1) {
@@ -389,11 +378,9 @@ void hamcSpecHRS::Print() {
   cout << "P0 = "<<GetP0() << "    P0 sigma "<<GetP0Sigma()<<endl;
   cout << "Angle = "<<GetScattAngle()<<endl;
   cout << "Septum choice "<<sept_choice<<endl;
-  cout << "Collimator choice "<<collim_choice<<endl;
   cout << "Collim distance = "<<GetCollimDist()<<endl;
   cout << "Number of break points = "<<break_point.size();
   for (Int_t i=0; i<(Int_t)break_point.size(); i++) {
     break_point[i]->Print();
   }
 }
-
