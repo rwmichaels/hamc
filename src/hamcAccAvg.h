@@ -40,8 +40,10 @@ class hamcAccAvg {
 
      void Print();
 
-     static const Int_t numcell = 80;  // 80 is ~ok for 500K evts
-     Int_t ncellcut;                   // 500 needs 20M events, I think.  (check!)
+  // Num events (million) needed is approx = 3.3e-4 * (numcell)^2
+
+     static const Int_t numcell = 100;  // 100 is ~ok for 10M evts
+     Int_t ncellcut;                    // 500 needs 100M events, I think. 
 
   private:
 
