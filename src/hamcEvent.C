@@ -103,15 +103,24 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
      if (!track) continue;
 
      track->Generate(expt);
-
      track->MultScatt(expt, ITARGET_FULL);
-
      track->GenerateOut(expt);
 
      expt->physics->Generate(expt); 
 
 // Weight by cross section (optionally used for some histograms)
 // The 100 is just for convenience.
+
+     Float_t angcut = expt->GetAngCut();
+
+     if (angcut > 0) {  // To simulate mistuned Septum need 
+       Float_t theta_loc = (180./PI)*track->GetUpdatedScatt();
+        if (theta_loc < angcut) {
+          inaccept = 0;
+          continue;
+        }
+        if ((evnum%10000)==0) cout << "Warning !  Using (w/MS) angle cut "<<angcut<<endl;
+     }
 
      Float_t weight = 100.*expt->physics->GetCrossSection(); 
  
