@@ -580,7 +580,7 @@ Int_t hamcTrackOut::LabToTrans(hamcExpt *expt) {
 // (And the "angles" are actually tan(theta), tan(phi),
 //    so those are approximately radians).
 
-  Float_t xsign = 1.0;
+  xsign = 1.0;
   if (which_hrs == LEFTHRS) xsign = -1.0;  // sign convention, see above
 
   if (beam) {
@@ -716,6 +716,28 @@ void hamcTrackOut::ComputeQsqToTrack(const hamcTrack *trk) {
 
 }
 
+
+Float_t hamcTrackOut::GetUpdatedScatt() {
+
+// Get, on demand, the updated scattering angle constructed from tg_th and tg_ph
+// This will include whatever multiple scattering and resolution effects have occured.
+
+  Float_t stc, ctc, tantheta_t, tanphi_t, thloc;
+
+  stc = TMath::Sin(theta_central);
+  ctc = TMath::Cos(theta_central);
+
+  tantheta_t = tvect->GetTheta();
+  tanphi_t = tvect->GetPhi();
+
+// Reconstructed scattering angle
+
+  thloc = TMath::ACos(( ctc + xsign*fabs(stc)*tanphi_t)/(TMath::Sqrt(1 + tanphi_t * tanphi_t + tantheta_t * tantheta_t)));
+
+  return thloc;
+
+}
+   
 
 
    

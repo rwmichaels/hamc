@@ -34,6 +34,7 @@ class hamcTrackOut : public hamcTrack {
      Float_t Getphimax() const {return phimax;};
      Int_t UpdateAtDet();
      Int_t UpdateGuidoFocal(hamcSpecHRS *spec);  // using Guido's focal plane variables
+     Float_t GetUpdatedScatt();
 
   protected:
 
@@ -47,6 +48,7 @@ class hamcTrackOut : public hamcTrack {
 
      Float_t theta_central;
      Float_t thetamin, thetamax, phimin, phimax;
+     Float_t xsign;
      Float_t tgt_mass;
      Float_t theta_iteration;
      Float_t dpp,qsq,qsq_obs,qsq_atrk,qsqfr;
