@@ -97,7 +97,7 @@ class hamcTarget {
      Bool_t did_init;
      Float_t overall_length, effective_length, radiation_length;
      Float_t width, weighted_anum, weighted_znum;
-     Float_t weighted_density;
+     Float_t weighted_density, zoffset;
      std::vector<hamcTgtSlab *> components;
      Float_t zscatt, mass;
      Float_t ascatt;   
