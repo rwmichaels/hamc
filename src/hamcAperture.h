@@ -291,10 +291,13 @@ public:
     hpt.push_back(0.005);   vpt.push_back(-0.03);
 #endif
 
-    hpt.push_back(-0.0096);  vpt.push_back(0.);    
-    hpt.push_back(-0.010);   vpt.push_back(0.007); 
-    hpt.push_back(-0.0113);  vpt.push_back(0.0165);
-    hpt.push_back(-0.0130); vpt.push_back(0.023);  
+    // This is the "golden" version for thin C12
+    // Modified (Sept 17) to allow smaller angles
+
+    hpt.push_back(-0.013);  vpt.push_back(0.);    
+    hpt.push_back(-0.013);   vpt.push_back(0.007); 
+    hpt.push_back(-0.013);  vpt.push_back(0.0165);
+    hpt.push_back(-0.013); vpt.push_back(0.023);  
     hpt.push_back(-0.013);  vpt.push_back(0.029);  
     hpt.push_back(-0.0114); vpt.push_back(0.035);  
     hpt.push_back(-0.0081); vpt.push_back(0.0405); 
@@ -319,9 +322,9 @@ public:
     hpt.push_back(-0.004);  vpt.push_back(-0.049); 
     hpt.push_back(-0.008);  vpt.push_back(-0.040); 
     hpt.push_back(-0.0113);  vpt.push_back(-0.037);
-    hpt.push_back(-0.0134);  vpt.push_back(-0.032);
-    hpt.push_back(-0.0122);  vpt.push_back(-0.023);
-    hpt.push_back(-0.010);   vpt.push_back(-0.013);
+    hpt.push_back(-0.013);  vpt.push_back(-0.032);
+    hpt.push_back(-0.013);  vpt.push_back(-0.023);
+    hpt.push_back(-0.013);   vpt.push_back(-0.013);
 
    
     npts = vpt.size();
