@@ -8,6 +8,8 @@
 #include "hamcPhysics.h"
 #include "TH1F.h"
 #include "TH2F.h"
+#include "TMath.h"
+#include <iostream>
 #include <vector>
 #include <string>
 #include <map>
@@ -27,6 +29,72 @@
 using namespace std;
 
 class hamcExpt;
+
+class hamcQuad {
+// Quadrupole beamline element.
+//         (x,x')    cm/rad  (not mrad)
+//         (x',x)    rad/cm
+ public:
+  hamcQuad(Float_t bbp, Float_t rrad, Float_t llen) : 
+// bbp = field (gauss) at pole,  rrad = radius of quad (cm), llen = length (cm)
+    bp(bbp), rad(rrad), len(llen), focusx(1), pcut(0.01), huge(999999), debug(0) 
+    {  grad = bp / rad;
+      kappa0 = TMath::Sqrt(4.8e-10 * grad / 1.6e-3); }
+  virtual ~hamcQuad() {};
+  void SetFocusX() { focusx = 1; };
+  void SetFocusY() { focusx = 0; };
+  Float_t GetMatrix(Float_t pmom, Int_t index) {
+    if (pmom < pcut) return huge;
+    kappa = kappa0 / TMath::Sqrt(pmom);
+    kL = kappa * len;
+    exp1 = exp(kL);
+    exp2 = exp(-1*kL);
+    coshx = (exp1 + exp2)/2;
+    sinhx = (exp1 - exp2)/2;
+     if (debug) 
+       std::cout << "focus "<<focusx<<"  pmom "<<pmom<<"  kappa "<<kappa<<"  kL "<<kL<<std::endl;
+    if (focusx) {
+      if (index == 0) return TMath::Cos(kL);
+      if (index == 1) return (1/kappa)*TMath::Sin(kL);
+      if (index == 2) return -1*kappa*TMath::Sin(kL);
+      if (index == 3) return TMath::Cos(kL);
+      if (index == 4) return coshx;
+      if (index == 5) return (1/kappa)*sinhx;
+      if (index == 6) return kappa*sinhx;
+      if (index == 7) return coshx;
+    } else {
+      if (index == 0) return coshx;
+      if (index == 1) return (1/kappa)*sinhx;
+      if (index == 2) return kappa*sinhx;
+      if (index == 3) return coshx;
+      if (index == 4) return TMath::Cos(kL);
+      if (index == 5) return (1/kappa)*TMath::Sin(kL);
+      if (index == 6) return -1*kappa*TMath::Sin(kL);
+      if (index == 7) return TMath::Cos(kL);
+    }
+    return 0;
+  }
+  void Print() {
+    std::cout << "Quad values "<<std::endl;
+    std::cout << "grad "<<grad<<"    kappa "<<kappa<<std::endl;
+    if (focusx) {
+      std::cout<<"focus in X"<<std::endl;
+    } else {
+      std::cout<<"focus in Y"<<std::endl;
+    }
+  }
+ private:
+  Float_t bp, rad, len;
+  Int_t focusx;
+  Float_t pcut, huge;
+  Int_t debug;
+  Float_t grad, kappa0;
+  Float_t exp1, exp2;
+  Float_t kappa, kL, coshx, sinhx;
+#ifndef NODICT
+ClassDef (hamcQuad, 0)   // Quadrupole beamline element
+#endif
+};
 
 class hamcPhyPREX : public hamcPhysics {
 
@@ -71,6 +139,8 @@ class hamcPhyPREX : public hamcPhysics {
      Float_t InterpAsym(Float_t ene, Float_t angle_rad);
      void PrintAsymTable();
 
+     hamcQuad *quad1, *quad2;
+
      Float_t qsq;
      Float_t asy0, asy1;  // unstretched and streteched R_N asymmetries 
      
@@ -104,16 +174,27 @@ class hamcPhyPREX : public hamcPhysics {
      vector<Float_t> angle_row;  //to save the angle values of Horowitch table
      vector<Float_t> energy_row; //to save the energy values 
 
+     TH1F *histphi; 
+     TH1F *histene;
+     TH1F *histprob;
+     TH2F *histrast;
+     TH1F *histinacc;
+     TH1F *histz1a, *histz1b, *histz1c, *histz1d, *histz1e, *histz1f;
+     TH1F *histz2a, *histz2b, *histz2c, *histz2d, *histz2e, *histz2f;
+     TH1F *histz3a, *histz3b, *histz3c, *histz3d, *histz3e, *histz3f;
+     TH1F *histz4a, *histz4b, *histz4c, *histz4d, *histz4e, *histz4f;
+     TH1F *histz5a, *histz5b;
      TH1F *hpph1,*hpph2,*hpph3,*hpph4,*hpph6,*hd1;
      TH1F *hfom1,*hfom2,*hfom3,*hfom4,*hfom5, *hfom6;
      TH1F *hfom7, *hfom8, *hfom9, *hfom10, *hfom11, *hfom12, *hfom13;
      TH2F *hpph5;
-     static const Int_t histo_test=1; // to test(1) or not(0) this code
+     static const Int_t histo_test=0; // to test(1) or not(0) this code
      static const Int_t accept_test=0; // to test(1) or not(0) this acceptance
      static const Int_t quick_feasibility=0; 
      static const Int_t quick_check=0; 
      static const Int_t quick_fom=0; 
      static const Int_t power_integ=0; 
+     static const Int_t neutron_power=0; 
 
 #ifndef NODICT
 ClassDef (hamcPhyPREX, 0)   // PREX physics

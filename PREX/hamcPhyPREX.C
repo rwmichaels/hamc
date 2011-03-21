@@ -3,7 +3,7 @@
 
 
 #include "hamcPhyPREX.h"
-#include "hamcExpt.h"c
+#include "hamcExpt.h"
 #include "hamcTarget.h"
 #include "hamcEvent.h"
 #include "hamcBeam.h"
@@ -641,7 +641,7 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
     Float_t anglo_deg = 10;  // degrees
     Float_t anghi_deg = 30;
 
-    Int_t use_brehms = 1;
+    Int_t use_brehms = 1;  // DONT TOUCH
 
     cout << "Check Power in solid angle from "<<endl;
     cout <<  anglo_deg << "   to  "<<anghi_deg<<"   degrees "<<endl;
@@ -660,7 +660,7 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
 
       theta_degr = anglo_deg + steptheta * ((Float_t)iang);
 
-      theta_rad = 3.1415926*theta_degr/180.0;
+      theta_rad = (pi/180.)*theta_degr;
   
       if (use_brehms) {
            prob = 0.0000000001+gRandom->Rndm();
@@ -703,13 +703,408 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
   }  // power_integ
    
 
+  if (neutron_power) {  
+
+    // To integrate the power differentially with angle
+
+    Int_t ldebug = 0;
+
+    Int_t use_multsc = 1;
+    Int_t use_brehms = 1;
+    
+    Float_t theta_degr, dtheta_rad, steptheta_degr;
+    Float_t ene0, ene, xcrsec, xnorm;
+    Float_t frecoil, eprime;
+    Float_t rate, domega, xang, xsim, xcnt, xcnt2, xpts;
+    Float_t ratesim, ratesimdump, ratewhat;
+    Float_t ratep0, ratep1, ratep2, ratep3, ratep4;
+    Float_t radlen, prob, ptot, xfact, xinv, eloss; 
+    Float_t xt, xpt, yt, ypt, xt0, xpt0, yt0, ypt0;
+    Float_t phi, rrad;
+    Float_t zdrift1, zdrift2, zdrift3;
+    Float_t radcut1, radcut2, radcut3, radcut4, radcut5;
+    Float_t xptcut1, yptcut1, xptcut2, yptcut2; 
+    Float_t xptcut3, yptcut3, xptcut4, yptcut4; 
+    Int_t inacc;
+
+    histphi = new TH1F("histphi","Phi chk",100,-0.2,6.5);
+    histrast = new TH2F("histrast","Rast chk",100,-1,1,100,-1,1);
+    histene  = new TH1F("histene","Energy ",100,0.05,1.2);
+    histprob = new TH1F("histprob","prob vs angle",100,0.0,1.0);
+    histinacc = new TH1F("histinacc","In acceptance",10,-0.5,2.0);
+
+    histz1a = new TH1F("histz1a","Radius (cm) at entrance to SEPTUM",100,-0.2,100.0);
+    histz1b = new TH1F("histz1b","X angle at Z1",100,-0.17,0.17);
+    histz1c = new TH1F("histz1c","Y angle at Z1",100,-0.17,0.17);
+    histz1d = new TH1F("histz1d","(inacc) Radius (cm) at Z1",100,-0.2,100.0);
+    histz1e = new TH1F("histz1e","(inacc) X angle at Z1",100,-0.17,0.17);
+    histz1f = new TH1F("histz1f","(inacc) Y angle at Z1",100,-0.17,0.17);
+
+    histz2a = new TH1F("histz2a","Radius (cm) at ",100,-0.2,100.0);
+    histz2b = new TH1F("histz2b","X angle at Z2",100,-0.17,0.17);
+    histz2c = new TH1F("histz2c","Y angle at Z2",100,-0.17,0.17);
+    histz2d = new TH1F("histz2d","(inacc) Radius (cm) at Z2",100,-0.2,100.0);
+    histz2e = new TH1F("histz2e","(inacc) X angle at Z2",100,-0.17,0.17);
+    histz2f = new TH1F("histz2f","(inacc) Y angle at Z2",100,-0.17,0.17);
+
+    histz3a = new TH1F("histz3a","Radius (cm) after SEPTUM and DRIFT",100,-0.2,100.0);
+    histz3b = new TH1F("histz3b","(inacc) Radius (cm) at Z3",100,-0.2,100.0);
+
+    histz4a = new TH1F("histz4a","Radius (cm) after COMPENSATING QUAD",100,-0.2,100.0);
+    histz4b = new TH1F("histz4b","(inacc) Radius (cm) at Z4",100,-0.2,100.0);
+
+    histz5a = new TH1F("histz5a","Radius (cm) at BEAM DUMP ",100,-0.2,150.0);
+    histz5b = new TH1F("histz5b","Radius (cm) ad dump (cut) ",100,-0.2,150.0);
+
+    Int_t Nang = 100;   // number of angle bins
+    Int_t Npts = 200;   // number of points within a bin to integ
+
+    Int_t Nsim = 100;  // number of points per angle bin to simulate (Brehms, and later phi and raster)
+
+    quad1 = new hamcQuad(800, 1, 87);
+    quad1->SetFocusY();
+    quad2 = new hamcQuad(200, 1, 87);
+    quad2->SetFocusX();
+
+    cout << "Quad 1 setup "<<endl;
+    quad1->Print();
+    cout << "\n\nQuad 2 setup "<<endl;
+    quad2->Print();
+
+    // all units cm
+    // to septum     between quads    to dump
+    zdrift1 = 150;   zdrift2 = 60;   zdrift3 = 2100;
+
+// Transport model is D Q D Q D to dump.  
+// radcut after each each element (units: cm)                       
+    radcut1 = 12;  radcut2 = 20;   radcut3 = 30;  radcut4 = 40;  radcut5 = 80;
+
+    xptcut1 = 0.08; 
+    xptcut2 = 0.08; 
+    xptcut3 = 0.08; 
+    xptcut4 = 0.08; 
+    yptcut1 = 0.08; 
+    yptcut2 = 0.08; 
+    yptcut3 = 0.08; 
+    yptcut4 = 0.08; 
+
+    xang = ((Float_t)Nang);
+    xsim = ((Float_t)Nsim);
+    xpts = ((Float_t)Npts);
+
+    Float_t tdens = 11.35;          // g/cm^3
+    Float_t tlen = 0.05;            // cm
+    Float_t current = 100;          // uA
+    current = current * 6.25e12;    // 100 uA = 6.25e14 e- / sec
+    Float_t anum = 208;             // atomic num.
+    Float_t pi = 3.1415926;
+
+    Float_t anglo_deg, anghi_deg;   // degrees
+    Float_t anglolo = 0.002;        // lowest we'll go
+    Float_t angbite;                // angle bite
+    Float_t anghihi = 10.0;         // highest we'd go
+    Float_t angp0_lo;               // lowest where we believe rate
+    Float_t angp1_lo, angp1_hi;     // limits for PREX I (2010)
+    Float_t angp2_lo, angp2_hi;     // poss. limits for PREX II 
+
+
+    angp0_lo = anglolo;  // essentially no cut
+ 
+
+    angp1_lo = 1.1;
+    angp1_hi = anghihi;
+
+    angp2_lo = 3.0;  // ???
+    angp2_hi = anghihi;
+
+    angbite = (anghihi - anglolo) / xang;
+
+    ene0 = 1.063;  // GeV
+
+// Neutron power
+
+    cout << "Power integral for elastic scattering"<<endl;
+    cout << "At energy "<<ene0<<endl;
+    cout << "Tgt  A = "<<anum<<"    tdens = "<<tdens<<"   tlen = "<<tlen<<endl;
+    cout << "Current = "<<current<<"  e-/sec =   "<<current/6.25e12<<"   uA"<<endl;
+
+    ratep0 = 0;
+    ratep1 = 0;
+    ratep2 = 0;
+    ratep3 = 0;
+    ratep4 = 0;
+    ptot = 0;
+
+    for (Int_t iang = 0; iang < Nang; iang++) {
+
+      anglo_deg = anglolo + angbite * ((Float_t)iang);
+
+      anghi_deg = anglo_deg + angbite;
+
+      if (anghi_deg > anghihi) goto done101;  // done
+
+      if ((iang%10)==0) cout <<  anglo_deg << "   to  "<<anghi_deg<<"   degrees "<<endl;
+
+      steptheta_degr = (anghi_deg-anglo_deg)/xpts;
+      dtheta_rad = (pi/180.)*steptheta_degr;
+
+
+// Integrate of over fine bins in angle within the bite "angbite".
+
+      for (Int_t ibin = 0; ibin<Npts; ibin++) {
+
+        theta_degr = anglo_deg + steptheta_degr * ((Float_t)ibin);
+
+        theta_rad = (pi/180.)*theta_degr;
+
+        ratesim = 0;
+        ratesimdump = 0;
+        ratewhat = 0;
+
+// Within each scattering angle increment, 
+// simulate by wiggling:  azimuth, raster, and Brehmstrahlung Eloss.
+
+        for (Int_t ievt = 0; ievt<Nsim; ievt++) {
+
+           ene = ene0;
+
+  	   inacc = 1;
+
+// Need a phi (azimuth)
+
+           phi = 2*pi*gRandom->Rndm();
+
+           histphi->Fill(phi);
+
+           xpt = TMath::Tan(theta_rad) * TMath::Cos(phi);
+           ypt = TMath::Tan(theta_rad) * TMath::Sin(phi);
+
+// Need a raster (+/- 0.2 cm)
+
+          xt  = -0.2 + 0.4*gRandom->Rndm();
+          yt  = -0.2 + 0.4*gRandom->Rndm();
+
+          histrast->Fill(xt,yt);
+ 
+// Brehmstrahlung energy loss
+
+
+          if (use_brehms) {
+
+            prob = 0.0000000001+gRandom->Rndm();
+            if (prob>1.0) prob = 1;
+            radlen = 0.05; // 1/2 target
+            xinv = 1./radlen;
+            xfact = TMath::Exp(xinv*TMath::Log(prob));
+            eloss = ene0*xfact;
+        // truncate the Eloss
+            if (eloss > 0.99*ene0) eloss = 0.99*ene0;
+            ene = ene0 - eloss;
+            if (ldebug) cout << "Brehms "<<xfact<<"  "<<eloss<<"  "<<ene<<endl;
+
+	  }
+
+          histene->Fill(ene);
+
+          frecoil = 1 + (ene/195.)*(1-TMath::Cos(theta_rad));
+          eprime = ene/frecoil;
+          qsq = 2*ene*eprime*(1-TMath::Cos(theta_rad));
+          xcrsec = CalculateCrossSection(0, ene, theta_degr);
+          domega = 2 * pi * TMath::Sin(theta_rad) * dtheta_rad;
+          prob = xcrsec * 0.602 * tlen * tdens * domega / anum;  
+          ptot = ptot + prob;
+
+          histprob->Fill(theta_degr, prob);
+
+          rate = current * prob;
+ 
+// Weight the rate by energy (power ~ energy)
+
+          rate = rate * ene/1.063;
+
+          ratesim += rate;  
+
+          if (ldebug) {
+            cout << "energy "<<ene<<"  theta "<<theta_degr<<endl;
+            cout << "crsec  "<<theta_degr<<"  "<<xcrsec<<"   domega "<<domega<<"  "<<prob<<endl;
+            cout << "rate in bin "<<rate<<endl;
+            cout << "Initial trans " << xt << "  "<<yt<<"   "<<xpt<<"  "<<ypt<<endl;
+	  }
+
+// Multiple scattering in lead
+
+          if (use_multsc) {
+
+             Float_t radlen = 0.1;
+             Float_t theta_sigma = (0.0136/ene) * TMath::Sqrt(radlen);
+
+             Float_t dtheta1, dtheta2, prob;
+
+             prob = gRandom->Rndm();
+             if (prob < 0.02) {
+                 dtheta1 = 5 * theta_sigma * gRandom->Rndm();  // flat tail
+            } else {
+                 dtheta1 = theta_sigma * gRandom->Gaus();
+            }
+
+            xpt = xpt + dtheta1;
+      
+            prob = gRandom->Rndm();
+            if (prob < 0.02) {
+               dtheta2 = 5 * theta_sigma * gRandom->Rndm();  // flat tail
+            } else {
+               dtheta2 = theta_sigma * gRandom->Gaus();
+            }
+
+            ypt = ypt + dtheta2;
+
+	  }
+
+ // Transport in x and y. D Q D Q D to dump.  Check aperture in each place. 
+
+          xt  =  xt + xpt * zdrift1;
+          yt  =  yt + ypt * zdrift1;
+
+          rrad = TMath::Sqrt(xt*xt + yt*yt);
+
+          if (ldebug) {
+            cout << "z1 "<<zdrift1<<endl;
+            cout << "Trans at z1 " << xt << "  "<<yt<<"   "<<xpt<<"  "<<ypt<<endl;
+            cout << "radius at z1  "<<rrad << endl;
+	  }
+
+          if (rrad > radcut1 || xpt > xptcut1 || -1*xpt > xptcut1 ||
+	       ypt > yptcut1 || -1*ypt > yptcut1 ) {
+   	           inacc = 0;               
+   	  }
+
+          histz1a->Fill(rrad,prob);
+          histz1b->Fill(xpt);
+          histz1c->Fill(ypt);
+          if (inacc==0) {
+	    histz1d->Fill(rrad,prob);
+	    histz1e->Fill(xpt);
+	    histz1f->Fill(ypt);
+	  }
+
+          xt0 = xt;  xpt0 = xpt;
+          xt  =  quad1->GetMatrix(ene,0) * xt0 + quad1->GetMatrix(ene,1) * xpt0;
+          xpt =  quad1->GetMatrix(ene,2) * xt0 + quad1->GetMatrix(ene,3) * xpt0;
+
+          yt0 = yt;  ypt0 = ypt;
+          yt  =  quad1->GetMatrix(ene,4) * yt0 + quad1->GetMatrix(ene,5) * ypt0;
+          ypt =  quad1->GetMatrix(ene,6) * yt0 + quad1->GetMatrix(ene,7) * ypt0;
+
+          rrad = TMath::Sqrt(xt*xt + yt*yt);
+
+          if (ldebug) {
+            cout << "Quad 1  m.e. "<<quad1->GetMatrix(ene,0)<<"  "<<quad1->GetMatrix(ene,1);
+            cout << "   "<<quad1->GetMatrix(ene,2)<<"  "<<quad1->GetMatrix(ene,3)<<endl;
+            cout << "   "<<quad1->GetMatrix(ene,4)<<"  "<<quad1->GetMatrix(ene,5);
+            cout << "   "<<quad1->GetMatrix(ene,6)<<"  "<<quad1->GetMatrix(ene,7)<<endl;
+            cout << "Trans at z1 " << xt << "  "<<yt<<"   "<<xpt<<"  "<<ypt<<endl;
+            cout << "radius at z1  "<<rrad << endl;
+	  }
+
+ 
+          if (rrad > radcut2) {
+   	      inacc = 0;               
+   	  }
+
+          histz2a->Fill(rrad,prob);
+          histz2b->Fill(xpt);
+          histz2c->Fill(ypt);
+          if (inacc==0) {
+  	     histz2d->Fill(rrad,prob);
+             histz2e->Fill(xpt);
+             histz2f->Fill(ypt);
+	  }
+
+          xt  =  xt + xpt * zdrift2;
+          yt  =  yt + ypt * zdrift2;
+
+          rrad = TMath::Sqrt(xt*xt + yt*yt);
+
+          if (rrad > radcut3 ) inacc = 0;               
+   
+          histz3a->Fill(rrad,prob);
+          if (inacc==0) histz3b->Fill(rrad,prob);
+
+          xt0 = xt;  xpt0 = xpt;
+          xt  =  quad2->GetMatrix(ene,0) * xt0 + quad2->GetMatrix(ene,1) * xpt0;
+          xpt =  quad2->GetMatrix(ene,2) * xt0 + quad2->GetMatrix(ene,3) * xpt0;
+
+          yt0 = yt;  ypt0 = ypt;
+          yt  =  quad2->GetMatrix(ene,4) * yt0 + quad2->GetMatrix(ene,5) * ypt0;
+          ypt =  quad2->GetMatrix(ene,6) * yt0 + quad2->GetMatrix(ene,7) * ypt0;
+
+          rrad = TMath::Sqrt(xt*xt + yt*yt);
+ 
+          if (rrad > radcut4) inacc = 0;               
+
+          histz4a->Fill(rrad,prob);
+          if (rrad > radcut4) {
+	    histz4b->Fill(rrad,prob);
+          }
+
+          xt  =  xt + xpt * zdrift3;  // transport to beam dump
+          yt  =  yt + ypt * zdrift3;
+
+          rrad = TMath::Sqrt(xt*xt + yt*yt);
+          if (rrad > radcut5 ) inacc = 0;               
+
+          histz5a->Fill(rrad,prob);
+          if (inacc == 0 ) {
+             histz5b->Fill(rrad,prob);
+             ratesimdump = ratesimdump + rate;
+	  } else {
+ 	     ratewhat = ratewhat + rate;
+	  }
+
+          histinacc->Fill(inacc);
+
+	}
+
+        rate = ratesim/xsim;
+
+        ratep0 = ratep0 + rate;
+ 
+        if (theta_degr > angp1_lo && theta_degr < angp1_hi) ratep1 = ratep1 + rate;
+
+        if (theta_degr > angp2_lo && theta_degr < angp2_hi) ratep2 = ratep2 + rate;
+
+
+        ratep3 = ratep3 + ratesimdump/xsim; 
+
+        ratep4 = ratep4 + ratewhat/xsim; 
+
+      }  // loop over i (angle bins)
+
+      rate = ratesim/xsim;
+
+    }
+
+ done101:
+
+    cout << endl << "Total rate "<<ratep0<<endl;
+    cout << "Total prob "<<ptot<<endl;
+    cout << "Power = "<<ratep0*ene*1.6e-10<<"  Watts "<<endl;
+    cout << "Rate PREX I  =   "<<ratep1<<"  Power = "<<ratep1*ene*1.6e-10<<"  Watts "<<endl;
+    cout << "Rate PREX II  =   "<<ratep2<<"  Power = "<<ratep2*ene*1.6e-10<<"  Watts "<<endl;
+    cout << "Rate PREX II trans  =   "<<ratep3<<"  Power = "<<ratep3*ene*1.6e-10<<"  Watts "<<endl;
+    cout << "Leftover "<<ratep4<<endl;
+
+ 
+  }  // neutron_power
+   
+
   return 1;
 }
 
 
 Float_t hamcPhyPREX::InterpAsym(Float_t ene, Float_t theta_rad) {
 
-   Int_t ldebug = 1;
+   Int_t ldebug = 0;
 
    Float_t daa = 1;
 
@@ -1041,6 +1436,8 @@ Float_t hamcPhyPREX::CalculateCrossSection(Int_t nuc, Float_t energy, Float_t an
 
   // energy in GeV,  angle in degrees.
 
+  Int_t ldebug=0;
+
   Float_t pi = 3.1415926; 
 
   if (nuc != 0 && nuc != 1) {
@@ -1067,7 +1464,11 @@ Float_t hamcPhyPREX::CalculateCrossSection(Int_t nuc, Float_t energy, Float_t an
     znuc = 6;
   }
 
-  mott = pow(((znuc*0.197*cos(halfangle_rad))/137),2)/ (400*pow(energy,2)*sin4);
+  Float_t ascreen = 5e5;  // units: fm (1e-15 m)
+
+  Float_t xscreen = 38.0 / (ascreen * ascreen);
+
+  mott = pow(((znuc*0.197*cos(halfangle_rad))/137),2)/ (xscreen + 400*pow(energy,2)*sin4);
 
   // qsq comes from hamcKine 
 
@@ -1107,6 +1508,9 @@ Float_t hamcPhyPREX::CalculateCrossSection(Int_t nuc, Float_t energy, Float_t an
   }
 
   calcrsec = mott*form_factor; //result is in barn/seradians multiply by 1000 to compare with the value from Horowitchs table where it is milibars/stereadians 
+
+  if (ldebug) cout << "CalcCross:  "<<angle<<"  "<<energy<<"   "<<form_factor<<"   "<<
+               mott<<"   "<<calcrsec<<endl;
 
   return calcrsec;
 }

@@ -466,11 +466,20 @@ void hamcExptPREX::RunSummary(Int_t iteration) {
           drrtot = drr * blowup;
           cout << "Sensitivity =  "<<100*sensi<<" %"<<endl;
           cout << "dR/R = "<<drr<<endl;
+          cout << "polerr "<<polerr<<endl;
           cout << "blowup factor "<<blowup<<endl;
           cout << "total dR/R = "<<drrtot<<endl;
-// "Bottom line" printout (GeV, degrees, GHz, ppm, 4* %)
-	  printf("\nBL:  %4.3f  %4.1f  %5.4f  %5.4f  %4.3f  %4.3f  %4.3f  %4.3f\n",event->beam->GetE0(),GetSpectrom(0)->GetScattAngle(),1e-9*rate,rawasy,100*daa,100*sensi,100*drr,100*drrtot);
+
+          Float_t qsqbl = hqsq00->GetMean();
+          Float_t angcut = GetAngCut();
+
+// "Bottom line" printout (GeV, degrees, degrees, GeV^2  MHz, ppm, 4x %)
+          cout << "Bottom line printout : E, theta, theta_cut  Qsq Rate dA/A sensi dR/R(raw) dR/R(tot)"<<endl;
+          cout << "                       GeV, degrees, degrees, GeV^2  MHz, ppm, 4x %)"<<endl;
+
+	  printf("\nBL:  %4.3f   %4.3f   %4.3f   %6.5f   %5.1f   %5.4f   %4.3f   %4.3f   %4.3f   %4.3f\n",event->beam->GetE0(),GetSpectrom(0)->GetScattAngle(),angcut,qsqbl,1e-6*rate,rawasy,100*daa,100*sensi,100*drr,100*drrtot);
           cout << "++++++++++++++++++++++++++++++++++++++++++"<<endl;
+
 	}
       }
 
