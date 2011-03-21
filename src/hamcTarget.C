@@ -30,7 +30,9 @@ hamcTarget::hamcTarget(string tgt_name) : name(tgt_name),did_init(kFALSE)
   material_index=0;
 
   // Use zoffset to move the target along the central beam line to the dump
-  zoffset = 0.00; 
+
+  zoffset = 0.0; 
+
   // below are happex III offset values, rupesh 13Dec10
   // LHRS, need to move the target downstream along the central beam axis
   //  zoffset = 0.004183; // in meters LHRS,  = 1.02/sin(0.2463) mm 
@@ -97,15 +99,13 @@ Int_t hamcTarget::Setup() {
     cout << "Weighted radiation length  "<<radiation_length<<endl;
 
     for (Int_t i=0; i<(Int_t)components.size(); i++) {
-      //      cout << "zpos\t" << zpos << endl;
+
       zpos += (components[i]->GetLen())/2;  // 1st half
-      //      cout << "zpos\t" << zpos << endl; 
+
       components[i]->PutZloc(zpos);
-      //      cout << "zpos\t" << zpos << endl;
-      //      cout << "PutZloc(??)\t" << zpos << endl;
       
       zpos += (components[i]->GetLen())/2;  // 2nd half
-      //      cout << "zpos\t" << zpos << endl;
+
     }
 
     did_init = kTRUE;
