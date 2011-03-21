@@ -13,7 +13,6 @@
 #include "hamcInout.h"
 #include "THaString.h"
 #include "Rtypes.h"
-#include "TH1F.h"
 #include "TMath.h"
 #include <string>
 #include <vector>
@@ -36,6 +35,8 @@ hamcSingles::~hamcSingles() {
 
 
 Int_t hamcSingles::Init(string sfile) {
+
+  lcnt = 0;
 
   hamcExpt::InitInput(sfile);
   THaString strin;
@@ -63,9 +64,22 @@ Int_t hamcSingles::Init(string sfile) {
      sscanf(sdata[0].c_str(),"%f",&angle);
   }
 
-  cout << "hamcSingles:  P0 = "<<P0<<"    angle = "<<angle<<endl;
+  
+  cout << "hamcSingles:  which = "<<which<<"  P0 = "<<P0<<"    angle = "<<angle<<endl;
 
   SetSpectrom(which, P0, angle);
+
+  angcut = -1;
+  sdata = inout->GetStrVect("Angle_cut");
+  if (sdata.size()>=1) {
+     sscanf(sdata[0].c_str(),"%f",&angcut);
+  }
+
+  if (angcut > 0) {
+      cout << "Using angle cut "<<angcut<<endl;
+  } else {
+      cout << "With NO angle cuts "<<endl;
+  }
 
   hamcExpt::Init(sfile);
 
@@ -91,6 +105,11 @@ Int_t hamcSingles::Init(string sfile) {
     }
   }
 
+  bxy1 = new TH2F("bxy1","X-Y in accept",100,-1,1,100,-0.2,0.2);
+  bxy2 = new TH2F("bxy2","X-Y in det",100,-1,1,100,-0.2,0.2);
+  bqsq = new TH1F("bqsq","Qsq in det",200,0.2,1.2);
+
+
   return OK;
 
 }
@@ -111,26 +130,19 @@ Int_t hamcSingles::Run(Int_t maxevent) {
   }
 
   for (iteration = 0; iteration < numiter; iteration++) {
-    
-    for (Int_t imodel = 0; imodel<num_phyt; imodel++){
-      for (Int_t imtl =0; imtl<num_mtl; imtl++){
-	
-	Int_t idx = imodel*num_mtl+imtl;
-	acc[idx]->Init();
-      }      
-    }
 
     for (Int_t ievt = 0; ievt < maxevent; ievt++ ) {
-      
+
       if (ievt > 0 && ((ievt%10000)==1)) cout << "event "<<ievt<<endl;
+ 
       if (event) event->Process(this);
-      
+
     }
 
     RunSummary(iteration);
-    
+
   }
-  
+
   return OK;
   
 }
@@ -140,7 +152,7 @@ void hamcSingles::EventAnalysis() {
 
   Int_t ldebug = 0;
 
-  if (ldebug==2) {
+  if (ldebug) {
     cout << "Event analysis"<<endl;
     cout << "acceptance flag "<<event->inaccept<<endl;
   }
@@ -160,7 +172,6 @@ void hamcSingles::EventAnalysis() {
     cout << "hamcSingles::EventAna:ERROR:  bad mtl index"<<endl;
     return;
   }
- 
 
   Float_t anum = target->GetAscatt();    // atomic num.
   if (anum == 0) {
@@ -184,11 +195,22 @@ void hamcSingles::EventAnalysis() {
   for (Int_t imodel = 0; imodel < num_phyt; imodel++) {
 
     Float_t crsec = physics->GetCrossSection(imodel);  // barns/str
+    //   Float_t crsec = physics->CalculateCrossSection(0, 1.063, 57.296*physics->kine->theta);
+    //   if ((lcnt%100)==0) cout << "hamcSingles:: warning: using FF*Mott"<<endl;
+    //  lcnt++;
+
     Float_t asy = 1e6 * physics->GetAsymmetry(imodel); // ppm
+
     Float_t rel_rate = 
         current * crsec * 0.602 * tlen * tdens / anum;
-
     Int_t idx = imodel*num_mtl + mtl_idx;
+
+    ldebug = 0;
+    if (asy < -100 || asy > 100) {
+      cout << "\n\n Crazy asymmetry "<<endl;
+      ldebug = 1;
+    }
+
     if (idx >= 0 && idx < acc.size()) {
        acc[idx]->Increment(theta, phi, rel_rate, asy);
     }
@@ -196,7 +218,7 @@ void hamcSingles::EventAnalysis() {
     if (ldebug) {
       cout << "\n\nSingles event analysis "<<endl;
       cout << "physics model "<<imodel<<"  mtl_idx "<<mtl_idx<<endl;
-      cout << "energy "<<physics->kine->energy<<"   angle "<<physics->kine->theta;
+      cout << "energy "<<physics->kine->energy<<"   angle (deg) "<<57.296*physics->kine->theta;
       cout << "   qsq "<<physics->kine->qsq<<endl;
       cout << "tgt len "<<tlen<<"   density "<<tdens<<"  "<<anum<<endl;
       cout << "beam "<<current<<endl;
@@ -206,6 +228,19 @@ void hamcSingles::EventAnalysis() {
       cout << "Relative rate  "<<rel_rate<<endl;
     }
 
+  }
+
+  Float_t xfoc = event->trackout[0]->xtrans;
+  Float_t yfoc = event->trackout[0]->ytrans;
+  Float_t qsq  = physics->kine->qsq;
+  Float_t crsec = physics->GetCrossSection(0);  // barns/str
+
+  Float_t yline = -0.026 - 0.119*xfoc;
+
+  bxy1->Fill(xfoc,yfoc);
+  if (yfoc > yline) {
+    bxy2->Fill(xfoc,yfoc);
+    bqsq->Fill(qsq,10000.*crsec);
   }
 
 }
@@ -221,7 +256,7 @@ void hamcSingles::RunSummary(Int_t iteration) {
 // Warning, you need to run with enough statistics to fill cells
 // in acceptance.  See comments in hamcAccAvg
 
-  cout << "hamcSingles::RunSummary "<<endl;
+  cout << "hamcSingles::RunSummary (v2.1) "<<endl;
  
   for (Int_t imodel=0; imodel<num_phyt; imodel++) {
 
@@ -231,6 +266,9 @@ void hamcSingles::RunSummary(Int_t iteration) {
     sum_asy = 0;
 
     for (Int_t idx = 0; idx < num_mtl; idx++) {
+
+
+      cout << "\nMaterial "<<idx<<"  "<<target->GetMtlName(idx)<<endl<<endl;
 
       acc[imodel*num_mtl + idx]->RunSummary();
 
@@ -243,14 +281,15 @@ void hamcSingles::RunSummary(Int_t iteration) {
       if (xcnt == 0) {
 	cout << "hamcSingles::RunSum:: no counts for mtl = "<<idx<<endl<<endl;
       } else {
-          cout << "\nMaterial "<<idx<<"  "<<target->GetMtlName(idx)<<endl;
+  	  cout << "\nModel (again) "<<imodel<<endl;
+          cout << "Mtl (again)  "<<idx<<"  "<<target->GetMtlName(idx)<<endl<<endl;
           cout << "Rate "<<rate<<" Hz "<<endl;
           cout << "<A>_phys = "<<asy<<endl;
           cout << "<A>_raw = "<<asy*pol<<endl;
           cout << "omega "<<omega<<"  str "<<endl;
       }
 
-      sum_asy += rate * asy;  
+      sum_asy += rate * asy;
       sum_rate += rate;
 
     }
@@ -270,6 +309,7 @@ void hamcSingles::RunSummary(Int_t iteration) {
       cout << "Num of counts "<<xcnt<<endl;
       cout << "Stat precision "<<daa<<endl;
       cout << "using polarization = "<<pol<<endl;
+      cout << "dpp cut "<<dpp_cut<<endl;
       cout << "Total rate "<<sum_rate<<"  Hz "<<endl;
       cout << "run time "<<run_time<<" hours "<<endl;
       cout << "beam current "<<event->beam->beam_current<<" uA"<<endl; 

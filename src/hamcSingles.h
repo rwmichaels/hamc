@@ -22,6 +22,7 @@ class hamcSingles : public hamcExpt {
      virtual Int_t SetSpectrom(Int_t which, Float_t pmom, Float_t theta);
      void SetP0(Float_t p) { P0 = p; };
      void SetTheta(Float_t ang) { angle = ang; };
+     Float_t GetAngCut() { if (angcut > 0) return angcut; return -1; };
      virtual void EventAnalysis();
      virtual void RunSummary(Int_t iter=0);
      Int_t Run(Int_t maxevent);
@@ -32,11 +33,16 @@ class hamcSingles : public hamcExpt {
      std::vector<hamcAccAvg* > acc;
      Int_t num_mtl, num_phyt;
      Float_t dpp_cut;
+     Float_t angcut;
+     Int_t lcnt;
 
   private: 
 
      hamcSingles(const hamcSingles& expt);
      hamcSingles& operator=(const hamcSingles& expt);
+
+     TH2F *bxy1,*bxy2;
+     TH1F *bqsq;
 
 #ifndef NODICT
 ClassDef (hamcSingles, 0)   // Single experiment
