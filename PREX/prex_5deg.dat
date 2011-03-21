@@ -1,33 +1,32 @@
-
 # (optional) Setup parameters for hamc for PREX
 
 # Setup choices for HRS
-hrs_setup warmseptum uselerose usepaulcollim
+hrs_setup warmseptum uselerose useempiricalangle
 
-# usepaulcollim = original design acceptance.
-# useempiricalangle  instead  of usepaulcollim ?
-# for empirical, need to control "osign" in hamcAperture.h
-# At the moment, osign is -1 which is for  HRS_arm left.
+# "useempiricalangle" is different from (slightly better than) "usepaulcollim"
+# for empirical, need HRS_arm left; or change "osign" in hamcAperture.h
 
-# the following is for the C12 plug (A_T hole)
+# this is the A_T hole in paulcollim.
 spreader_collim radlen1 0.117
 
 # HRS momentum and angle
 HRS_P0 1.0629
-
 # Left HRS, survey 5.007, Nilanga 5.053
 # HRS_angle 5.007, Nilanga 
 # Right HRS, survey 4.910, Nilanga same
 # HRS_angle 4.910
 
-HRS_angle 4.910
+HRS_angle 5.053
 
-HRS_arm right
+# If Angle_cut is turned on, there is a cut on scattering angle 
+# The cut of 4.58 simulates accurately the mistune of septum to 730 A
+# which is where we ran in 2010.
+Angle_cut 4.58
+
+HRS_arm left
 
 PREX_model horpb
 
-# if this is turned on we use the thin C12 target only. (50 um foil)
-# PREX_target thinc12
 
 # The HRS_acceptoff is normally commented out (or deleted)
 # When uncommented it's a way of testing the acceptance model.
@@ -39,10 +38,14 @@ PREX_model horpb
 # cut at collim
 HRS_acceptoff 0 0 0 1 1 1 1 1 1 1 
 
+
+
 # Beam parameters.  Raster is in meters, typ 0.002 (means +/- this)
-# normally raster 0.003 x 0.002
+# normally raster 0.003 x 0.002 
 # current in uA.
+
 beam  E0 1.063 E0sigma 0.00011   rastered  xraster 0.003  yraster 0.002 current 70
+
 
 # range of angles (scatt, azimuth) in degrees
 # phi=0 is up.  phi=90 is into HRS,  phi=180 is down.
@@ -59,9 +62,9 @@ detector dist 1.23
 # Here is the variable to iterate
 # kick:track P0 0.003
 
-# Uncomment the "nontup" line to turn off ntuple (good if you only want 
-# histograms, takes less disk space and runs faster)
-# hamc_inout nontup
+# to turn off ntup (good for high stats).  
+# comment this out to receive an ntuple output.
+hamc_inout nontup
 
 
 
