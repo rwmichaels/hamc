@@ -141,7 +141,8 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 	        "Theta Generated", &theta_deg, 600,2.0,8.0);
    expt->inout->BookHisto(kFALSE, kTRUE, IFOCAL, "hthacc", 
 	        "Theta Accepted", &theta_deg, 600,2.0,8.0);
-
+   expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "hthaccw", 
+	        "Theta Accepted, Weighted", &theta_deg, 600,2.0,8.0);
 
    expt->inout->BookHisto(kFALSE, kFALSE, ITARGET, "ph", 
 		"Phi at target", &phi, nbin, -0.2,1.2*phimax);
