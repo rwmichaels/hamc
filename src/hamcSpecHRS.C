@@ -1,3 +1,4 @@
+
 //  hamcSpecHRS   -- HRS Spectrometer
 //  R. Michaels  June 2008
 
@@ -61,6 +62,11 @@ void hamcSpecHRS::UsePaulColl(void) {
   collim_choice = paul_coll;
 }
 
+void hamcSpecHRS::UseAngleColl(void) {
+  // Empirical angle cut.
+  collim_choice = angle_coll;
+}
+
 void hamcSpecHRS::UseHRSOnly() {
   sept_choice = noseptum;
 }
@@ -117,6 +123,10 @@ Int_t hamcSpecHRS::Init(hamcExpt *expt) {
    if (parser.IsFound("usepaulcollim")) {
      cout << "hamcSpecHRS: Using Paul's composite collimator"<<endl;
      UsePaulColl();
+   }   
+   if (parser.IsFound("useempiricalangle")) {
+     cout << "hamcSpecHRS: Using empirical angle collimation"<<endl;
+     UseAngleColl();
    }   
    if (parser.IsFound("usematrix")) {
      cout << "hamcSpecHRS: Using matrix transport"<<endl;
@@ -175,8 +185,12 @@ Int_t hamcSpecHRS::BuildSpectrom() {
      if (IsCollimated()) {
         if (IsPaulCollim()) {
  	   AddBreakPoint(ICOLLIM2);
-        } else {
-           AddBreakPoint(ICOLLIM);
+	} else {
+	   if (IsAngleCollim()) {
+   	      AddBreakPoint(ICOLLIM3);
+	   } else {
+              AddBreakPoint(ICOLLIM);
+	   }
         }
      }
      AddBreakPoint(IFOCAL); 
@@ -202,13 +216,17 @@ Int_t hamcSpecHRS::BuildSpectrom() {
        AddBreakPoint(ISEPTOUT);  // setpum out
     }
         
-    if (IsCollimated()) {
+     if (IsCollimated()) {
         if (IsPaulCollim()) {
-    	      AddBreakPoint(ICOLLIM2);
-        } else {
+ 	   AddBreakPoint(ICOLLIM2);
+	} else {
+	   if (IsAngleCollim()) {
+   	      AddBreakPoint(ICOLLIM3);
+	   } else {
               AddBreakPoint(ICOLLIM);
+	   }
         }
-    }
+     }
 
     AddBreakPoint(IQ1EXIT);
     AddBreakPoint(IDIPIN);
@@ -291,6 +309,14 @@ void hamcSpecHRS::AddBreakPoint(Int_t where) {
          0.1474, -1.88)));  // Champhor line.
         idx = break_point.size()-1; 
         break_point[idx]->aperture->DefineRadLen(0,collim2_radlen1);
+      }
+      break;
+
+// Collim3 is the empirical angle collimation which is a tighter cut than COLLIM2.
+    case ICOLLIM3:
+      if (IsWarmSeptum()) { 
+	break_point.push_back(new hamcSpecBrk(where, new  hamcAngleCollim()));
+        idx = break_point.size()-1; 
       }
       break;
 
@@ -378,6 +404,7 @@ void hamcSpecHRS::Print() {
   cout << "P0 = "<<GetP0() << "    P0 sigma "<<GetP0Sigma()<<endl;
   cout << "Angle = "<<GetScattAngle()<<endl;
   cout << "Septum choice "<<sept_choice<<endl;
+  cout << "Collimator choice "<<collim_choice<<endl;
   cout << "Collim distance = "<<GetCollimDist()<<endl;
   cout << "Number of break points = "<<break_point.size();
   for (Int_t i=0; i<(Int_t)break_point.size(); i++) {

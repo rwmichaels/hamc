@@ -87,6 +87,7 @@ Int_t hamcTransLerHRS::TransForm(hamcTrack *trk, Int_t where) const {
 
       case ICOLLIM: 
       case ICOLLIM2: 
+      case ICOLLIM3: 
  
         Drift(collim_distance, trk);
         return OK;
@@ -160,6 +161,7 @@ Int_t hamcTransLerHRS::TransForm(hamcTrack *trk, Int_t where) const {
 
       case ICOLLIM: 
       case ICOLLIM2: 
+      case ICOLLIM3: 
  
         Drift(collim_distance, trk);
         return OK;

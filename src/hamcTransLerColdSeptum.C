@@ -1,4 +1,4 @@
-//  hamcTransLerWarmSeptum   -- Transport model using LeRose transfer functions
+//  hamcTransLerColdSeptum   -- Transport model using LeRose transfer functions
 //  for the HRS + 6 degree cold septum (circa 2003 - 2005).
 //  R. Michaels  Sept 2008
 
@@ -98,6 +98,7 @@ Int_t hamcTransLerColdSeptum::TransForm(hamcTrack *trk, Int_t where) const {
 
       case ICOLLIM: 
       case ICOLLIM2: 
+      case ICOLLIM3: 
          break;
 
       case IQ1EXIT: 
@@ -180,6 +181,7 @@ Int_t hamcTransLerColdSeptum::TransForm(hamcTrack *trk, Int_t where) const {
 
       case ICOLLIM: 
       case ICOLLIM2: 
+      case ICOLLIM3: 
          break;
 
       case IQ1EXIT: 
