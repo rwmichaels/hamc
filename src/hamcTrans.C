@@ -25,16 +25,13 @@ hamcTrans::~hamcTrans() {
 Int_t hamcTrans::Drift(Float_t dist, hamcTrack *trk) const {
 // transform through a drift space 'dist'
 
-   vector<Float_t> din;
    Float_t dout[6];
 
-   din = trk->tvect->Get();
-
-   dout[0] = din[0] + dist*din[1];
-   dout[1] = din[1];
-   dout[2] = din[2] + dist*din[3];
-   dout[4] = din[4];
-   dout[5] = din[5];
+   dout[0] = trk->tvect->GetX() + dist*trk->tvect->GetTheta();
+   dout[1] = trk->tvect->GetTheta();
+   dout[2] = trk->tvect->GetY() + dist*trk->tvect->GetPhi();
+   dout[3] = trk->tvect->GetPhi();
+   dout[4] = trk->tvect->GetDpp();
 
    trk->tvect->Load(dout);
 
