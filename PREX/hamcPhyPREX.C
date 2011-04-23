@@ -136,6 +136,13 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
 
   if (histo_test) {
 
+    //    Float_t x1,x2;
+    //    for (Int_t j=0; j<100; j++) {
+    //       x1 = 0.8 + 0.4*((Float_t)j)/100;
+    //       x2 = round(0.98*x1*20)/20;
+    //       cout << "round test "<<j<<"   "<<x1<<"   "<<x2<<endl;
+    //    }
+
     hpph1 = new TH1F("hpph1","Horowitz Lookup Crsec  vs  angle",2000,3,9);
     hpph2 = new TH1F("hpph2","Mott * FF (1.05 GeV)",2000,3,9);
     hpph3 = new TH1F("hpph3","Cross Section (0.2482 GeV)",2000,17,95);
@@ -1222,17 +1229,31 @@ Int_t hamcPhyPREX::CrossSection(Float_t energy, Float_t angle_rad, Int_t stretch
 
   if (indxEnergy <= 0) return -1;
 
+  if (debug) {
+     cout << "\n\nenergy "<<energy<<"        angle "<<angle<<endl;
+     cout << "Indices  "<<indxEnergy<<"   "<<indxAngle<<endl;
+     cout << energy_row[indxEnergy] << "  " << crsc_tables[0][indxEnergy][0] << "    " << crsc_tables[0][indxEnergy][4] << endl;
+  }
+
   Float_t crsc1, crsc2;
   Float_t crsca1, crsca2;
   Float_t e1, e2;
 
   //find the angles above and below the actual angle; used for interpolation
-  Float_t angle_upper =angle_row[indxAngle];
-  Float_t angle_lower = angle_row[indxAngle-1];
+  Float_t angle_upper =angle_row[indxAngle+1];
+  Float_t angle_lower = angle_row[indxAngle];
+
+  if (debug) {
+    cout << "angle lims "<<indxAngle<<"  "<<angle_lower<<"  "<<angle_upper<<endl;
+  }
 
   crsc1 = crsc_tables[stretch][indxEnergy][indxAngle]; /*get the cross section value for angle value larger than the actual*/
   crsc2 = crsc_tables[stretch][indxEnergy][indxAngle+1]; //get the cross section value for nearby angle */
   crsca1 = Interpolate(angle_lower, angle_upper, angle, crsc1, crsc2)/1000;  
+
+  if (debug) {
+    cout << "crsec1, 2  "<<indxEnergy<<"  "<<crsc1<<"  "<<crsc2<<endl;
+  }
 
   crsca2 = -1;
 
@@ -1352,9 +1373,12 @@ Int_t hamcPhyPREX::FindAngleIndex(Float_t angle){
 
   Int_t idx;
 
+  // Round off the angle a bit to find the index. 
+  
+ 
   vector<Float_t>::const_iterator iterAngle = upper_bound(angle_row.begin(), angle_row.end(), angle); //search for the first value of angle which is larger than actual
 
-  idx = iterAngle - angle_row.begin();
+  idx = iterAngle - angle_row.begin()-1;
 
   if (idx > angle_row.size()-2) idx = -1;
 
@@ -1365,15 +1389,16 @@ Int_t hamcPhyPREX::FindAngleIndex(Float_t angle){
 Int_t hamcPhyPREX::FindEnergyIndex(Float_t energy){
   
   // Round off the energy a bit to find the index.  (E is fixed later by interpolation)
-  Float_t rounded_energy = round(1.02*energy*20)/20;
   
+  Float_t rounded_energy = round(0.98*energy*20)/20;
+
   vector<Float_t>::const_iterator iterEnergy  = lower_bound(energy_row.begin(), energy_row.end(), rounded_energy); //search for the first value of energy which is larger or equal than actual 
 
   UInt_t isize = energy_row.size();
   
   if (rounded_energy > energy_row[isize-1]) return -1;
 
-  return iterEnergy - energy_row.begin()-1; //indexing in vectors starts from 0, therefore -1
+  return iterEnergy - energy_row.begin(); 
 }
 
 Float_t hamcPhyPREX::Interpolate(Float_t min, Float_t max, Float_t mid, Float_t val1, Float_t val2){

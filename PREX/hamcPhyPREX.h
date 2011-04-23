@@ -188,7 +188,7 @@ class hamcPhyPREX : public hamcPhysics {
      TH1F *hfom1,*hfom2,*hfom3,*hfom4,*hfom5, *hfom6;
      TH1F *hfom7, *hfom8, *hfom9, *hfom10, *hfom11, *hfom12, *hfom13;
      TH2F *hpph5;
-     static const Int_t histo_test=0; // to test(1) or not(0) this code
+     static const Int_t histo_test=1; // to test(1) or not(0) this code
      static const Int_t accept_test=0; // to test(1) or not(0) this acceptance
      static const Int_t quick_feasibility=0; 
      static const Int_t quick_check=0; 
