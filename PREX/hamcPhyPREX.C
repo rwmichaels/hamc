@@ -1299,6 +1299,8 @@ Int_t hamcPhyPREX::Asymmetry(Float_t energy, Float_t angle_rad, Int_t stretch) {
   }
   // lookup the asymmetry for this E,theta
 
+  Int_t ldebug = 0;
+
   Float_t angle = angle_rad * 180 / PI;
 
   asymmetry = 0;
@@ -1309,15 +1311,18 @@ Int_t hamcPhyPREX::Asymmetry(Float_t energy, Float_t angle_rad, Int_t stretch) {
   if (indxAngle <= 0 || indxEnergy <= 0) return -1;
 
   Float_t asymmetry1, asymmetry2, asyE1, asyE2, e1, e2;
-  Float_t angle_upper = angle_row[indxAngle] ;
-  Float_t angle_lower = angle_row[indxAngle-1];
+  Float_t angle_upper = angle_row[indxAngle+1] ;
+  Float_t angle_lower = angle_row[indxAngle];
 
   asymmetry1 = asymmetry_tables[stretch][indxEnergy][indxAngle];
   asymmetry2 = asymmetry_tables[stretch][indxEnergy][indxAngle+1];
   asyE1 = Interpolate(angle_lower, angle_upper, angle, asymmetry1, asymmetry2);
 
-  //  cout << "\n\nindices "<<stretch<<"  "<<indxEnergy<<"  "<<indxAngle<<"  "<<indxAngle+1<<endl;
-  //  cout << "asyE1 inputs "<<asymmetry1<<"  "<<asymmetry2<<"  "<<angle_lower<<"  "<<angle_upper<<"  "<<asyE1<<endl;
+  if (ldebug) {
+    cout << "\n\nEnergy  "<<energy<<"   angle "<<angle<<endl;
+    cout << "indices "<<stretch<<"  "<<indxEnergy<<"  "<<indxAngle<<"  "<<indxAngle+1<<endl;
+    cout << "asyE1 inputs "<<asymmetry1<<"  "<<asymmetry2<<"  "<<angle_lower<<"  "<<angle_upper<<"  "<<asyE1<<endl;
+  }
 
   asyE2 = -1;
 
@@ -1327,7 +1332,8 @@ Int_t hamcPhyPREX::Asymmetry(Float_t energy, Float_t angle_rad, Int_t stretch) {
      asyE2 = Interpolate(angle_lower, angle_upper, angle, asymmetry1, asymmetry2);
   }
 
-  //  cout << "asyE2 inputs "<<asymmetry1<<"  "<<asymmetry2<<"  "<<angle_lower<<"  "<<angle_upper<<"  "<<asyE2<<endl;
+  if(ldebug) 
+     cout << "asyE2 inputs "<<asymmetry1<<"  "<<asymmetry2<<"  "<<angle_lower<<"  "<<angle_upper<<"  "<<asyE2<<endl;
 
   asymmetry = asyE1;
 
