@@ -368,7 +368,6 @@ hamcMultScatt *hamcTarget::GetFullScatt(double p) {
 	    msZ[i] = components[i]->GetZ();
 	    // Len is in m, need to convert it to cm
 	    mst[i] = components[i]->GetDensity()*components[i]->GetLen()*100.0;
-	    printf("%f %f %f\n", msA[i], msZ[i], mst[i] );
 	}
 
 	fullscatt->Init(p, components.size(), mst, msA, msZ );
