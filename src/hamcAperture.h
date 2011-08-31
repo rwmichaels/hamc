@@ -25,6 +25,7 @@ public:
       return CheckAccept(trk->tvect->GetX(), trk->tvect->GetY());
     };
 // An aperture may have material (degrader) or multiple materials.
+    /*
     void DefineRadLen(Int_t idx, Float_t rl) { 
       if (idx < (Int_t)radlen.size()) {
          radlen[idx] = rl;
@@ -35,19 +36,94 @@ public:
 	radlen.push_back(rl);
       }
     }
+    */
+    void DefineMaterial(Int_t idx, Float_t ta, Float_t tz, Float_t tt) { 
+      if (idx < (Int_t) a.size()) {
+         a[idx] = ta;
+         z[idx] = tz;
+         t[idx] = tt;
+      } else {
+        for (Int_t ix = (Int_t)a.size(); ix < idx; ix++) {
+         a.push_back(0);
+         z.push_back(0);
+         t.push_back(0);
+	}
+	a.push_back(ta);
+	z.push_back(tz);
+	t.push_back(tt);
+      }
+
+    }
     virtual Float_t GetRadLen(Int_t idx) const { 
+	double X0;
       if (idx >= 0 && 
-          idx < (Int_t)radlen.size()) return radlen[idx];
+          idx < (Int_t)a.size()){
+	  X0 = 716.4*a[idx]/(z[idx]*(z[idx]+1.0)*log(287.0/sqrt(z[idx])));
+	  return t[idx]/X0;
+      }
       return 0;
     }
+    virtual Float_t GetA(Int_t idx) const { 
+      if (idx >= 0 && 
+          idx < (Int_t)a.size()){
+	  return a[idx];
+      }
+      return 0;
+    }
+    virtual Float_t GetZ(Int_t idx) const { 
+      if (idx >= 0 && 
+          idx < (Int_t)z.size()){
+	  return z[idx];
+      }
+      return 0;
+    }
+    virtual Float_t Gett(Int_t idx) const { 
+      if (idx >= 0 && 
+          idx < (Int_t)t.size()){
+	  return t[idx];
+      }
+      return 0;
+    }
+
     virtual Float_t GetRadLen(Float_t x, Float_t y) const {
+	double X0;
  // default (virtual) method.  normally defined by inheriting class.
-      if (radlen.size()>0) return radlen[0];
+//      if (radlen.size()>0) return radlen[0];
+      if (a.size()>0){
+        X0 = 716.4*a[0]/(z[0]*(z[0]+1.0)*log(287.0/sqrt(z[0])));
+	  return t[0]/X0;
+      }
       return 0;
     }
+
+    virtual Float_t GetA(Float_t x, Float_t y) const {
+ // default (virtual) method.  normally defined by inheriting class.
+      if (a.size()>0){
+        return a[0];
+      }
+      return 0;
+    }
+    virtual Float_t GetZ(Float_t x, Float_t y) const {
+ // default (virtual) method.  normally defined by inheriting class.
+      if (z.size()>0){
+        return z[0];
+      }
+      return 0;
+    }
+    virtual Float_t Gett(Float_t x, Float_t y) const {
+ // default (virtual) method.  normally defined by inheriting class.
+      if (t.size()>0){
+        return t[0];
+      }
+      return 0;
+    }
+
     virtual void FlipPhi() { };
 protected:
-    std::vector<Float_t> radlen;
+//    std::vector<Float_t> radlen;
+    std::vector<Float_t> a;
+    std::vector<Float_t> z;
+    std::vector<Float_t> t;
     Float_t xcent,ycent;
 #ifndef NODICT
 ClassDef (hamcAperture, 0)   // Apertures used to define acceptance
@@ -152,6 +228,16 @@ public:
   Float_t GetRadLen(Float_t x, Float_t y) const {
     return hamcAperture::GetRadLen(WhichBox(x,y));
   }
+  Float_t GetA(Float_t x, Float_t y) const {
+    return hamcAperture::GetA(WhichBox(x,y));
+  }
+  Float_t GetZ(Float_t x, Float_t y) const {
+    return hamcAperture::GetZ(WhichBox(x,y));
+  }
+  Float_t Gett(Float_t x, Float_t y) const {
+    return hamcAperture::Gett(WhichBox(x,y));
+  }
+
   Bool_t CheckAccept(Float_t x, Float_t y) const {
     Int_t idx = WhichBox(x,y);
     if (idx != -1) return kTRUE;
@@ -198,7 +284,8 @@ public:
     std::cout <<"Line (Champhor)  "<<yline1<<"  "<<slope1<<std::endl;
     std::cout <<"Rad lens "<<hamcAperture::GetRadLen(0);
     std::cout << "  "<<hamcAperture::GetRadLen(1);
-    std::cout << "   size "<<radlen.size()<<std::endl;
+//    std::cout << "   size "<<radlen.size()<<std::endl;
+    std::cout << "   size "<<a.size()<<std::endl;
     hamcAperture::Print();
   }
   Int_t WhichBox(Float_t x, Float_t y) const {
@@ -243,6 +330,16 @@ public:
   Float_t GetRadLen(Float_t x, Float_t y) const {
     return hamcAperture::GetRadLen(WhichBox(x,y));
   }
+  Float_t GetA(Float_t x, Float_t y) const {
+    return hamcAperture::GetA(WhichBox(x,y));
+  }
+  Float_t GetZ(Float_t x, Float_t y) const {
+    return hamcAperture::GetZ(WhichBox(x,y));
+  }
+  Float_t Gett(Float_t x, Float_t y) const {
+    return hamcAperture::Gett(WhichBox(x,y));
+  }
+
   Bool_t CheckAccept(Float_t x, Float_t y) const {
     Int_t idx = WhichBox(x,y);
     if (idx != -1) return kTRUE;

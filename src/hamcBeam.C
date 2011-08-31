@@ -216,6 +216,8 @@ Int_t hamcBeam::Generate(hamcExpt *expt) {
 
  // Apply multiple scattering
 
+  /*
+   * spr:  antiquated
   Float_t radlen;
   Float_t tlen =  expt->target->GetLength();  // "L" of target
 // zscat varies from -L/2 to +L/2
@@ -223,9 +225,11 @@ Int_t hamcBeam::Generate(hamcExpt *expt) {
   Float_t x0rad = expt->target->GetRadLength();
   radlen = 0;
   if (x0rad != 0) radlen = (((tlen/2)+zscat)/tlen) * x0rad;
+  MultScatt(radlen, ITARGET);
+  */
 
   //  cout << "\n ******* Calling Mult Scatt in beam "<<endl;
-  MultScatt(radlen, ITARGET);    // this modifies/updates plab (momentum)
+  MultScatt(expt->target->GetPartialScatt(pmom), ITARGET);    // this modifies/updates plab (momentum)
                                  // Note, MultScatt is a member of hamcTrack
                                  // and hamcBeam inherits from hamcTrack.
 

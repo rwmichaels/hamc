@@ -58,8 +58,13 @@ public:
  	 accept_cut = kTRUE;
       }
   }
+  /*
   void DefineRadLen(Int_t index, Float_t rl) {
     if (aperture) aperture->DefineRadLen(index,rl);
+  }
+  */
+  void DefineMaterial(Int_t index, Float_t a, Float_t z, Float_t t) {
+    if (aperture) aperture->DefineMaterial(index,a, z, t);
   }
   ~hamcSpecBrk() { 
     if (aperture) delete aperture;
@@ -153,6 +158,7 @@ class hamcSpecHRS {
      std::string name, desc;
      Float_t P0, P0_sigma, central_angle;
      Float_t collim2_radlen1, collim2_radlen2;
+     Float_t collim2_a, collim2_z, collim2_t;
  
   private:
 

@@ -1,6 +1,7 @@
 //  hamcTrack   -- A track
 //  R. Michaels  Feb 2009
 
+#include "hamcMultScatt.h"
 #include "hamcTrack.h"
 #include "hamcTrans.h"
 #include "hamcSpecHRS.h"
@@ -187,6 +188,10 @@ void hamcTrack::MultScatt(const hamcExpt *expt, Int_t where) {
 
   if (where == ITARGET) {  
 
+      /*
+       // SPR 8/29:  I think this is antiquated
+       // zscat varies from -L/2 to +L/2 + offset now
+       
     Float_t tlen =  expt->target->GetLength();  // "L" of target
     // zscat varies from -L/2 to +L/2
     Float_t zscat = expt->target->GetZScatt();
@@ -195,14 +200,20 @@ void hamcTrack::MultScatt(const hamcExpt *expt, Int_t where) {
     if (x0rad != 0) radlen = (((tlen/2)-zscat)/tlen) * x0rad;
 
     MultScatt(radlen, where);     
+    */
+
+      MultScatt(expt->target->GetPartialScatt(P0), where );
 
   }
 
   if (where == ITARGET_FULL) {  
 
+      /*
     Float_t x0rad = expt->target->GetRadLength();
     MultScatt(x0rad, where);     
+    */
 
+      MultScatt(expt->target->GetFullScatt(P0), where );
   }
 
 }
@@ -214,16 +225,30 @@ void hamcTrack::MultScatt(const hamcAperture *aperture, Int_t where) {
 
   if (!aperture) return;  
 
-  Float_t radlen = aperture->GetRadLen(tvect->GetX(), tvect->GetY());
 
-  if (radlen <= 0) return;   // no mult scattering
+  //Float_t radlen = aperture->GetRadLen(tvect->GetX(), tvect->GetY());
 
-  MultScatt(radlen, where);
+  Double_t a = aperture->GetA(tvect->GetX(), tvect->GetY());
+  Double_t z = aperture->GetZ(tvect->GetX(), tvect->GetY());
+  Double_t t = aperture->Gett(tvect->GetX(), tvect->GetY());
 
+
+  if (t <= 0){
+      return;   // no mult scattering
+  }
+
+  hamcMultScatt *appscat = new hamcMultScatt(P0, t, a, z);
+
+//  MultScatt(radlen, where);
+  MultScatt(appscat, where);
+
+  delete appscat;
 }
 
 
 void hamcTrack::MultScatt(Float_t radlen, Int_t where) {
+    fprintf(stderr, "%s %s line %d:  ERROR:  Shouldn't be using this multiple scattering code anymore...\n",  __FILE__, __FUNCTION__, __LINE__ );
+    exit(1);
 // Applies multiple scattering to track parameters.
 // Resets track origin to present location.
 // The transport model must provide transport from this new origin.
@@ -313,3 +338,58 @@ void hamcTrack::UpdateTrans() {
 
 }
 
+void hamcTrack::MultScatt(hamcMultScatt *ms, Int_t where) {
+// Applies multiple scattering to track parameters.
+// Resets track origin to present location.
+// The transport model must provide transport from this new origin.
+
+// Ideally these variables should NOT be here; it makes the class opaque.  
+// Should fix this later.
+
+  Int_t use_resol = 1;
+
+  Int_t use_mscat = 1;
+
+  Float_t vresol,hresol,vkick,hkick;
+
+  vresol = 0.002;        // resolution of the HRS in vertical angle
+  hresol = 0.0006;       // ditton, horizontal
+
+
+  Float_t dtheta1, dtheta2;
+
+  dtheta1 = ms->GenerateMSPlane();
+  dtheta2 = ms->GenerateMSPlane();
+
+  if (use_mscat) tvect->AddToTheta(dtheta1);
+
+  if (use_mscat) tvect->AddToPhi(dtheta2);
+
+  *tvect_orig = *tvect;
+
+  if (ITARGET == ITARGET_FULL) origin = ITARGET;
+
+  if (where == ICOLLIM2) ms_collim=1;
+
+  vkick = 0; 
+  hkick = 0;
+  if (where == ITARGET || where == ITARGET_FULL) {
+     thtgt = tvect->GetTheta();
+     phtgt = tvect->GetPhi();
+    // Resolution smearing -- affects thtgt and phtgt variables.
+    if (use_resol) {
+       vkick = vresol*gRandom->Gaus();
+       hkick = hresol*gRandom->Gaus();
+       thtgt = thtgt + vkick;
+       phtgt = phtgt + hkick;
+     }
+  }
+
+  th_ms = tvect->GetTheta();
+  ph_ms = tvect->GetPhi();
+
+  plab_x = pnoms_x + pmom * (dtheta1 + hkick);
+  plab_y = pnoms_y + pmom * (dtheta2 + vkick) ;
+  plab_z = TMath::Sqrt(pmom*pmom - plab_x*plab_x - plab_y*plab_y);
+
+}

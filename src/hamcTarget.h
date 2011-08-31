@@ -10,7 +10,10 @@
 #include <iostream>
 #include <map>
 
+#include "hamcMultScatt.h"
+
 class hamcExpt;
+class hamcMultScatt;
 
 class hamcTgtSlab {
 //  A monolithic slab of material belonging to the target
@@ -91,6 +94,8 @@ class hamcTarget {
      Float_t GetLenInMtl();   // length from front face of mtl hit
      Float_t GetLenOutMtl();  // from scatt. pt to exit of mtl hit
 
+     hamcMultScatt *GetFullScatt(double p);
+     hamcMultScatt *GetPartialScatt(double p);
   protected:
 
      std::string name;
@@ -112,6 +117,8 @@ class hamcTarget {
      hamcTarget& operator=(const hamcTarget& tgt);
      hamcTarget(const hamcTarget& tgt);
 
+     hamcMultScatt *fullscatt;
+     hamcMultScatt *partialscatt;
 
 #ifndef NODICT
 ClassDef (hamcTarget, 0)   // Target

@@ -63,7 +63,7 @@ endif
 ifdef OPTIMIZE
    CXXFLAGS += -O
 else
-   CXXFLAGS += -g
+   CXXFLAGS += -g -ggdb
 endif
 
 SRC = $(SRCDIR)/hamcExpt.C $(SRCDIR)/hamcSingles.C $(SRCDIR)/hamcPhysics.C \
@@ -77,7 +77,7 @@ SRC = $(SRCDIR)/hamcExpt.C $(SRCDIR)/hamcSingles.C $(SRCDIR)/hamcPhysics.C \
       $(SRCDIR)/hamcTarget.C \
       $(SRCDIR)/hamcEloss.C $(SRCDIR)/hamcKine.C \
       $(SRCDIR)/hamcTrack.C $(SRCDIR)/hamcBeam.C $(SRCDIR)/hamcTrackOut.C \
-      $(SRCDIR)/hamcInout.C $(SRCDIR)/THaString.C
+      $(SRCDIR)/hamcInout.C $(SRCDIR)/THaString.C $(SRCDIR)/hamcMultScatt.C
 
 DEPS = $(SRC:.C=.d)
 DEP  = $(SRC:.C=.d)

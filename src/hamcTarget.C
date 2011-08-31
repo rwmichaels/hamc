@@ -2,6 +2,7 @@
 //  R. Michaels  June 2008
 
 #include "hamcTarget.h"
+#include "hamcMultScatt.h"
 #include "hamcExpt.h"
 #include "Rtypes.h"
 #include "TRandom.h"
@@ -38,6 +39,9 @@ hamcTarget::hamcTarget(string tgt_name) : name(tgt_name),did_init(kFALSE)
   //  zoffset = 0.004183; // in meters LHRS,  = 1.02/sin(0.2463) mm 
   // RHRS, need to move the target upstream along the central beam axis
   //zoffset = -0.013058; // in meters RHRS, = 3.09/sin(0.2389) mm
+
+  fullscatt       = new hamcMultScatt();
+  partialscatt    = new hamcMultScatt();
 }
 
 hamcTarget::~hamcTarget() {
@@ -349,5 +353,55 @@ Int_t hamcTarget::CheckIndex(Int_t index) {
 
 
 
+hamcMultScatt *hamcTarget::GetFullScatt(double p) {
+    int i;
+    double msA[50], msZ[50], mst[50];
+
+    if( components.size() > 50 ){ fprintf(stderr, "%s %s: line %d  ERROR:  make the arrays here longer.  You have too many target components.\n", __FILE__, __FUNCTION__, __LINE__); exit(1); }
+
+    // Don't bother redoing this calculation if the difference from
+    // the previous electron energy is less than 10 MeV
+    if( !fullscatt->IsInit() || fabs(fullscatt->GetP()-p)>1.0e-2 ){
+
+	for( i = 0; i < components.size(); i++ ){
+	    msA[i] = components[i]->GetA();
+	    msZ[i] = components[i]->GetZ();
+	    // Len is in m, need to convert it to cm
+	    mst[i] = components[i]->GetDensity()*components[i]->GetLen()*100.0;
+	    printf("%f %f %f\n", msA[i], msZ[i], mst[i] );
+	}
+
+	fullscatt->Init(p, components.size(), mst, msA, msZ );
+    }
+
+    return fullscatt;
+}
+
+hamcMultScatt *hamcTarget::GetPartialScatt(double p) {
+    int i;
+    double msA[50], msZ[50], mst[50];
+    double zloff, zdist, rlen;
+
+    if( components.size() > 50 ){ fprintf(stderr, "%s %s: line %d  ERROR:  make the arrays here longer.  You have too many target components.\n", __FILE__, __FUNCTION__, __LINE__); exit(1); }
+
+    for (Int_t i=0; i<material_index; i++) {
+	msA[i] = components[i]->GetA();
+	msZ[i] = components[i]->GetZ();
+	mst[i] = components[i]->GetDensity()*components[i]->GetLen();
+    }
+
+    hamcTgtSlab *slab = components[material_index];
+
+    msA[material_index] = slab->GetA();
+    msZ[material_index] = slab->GetZ();
 
 
+    zloff = slab->GetZloc() - 0.5*slab->GetLen();
+    zdist = zscatt - zloff;
+    // zdist is in m, need to convert to m
+    mst[material_index] = slab->GetDensity()*zdist*100.0;
+
+    partialscatt->Init(p, material_index+1, mst, msA, msZ);
+
+    return partialscatt;
+}

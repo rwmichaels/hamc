@@ -147,10 +147,26 @@ Int_t hamcSpecHRS::Init(hamcExpt *expt) {
    }   
 
    collim2_radlen1 = 0;
+
+   collim2_a = 0;
+   collim2_z = 0;
+   collim2_t = 0;
+
    parser.Load(expt->inout->GetStrVect("spreader_collim"));
    if (parser.IsFound("radlen1")) {
      collim2_radlen1 = parser.GetData(); 
    }      
+   if (parser.IsFound("a")) {
+     collim2_a = parser.GetData(); 
+   }      
+   if (parser.IsFound("z")) {
+     collim2_z = parser.GetData(); 
+   }      
+   if (parser.IsFound("t")) {
+     collim2_t = parser.GetData(); 
+   }      
+
+
 
    BuildSpectrom();
 
@@ -253,6 +269,8 @@ void hamcSpecHRS::AddBreakPoint(Int_t where) {
 
   Int_t idx;
 
+  printf("*************************   where = %d\n", where );
+
   switch(where) {
 
     case ITARGET:
@@ -308,7 +326,9 @@ void hamcSpecHRS::AddBreakPoint(Int_t where) {
          0.117, 0.04,       // top, right
          0.1474, -1.88)));  // Champhor line.
         idx = break_point.size()-1; 
-        break_point[idx]->aperture->DefineRadLen(0,collim2_radlen1);
+//        break_point[idx]->aperture->DefineRadLen(0,collim2_radlen1);
+        break_point[idx]->aperture->DefineMaterial(0,collim2_a, collim2_z, collim2_t);
+	printf("%f %f %f\n", collim2_a, collim2_z, collim2_t);
       }
       break;
 

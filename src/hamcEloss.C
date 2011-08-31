@@ -111,6 +111,14 @@ Int_t hamcEloss::Init(hamcExpt* expt) {
       psi_scale = parser.GetData(); 
       cout << "hamcEloss:: psi_scale factor = "<<psi_scale<<endl;
    }      
+   if (parser.IsFound("none")) {
+      psi_scale = parser.GetData(); 
+      cout << "hamcEloss:: no energy loss "<<endl;
+      use_genercone = kFALSE;  
+      use_ionize = kFALSE;
+      use_tf1 = kFALSE;
+      use_numer = kFALSE;
+   }      
 
    expt->inout->BookHisto(kFALSE, kFALSE, ITARGET, "dE1", 
 	 "dE Brehm in", &dE_ExtBrehmIn, 2000,-0.1,1.2);

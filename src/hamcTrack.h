@@ -22,6 +22,7 @@ class hamcTrans;
 class hamcAperture;
 class hamcBeam;
 class hamcSpectrom;
+class hamcMultScatt;
 
 class hamcTransVect {
 // Transport vector.  Utility class needed by hamcTrack
@@ -144,6 +145,8 @@ class hamcTrack {
      virtual void MultScatt(const hamcAperture *app, Int_t where);
      virtual void MultScatt(Float_t radlen, Int_t where);
 
+     virtual void MultScatt(hamcMultScatt *, Int_t where);
+
 // Apply energy loss (elsewhere from target)
      Int_t Eloss(const hamcExpt *expt, const hamcAperture *aperture, Int_t where);
 
@@ -153,7 +156,6 @@ class hamcTrack {
      Int_t ms_collim;      // mult. scatt. in collim ? (1/0)
 
      Float_t thtgt,phtgt;  // theta, phi at target after mult. scatt.
-
 
   protected:
 
