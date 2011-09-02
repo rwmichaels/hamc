@@ -187,13 +187,19 @@ Int_t hamcEloss::InitRad() {
     Setup_tf1(0, tequiv, tgtZ, E0);  
   }
 
-  Nslices = 10;  // # slices of target.
+  Nslices = 20;  // # slices of target.
 
   Float_t dtgt = trlen/(Float_t(Nslices));
 
   for (Int_t isl = 1; isl<=Nslices; isl++) {
 
-    Float_t tfrac = dtgt * (isl+1);
+      // spr 9/2/11:  This is a mistake
+      // Because we start counting at 1, tfrac
+      // should be multiplied by isl-0.5 (so you get 0.05, 0.15...)
+      // When we look up in LookupIdx  we then will return an average
+      // of the loss given in the slice
+      //    Float_t tfrac = dtgt * (isl+1);
+    Float_t tfrac = dtgt * (isl-0.5);
 
     if (use_tf1) {
       Setup_tf1(isl, tfrac, tgtZ, E0);
@@ -328,8 +334,23 @@ void hamcEloss::Print() {
 
 
 Int_t hamcEloss::LookupIdx(Float_t tl) {
+    // Returns the slice number
+    // Slices started counting at 1
+    // so 0 - 0.1 , returns slice 1 (evaluated at elos for 0.1)
+    // etc
+    // BUT the idx is slice-1 because vectors start counting at 0
+    //
+    // Just going to rewrite this using rounding for sanity and clarity
 
   Float_t dtgt = trlen/(Float_t(Nslices));
+
+  if( tl < 0 || tl > trlen ) return -1;
+
+  Float_t scl = tl/dtgt;
+
+  return (Int_t) scl;
+
+    /*
   Float_t t1, t2;
 
   t1=0;
@@ -346,6 +367,7 @@ Int_t hamcEloss::LookupIdx(Float_t tl) {
   }
 
   return 0;
+  */
 
 }
 
@@ -538,12 +560,26 @@ Int_t hamcEloss::GenerateNumer() {
         cout << "hamcEloss: WARNING: no radtail defined for slice "<<idx<<endl;
         return 0;
       }
-      x = (radtail.size()-1.)*gRandom->Rndm();
-      jj = (Int_t)x; 
+      // spr 9/2/11:
+      // I think the point of this is to generate
+      // a number between 0 and size-1 (inclusive)
+      // The problem with the way it is doing it is
+      // Int_t rounds down, so you'll never get the last
+      // value
+      // the TRandom::Integer function does what we want
+      // x = (radtail.size()-1.)*gRandom->Rndm();
+      //jj = (Int_t)x; 
+      jj = gRandom->Integer(radtail.size());
       dE_ExtBrehmIn = radtail[jj];
+   } else {
+       fprintf(stderr, "%s %s line %d:  ERROR:  radin slice index out of range:  idx = %d, rl = %f, total rl = %f\n"
+	       , __FILE__, __FUNCTION__, __LINE__, idx, radout, trlen );
    }
 
    idx = LookupIdx(radout);  // after scattering
+
+   // We should ALWAYS get a valid index from here
+   // if not something seriously wrong has occurred
 
    if (idx >= 0 && idx < Nslices) {
       radtail = Enumer[idx];
@@ -551,9 +587,14 @@ Int_t hamcEloss::GenerateNumer() {
         cout << "hamcEloss: WARNING: no radtail defined for slice "<<idx<<endl;
         return 0;
       }
-      x = (radtail.size()-1)*gRandom->Rndm();
-      jj = (Int_t)x; 
+      //  spr 9/2/11:  See above
+      //      x = (radtail.size()-1)*gRandom->Rndm();
+      //  jj = (Int_t)x; 
+      jj = gRandom->Integer(radtail.size());
       dE_ExtBrehmOut = radtail[jj];
+   } else {
+       fprintf(stderr, "%s %s line %d:  ERROR:  radout slice index out of range:  idx = %d, rl = %f, total rl = %f\n"
+	       , __FILE__, __FUNCTION__, __LINE__, idx, radout, trlen );
    }
 
 
