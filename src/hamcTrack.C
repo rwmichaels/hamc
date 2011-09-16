@@ -266,7 +266,6 @@ void hamcTrack::MultScatt(Float_t radlen, Int_t where) {
   vresol = 0.002;        // resolution of the HRS in vertical angle
   hresol = 0.0006;       // ditton, horizontal
 
-
   if (P0 == 0) {   
     cout << "hamcTrack::MultScatt: ERROR: P0 = 0 ?"<<endl;
     return;
@@ -274,11 +273,15 @@ void hamcTrack::MultScatt(Float_t radlen, Int_t where) {
 
   Float_t theta_sigma = (0.0136/P0) * TMath::Sqrt(radlen);
 
-  Float_t dtheta1, dtheta2, prob;
+  Float_t dtheta1, dtheta2, prob, probsign, xsign;
+
+  xsign = 1;
 
   prob = gRandom->Rndm();
   if (prob < 0.02) {
-    dtheta1 = 5 * theta_sigma * gRandom->Rndm();  // flat tail
+    probsign = gRandom->Rndm();
+    if (probsign < 0.5) xsign = -1;
+    dtheta1 = xsign * 5 * theta_sigma * gRandom->Rndm();  // flat tail
   } else {
     dtheta1 = theta_sigma * gRandom->Gaus();
   }
@@ -287,7 +290,9 @@ void hamcTrack::MultScatt(Float_t radlen, Int_t where) {
 
   prob = gRandom->Rndm();
   if (prob < 0.02) {
-    dtheta2 = 5 * theta_sigma * gRandom->Rndm();  // flat tail
+    probsign = gRandom->Rndm();
+    if (probsign < 0.5) xsign = -1;
+    dtheta2 = xsign * 5 * theta_sigma * gRandom->Rndm();  // flat tail
   } else {
     dtheta2 = theta_sigma * gRandom->Gaus();
   }
