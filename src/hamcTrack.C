@@ -214,6 +214,7 @@ void hamcTrack::MultScatt(const hamcExpt *expt, Int_t where) {
     */
 
       MultScatt(expt->target->GetFullScatt(P0), where );
+
   }
 
 }
@@ -295,7 +296,7 @@ void hamcTrack::MultScatt(Float_t radlen, Int_t where) {
 
   *tvect_orig = *tvect;
 
-  if (ITARGET == ITARGET_FULL) origin = ITARGET;
+  if (where == ITARGET_FULL) origin = ITARGET;
 
   if (where == ICOLLIM2) ms_collim=1;
 
@@ -361,15 +362,18 @@ void hamcTrack::MultScatt(hamcMultScatt *ms, Int_t where) {
   dtheta1 = ms->GenerateMSPlane();
   dtheta2 = ms->GenerateMSPlane();
 
+  //  cout << "dtheta "<<dtheta1<<"  "<<dtheta2<<endl;
+
   if (use_mscat) tvect->AddToTheta(dtheta1);
 
   if (use_mscat) tvect->AddToPhi(dtheta2);
 
   *tvect_orig = *tvect;
 
-  if (ITARGET == ITARGET_FULL) origin = ITARGET;
+  if (where == ITARGET_FULL) origin = ITARGET;
 
   if (where == ICOLLIM2) ms_collim=1;
+
 
   vkick = 0; 
   hkick = 0;
@@ -391,5 +395,6 @@ void hamcTrack::MultScatt(hamcMultScatt *ms, Int_t where) {
   plab_x = pnoms_x + pmom * (dtheta1 + hkick);
   plab_y = pnoms_y + pmom * (dtheta2 + vkick) ;
   plab_z = TMath::Sqrt(pmom*pmom - plab_x*plab_x - plab_y*plab_y);
+
 
 }
