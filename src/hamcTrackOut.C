@@ -687,8 +687,8 @@ void hamcTrackOut::ComputePvect() {
 // hamcTrack::MultScatt called by the event loop in hamcEvent 
 
   plab_x = pnoms_x;   
-  plab_y = pnoms_x;
-  plab_z = pnoms_x;
+  plab_y = pnoms_y;
+  plab_z = pnoms_z;
 
 }
 
