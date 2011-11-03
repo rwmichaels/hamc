@@ -184,6 +184,8 @@ class hamcPhyPREX : public hamcPhysics {
      TH1F *histz3a, *histz3b, *histz3c, *histz3d, *histz3e, *histz3f;
      TH1F *histz4a, *histz4b, *histz4c, *histz4d, *histz4e, *histz4f;
      TH1F *histz5a, *histz5b;
+     TH1F *histang1,*histang2,*histang3,*histang4,*histang5, *histang0;
+     TH1F *histang6,*histang7;
      TH1F *hpph1,*hpph2,*hpph3,*hpph4,*hpph6,*hd1;
      TH1F *hfom1,*hfom2,*hfom3,*hfom4,*hfom5, *hfom6;
      TH1F *hfom7, *hfom8, *hfom9, *hfom10, *hfom11, *hfom12, *hfom13;
@@ -195,6 +197,7 @@ class hamcPhyPREX : public hamcPhysics {
      static const Int_t quick_fom=0; 
      static const Int_t power_integ=0; 
      static const Int_t neutron_power=0; 
+     static const Int_t check_ms_1D=0;
 
 #ifndef NODICT
 ClassDef (hamcPhyPREX, 0)   // PREX physics

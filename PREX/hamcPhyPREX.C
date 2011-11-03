@@ -710,6 +710,150 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
   }  // power_integ
    
 
+  if (check_ms_1D) {  
+
+    // Crude check of acceptance in 1D
+
+    Int_t ldebug = 0;
+
+    cout << "Checking MS in 1D"<<endl;
+
+    Float_t ene, xcrsec;
+    Float_t frecoil, eprime, qsq_ms;
+    Float_t relrate, domega;
+    Float_t theta_deg, theta_rad, dtheta_rad, theta_ms_rad;
+
+    Int_t inaccept;
+
+    Int_t Nang=100000;
+    Float_t anglo_deg, anghi_deg;   // degrees
+    Float_t anglo = 1;            // lowest angle
+    Float_t anghi = 10.0;         // highest 
+    Float_t angbite, xang;
+    Float_t angle_nom_deg = 5.0;   // HRS nominal angle
+    Float_t angle_nom_rad;
+    Float_t sth, cth, tth;
+    Float_t trk_sth, trk_cth, trk_tth;
+    Float_t xtrk, ytrk;
+    Float_t xctr,yctr,x1,y1,x2,y2;
+
+    Float_t zlen = 2.5;   // meters (dist of target to collimator)
+    Float_t zcol = 0.06;   // size of collimator (meters)
+
+    Float_t pi = 3.1415926;
+
+    histang0 = new TH1F("histang0","Accepted Angles in 1D (degr) ",100,0.2,10);
+    histang1 = new TH1F("histang1","Mult. Scatt. (rad) ",500,-0.05,0.05);
+    histang2 = new TH1F("histang2","Accept Fcn (rel. to central ang.) no MS",100,-0.1,0.1);
+    histang3 = new TH1F("histang3","Accept Fcn (rel. to central ang.) with MS",100,-0.1,0.1);
+    histang4 = new TH1F("histang4","Accept Fcn (rel. to central ang.) no MS, weighted",100,-0.1,0.1);
+    histang5 = new TH1F("histang5","Accept Fcn (rel. to central ang.) with MS, weighted",100,-0.1,0.1);
+    histang6 = new TH1F("histang6","qsq in accept",100,0,0.02);
+    histang7 = new TH1F("histang7","qsq_obs in accept",100,0,0.02);
+
+    angle_nom_rad = (pi/180.)* angle_nom_deg;
+    sth = TMath::Sin(angle_nom_rad);
+    cth = TMath::Cos(angle_nom_rad);
+    tth = sth/cth;
+
+    xctr = zlen * sth;
+    yctr = zlen * cth;
+    x1 = xctr - zcol/cth;
+    x2 = xctr + zcol/cth;
+    y1 = yctr + -1*tth*(x1-xctr);  // note, slope is negative.
+    y2 = yctr + -1*tth*(x2-xctr);  //  "  "
+
+    xang = (Float_t) Nang;
+    angbite = (anghi - anglo) / xang;
+
+    ene = 1.063;  // GeV
+
+    for (Int_t iang = 0; iang < Nang; iang++) {
+
+      anglo_deg = anglo + angbite * ((Float_t)iang);
+
+      anghi_deg = anglo_deg + angbite;
+
+      theta_deg = (0.5 * (anglo_deg + anghi_deg));
+      theta_rad = (pi/180.)* theta_deg;
+      dtheta_rad = (pi/180.)* angbite;
+
+      frecoil = 1 + (ene/195.)*(1-TMath::Cos(theta_rad));
+      eprime = ene/frecoil;
+      qsq = 2*ene*eprime*(1-TMath::Cos(theta_rad));  // warning: qsq must be defined
+      xcrsec = CalculateCrossSection(0, ene, theta_deg);
+      domega = 2 * pi * TMath::Sin(theta_rad) * dtheta_rad;
+      relrate = 10000 * xcrsec * domega;
+
+// Multiple scattering in lead
+
+      Float_t radlen = 0.1;
+      Float_t theta_sigma = (0.0136/ene) * TMath::Sqrt(radlen);
+      Float_t deltaMS, prob, prob2, xsign;
+
+      prob = gRandom->Rndm();
+
+      if (prob < 0.02) {  // flat tail
+  	  xsign = 1;
+          prob2 = gRandom->Rndm();
+          if (prob2 < 0.5) xsign = -1;
+          deltaMS = xsign * 10 * theta_sigma * gRandom->Rndm(); 
+      } else {
+          deltaMS = theta_sigma * gRandom->Gaus();
+      }
+
+      theta_ms_rad = theta_rad + deltaMS;
+      qsq_ms = 2*ene*eprime*(1-TMath::Cos(theta_ms_rad));  
+
+      histang1->Fill(deltaMS);
+
+      if (theta_ms_rad <= 0) continue;
+
+      trk_sth = TMath::Sin(theta_ms_rad);
+      trk_cth = TMath::Cos(theta_ms_rad);
+      trk_tth = trk_sth/trk_cth;
+
+      xtrk = (1./((1./trk_tth) + tth)) * zlen * (cth + tth*sth);
+      ytrk = xtrk/trk_tth;
+
+      inaccept = 0;
+
+      if ( xtrk > x1 && xtrk < x2 && ytrk < y1 && ytrk > y2) inaccept = 1;
+
+      if (ldebug && (theta_deg > 4 && theta_deg < 6)) {
+        cout << endl<<"angle of track "<<theta_deg<<endl;
+        cout << "collim "<<zlen<<"  "<<zcol<<endl;
+        cout << "Angle factors (nom) "<<sth<<"  "<<cth<<"  "<<tth<<endl;
+        cout << "Angle factors (trk) "<<trk_sth<<"  "<<trk_cth<<"  "<<trk_tth<<endl; 
+	cout << "x1,y1  "<<x1<<"   "<<y1<<endl;
+	cout << "x2,y2  "<<x2<<"   "<<y2<<endl;
+        cout << "xtrk, ytrk "<<xtrk<<"  "<<ytrk<<endl;
+        cout << "relrate = "<<relrate<<"  "<<xcrsec<<"  "<<domega<<endl;
+        if (inaccept) cout << "--------------------- IN ACCEPTANCE "<<endl;
+      }
+
+      if (inaccept) {
+
+          histang0->Fill(theta_deg);
+
+   	  histang2->Fill(theta_rad - angle_nom_rad);  // no MS
+       
+	  histang3->Fill(theta_ms_rad - angle_nom_rad);  // with MS
+
+	  histang4->Fill(theta_rad - angle_nom_rad, relrate);  // no MS, weight by rate
+       
+	  histang5->Fill(theta_ms_rad - angle_nom_rad, relrate);  // with MS, weight by rate
+
+          histang6->Fill(qsq, relrate);
+
+          histang7->Fill(qsq_ms, relrate);
+
+      }
+    }
+ 
+  }  // check_ms_1D
+
+
   if (neutron_power) {  
 
     // To integrate the power differentially with angle
