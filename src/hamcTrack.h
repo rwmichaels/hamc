@@ -182,10 +182,10 @@ class hamcTrack {
       
      static const Int_t debug=0;
 
+     hamcTrack& operator=(const hamcTrack& trk);
 
   private: 
 
-     hamcTrack& operator=(const hamcTrack& trk);
      hamcTrack(const hamcTrack& trk);
 
 #ifndef NODICT
@@ -198,3 +198,4 @@ ClassDef (hamcTrack, 0)   // Track
 
 
    
+

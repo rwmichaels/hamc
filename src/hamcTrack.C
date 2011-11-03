@@ -44,6 +44,49 @@ hamcTrack::~hamcTrack() {
   delete tvect_orig;
 }
 
+hamcTrack& hamcTrack::operator=(const hamcTrack& rhs) {
+  *tvect = *rhs.tvect;
+  *tvect_orig = *rhs.tvect_orig;
+  xtrans = rhs.xtrans;
+  thtrans = rhs.thtrans;
+  ytrans = rhs.ytrans;
+  phtrans = rhs.phtrans;
+  dpptrans = rhs.dpptrans;
+  ztrans = rhs.ztrans;
+  x0 = rhs.x0;
+  th0 = rhs.th0;
+  y0 = rhs.y0;
+  ph0 = rhs.ph0;
+  dpp0 = rhs.dpp0;
+  z0 = rhs.z0;
+  th_ms = rhs.th_ms;
+  ph_ms = rhs.ph_ms;
+  thtgt = rhs.thtgt;
+  phtgt = rhs.phtgt;
+  E0 = rhs.E0;
+  P0 = rhs.P0;
+  E0sigma = rhs.E0sigma;
+  P0sigma = rhs.P0sigma;
+  energy = rhs.energy;
+  pmom = rhs.pmom;
+  mass = rhs.mass;
+  theta = rhs.theta;
+  phi = rhs.phi;
+  theta_deg = rhs.theta_deg;
+  phi_deg = rhs.phi_deg;
+  dP0_iter = rhs.dP0_iter;
+  pnoms_x = rhs.pnoms_x;
+  pnoms_y = rhs.pnoms_y;
+  pnoms_z = rhs.pnoms_z;
+  plab_x = rhs.plab_x;
+  plab_y = rhs.plab_y;
+  plab_z = rhs.plab_z;
+  xdet = rhs.xdet;
+  ydet = rhs.ydet;
+  return *this;
+}
+
+
 Int_t hamcTrack::InitMass() {
 
   mass=0;
@@ -257,7 +300,7 @@ void hamcTrack::MultScatt(Float_t radlen, Int_t where) {
 // Ideally these variables should NOT be here; it makes the class opaque.  
 // Should fix this later.
 
-  Int_t use_resol = 1;
+  Int_t use_resol = 0;
 
   Int_t use_mscat = 1;
 
@@ -352,7 +395,7 @@ void hamcTrack::MultScatt(hamcMultScatt *ms, Int_t where) {
 // Ideally these variables should NOT be here; it makes the class opaque.  
 // Should fix this later.
 
-  Int_t use_resol = 1;
+  Int_t use_resol = 0;
 
   Int_t use_mscat = 1;
 
@@ -396,6 +439,10 @@ void hamcTrack::MultScatt(hamcMultScatt *ms, Int_t where) {
 
   th_ms = tvect->GetTheta();
   ph_ms = tvect->GetPhi();
+
+  // Following is obsolete.  MS should NOT be applied this way 
+  // (plab is in different frame from Transport vector !)
+  // Fortunately it does not affect qsq_obs anymore.
 
   plab_x = pnoms_x + pmom * (dtheta1 + hkick);
   plab_y = pnoms_y + pmom * (dtheta2 + vkick) ;
