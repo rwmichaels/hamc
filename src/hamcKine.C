@@ -324,7 +324,7 @@ Int_t hamcKine::GenerateElastic() {
 // (the beam already had it's energy subtracted, and further subtraction will happen
 //  on the weay out of the target in GenerateOut called by hamcEvent)
 
-   eprime = eprime - dE_int;  
+  eprime = eprime - dE_int;  
 
   return 1;
 }
@@ -333,11 +333,13 @@ Int_t hamcKine::GenerateOut(hamcExpt *expt) {
 
   // Computes the qsq observed.
 
+  Int_t ldebug = 0;
+
   Float_t px1,py1,pz1,px2,py2,pz2;
   Float_t dE;
 
   beam = expt->event->beam;
-  track = expt->event->trackout[0];
+  track = expt->event->tracksieve;  // use tracks in sieve slit region
   hamcEloss *eloss = expt->physics->eloss;
 
   if (!beam || !track) {
@@ -364,32 +366,55 @@ Int_t hamcKine::GenerateOut(hamcExpt *expt) {
   py2 = track->GetPy();
   pz2 = track->GetPz();
 
+
+  Float_t bene = expt->event->beam->GetEnergy();  // microAmps (uA)
+  Float_t theta = PI * expt->GetSpectrom(0)->GetScattAngle() / 180;
+  Int_t which_hrs = expt->GetSpectrom(0)->which_spectrom;             // affects angle convention
+
+// Sign for phi(Transport), i.e. horizontal angle:
+// Use the sign convention for HRS, that it is +1/-1 for R/L HRS.
+// However, if we have the Warm Septum, there is only a R-HRS transport, so we need to keep sign +1.
+
+  Float_t xsign = 1.0;
+  if (which_hrs == LEFTHRS) xsign = -1.0;  // sign convention, see above
+  if (expt->GetSpectrom(0)->IsWarmSeptum()) xsign = 1.0;
+
+  Float_t mcph1, mcth1, mcp1;
+  Float_t mcph, mcth, mcp;
+
   // The following is the "observed" qsq.
   // The incoming beam is assumed to go along Z axis (that's what Podd assumes).
   // But there are Elosses in the beam.
   // The outgoing track has all mult scattering and all Elosses
 
-  qsq_obs = -1.0*((ebeam-eprime)*(ebeam-eprime)-((px1-px2)*(px1-px2)+(py1-py2)*(py1-py2)+(pz1-pz2)*(pz1-pz2)));
-  Float_t mcph = track->ph0;
-  Float_t mcth = track->th0;
-  Float_t mcp  = track->GetPmom();
+  mcph1 = track->tvect->GetPhi();    // Transport phi (tangent of horizontal angle)
+  mcth1 = track->tvect->GetTheta();  // Transport theta (tangent of vertical angle)
+  mcp1  = track->GetPmom();          // track momentum
 
-  Float_t theta = PI * expt->GetSpectrom(0)->GetScattAngle() / 180;
-  Int_t which_hrs = expt->GetSpectrom(0)->which_spectrom;             // affects angle convention
-  Float_t xsign = 1.0;
-  if (which_hrs == LEFTHRS) xsign = -1.0;  // sign convention, see above
+  // bene = beam energy
+  // The following is the correct formula because it uses MS applied to Transport angles
 
-  Float_t bene = expt->event->beam->GetEnergy();  // microAmps (uA)
+  qsq_obs =  2*bene*mcp1*(1-((TMath::Cos(theta)+(xsign*(TMath::Sin(theta))*mcph1))/(TMath::Sqrt(1+mcth1*mcth1+mcph1*mcph1))));
+
+  mcph = track->ph0;
+  mcth = track->th0;
+  mcp  = track->GetPmom();
 
   qsq_atrk = 2*bene*mcp*(1-((TMath::Cos(theta)+(xsign*(TMath::Sin(theta))*mcph))/(TMath::Sqrt(1+mcth*mcth+mcph*mcph))));
 
 // In Podd, this would be qsq_atrk for left HRS (L) with xsign = -1.  (For R-HRS, xsign = +1).
 //T->Draw("EK_L.Q2:2*(3.484)*(L.gold.p)*(1-((TMath::Cos(14.0*3.14159/180))+(xsign*(TMath::Sin(14.0*3.14159/180.))*L.gold.ph))/(TMath::Sqrt(1+L.gold.th*L.gold.th+L.gold.ph*L.gold.ph)))>>hqlc",ccut);
 
-  //   cout << "\n\nObserved Qsq "<<endl;
-  //   cout << "Beam "<<ebeam<<"  "<<px1<<"  "<<py1<<"  "<<pz1<<endl;
-  //   cout << "Track "<<eprime<<"  "<<px2<<"  "<<py2<<"  "<<pz2<<endl;
-  //   cout << "Qsq_obs  = "<<qsq_obs<<"   diff "<<qsq_obs-qsq<<endl;
+  if (ldebug) {
+     cout << "\n\nObserved Qsq "<<endl;
+     cout << "Beam "<<ebeam<<"  "<<px1<<"  "<<py1<<"  "<<pz1<<endl;
+     cout << "Track "<<eprime<<"  "<<px2<<"  "<<py2<<"  "<<pz2<<endl;
+     cout << "Qsq_obs  = "<<qsq_obs<<"   diff "<<qsq_obs-qsq<<endl;
+     cout << "qsq_atrk "<<qsq_atrk<<"  qsq alone "<<qsq<<endl;
+     cout << "Phi "<<mcph1 << "  "<<mcph<<endl;
+     cout << "theta "<<mcth1<<"   "<<mcth<<endl;
+     cout << "mcp " << mcp1<<"    "<<mcp<<endl;
+  }
 
   qsqfr = -1;
   if (qsq != 0) {
@@ -472,7 +497,7 @@ Int_t hamcKine::ComputeKine() {
   // the beam was applied, yet no Eloss on the outgoing particle.
 
   qsq = -1.0*((ebeam-eprime)*(ebeam-eprime)-((px1-px2)*(px1-px2)+(py1-py2)*(py1-py2)+(pz1-pz2)*(pz1-pz2)));
-  
+
   //  cout << "\n\nTrue Qsq "<<endl;
   // cout << "Beam "<<ebeam<<"  "<<px1<<"  "<<py1<<"  "<<pz1<<endl;
   // cout << "Track "<<pprime<<"  "<<px2<<"  "<<py2<<"  "<<pz2<<endl;
