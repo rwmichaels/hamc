@@ -55,11 +55,21 @@ Int_t hamcEvent::Init(hamcExpt* expt) {
     }
   }
 
+  tracknoms = new hamcTrackOut();
+  tracksieve = new hamcTrackOut();
+  tracksievenoms = new hamcTrackOut();
+
   expt->inout->AddToNtuple("inaccept",&inaccept);
   expt->inout->AddToNtuple("xcol",&xcol);
   expt->inout->AddToNtuple("ycol",&ycol);
   expt->inout->AddToNtuple("thcol",&thcol);
   expt->inout->AddToNtuple("phcol",&phcol);
+  expt->inout->AddToNtuple("thnoms",&thnoms);
+  expt->inout->AddToNtuple("phnoms",&phnoms);
+  expt->inout->AddToNtuple("thsiv",&thsiv);
+  expt->inout->AddToNtuple("phsiv",&phsiv);
+  expt->inout->AddToNtuple("thsinoms",&thsinoms);
+  expt->inout->AddToNtuple("phsinoms",&phsinoms);
   expt->inout->AddToNtuple("xsep",&xsep);
   expt->inout->AddToNtuple("ysep",&ysep);
 
@@ -92,6 +102,9 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
    inaccept = 1;
    xcol = -999;  ycol = -999;
    thcol = -999; phcol = -999;
+   thnoms = -999; phnoms = -999;
+   thsiv = -999; phsiv = -999;
+   thsinoms = -999; phsinoms = -999;
    xsep = -999;  ysep = -999;
 
 // Loop over spectrometers
@@ -100,16 +113,23 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
 
      hamcSpecHRS *spect = expt->GetSpectrom(ispect);
      hamcTrackOut *track = trackout[ispect]; // Assumes 1 track per spectrom.
+     
      if (!track) continue;
 
      track->Generate(expt);
+     //     cout << "\n\nInitial track out "<<endl;
+     //     track->Print();
+
+     *tracknoms = *track;
+     *tracksievenoms = *track;
+
      track->MultScatt(expt, ITARGET_FULL);
+
+     *tracksieve = *track;
+
      track->GenerateOut(expt);
 
      expt->physics->Generate(expt); 
-
-// Weight by cross section (optionally used for some histograms)
-// The 100 is just for convenience.
 
      Float_t angcut = expt->GetAngCut();
 
@@ -121,6 +141,9 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
         }
         if ((evnum%10000)==0) cout << "Warning !  Using (w/MS) angle cut "<<angcut<<endl;
      }
+
+// Weight by cross section (optionally used for some histograms)
+// The 100 is just for convenience.
 
      Float_t weight = 100.*expt->physics->GetCrossSection(); 
  
@@ -139,6 +162,7 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
 
        if (brkpoint != ITARGET) {
 
+         tracknoms->Transport(spect->transport, brkpoint);
          track->Transport(spect->transport, brkpoint);
 
 // Here it's assumed the break points are exclusive
@@ -164,6 +188,12 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
 	   ycol = track->GetTransY();
            thcol = track->GetTransTheta();
            phcol = track->GetTransPhi();
+           thnoms = tracknoms->GetTransTheta();
+           phnoms = tracknoms->GetTransPhi();
+           thsiv = tracksieve->GetTransTheta();
+           phsiv = tracksieve->GetTransPhi();
+           thsinoms = tracksievenoms->GetTransTheta();
+           phsinoms = tracksievenoms->GetTransPhi();
            Float_t xcut = 0.043; 
            Float_t ycut = 0.0175;
            Float_t zzz = 0.83;
@@ -175,8 +205,8 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
 	   //           if (ychk < -1*ycut || ychk > ycut) inaccept = 0;
  	 }
          if (brkpoint == ICOLLIM2) {
-           track->Eloss(expt, spect->Aperture(ibrk), brkpoint);
-	 }
+	     track->Eloss(expt, spect->Aperture(ibrk), brkpoint);
+      	 }
          if (brkpoint == ISEPTIN) {
 	   xsep = track->GetTransX();
 	   ysep = track->GetTransY();
