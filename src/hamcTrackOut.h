@@ -23,6 +23,8 @@ class hamcTrackOut : public hamcTrack {
      hamcTrackOut();
      hamcTrackOut(std::string pid, Float_t energy, Float_t x, Float_t theta, Float_t y, Float_t phi, Float_t dp);
      virtual ~hamcTrackOut(); 
+
+     Float_t dpp,qsq,qsq_obs,qsq_atrk,qsqfr;
    
      Int_t Init(Int_t ispect, hamcExpt *expt);
      Int_t Generate(hamcExpt *expt);
@@ -51,7 +53,6 @@ class hamcTrackOut : public hamcTrack {
      Float_t xsign;
      Float_t tgt_mass;
      Float_t theta_iteration;
-     Float_t dpp,qsq,qsq_obs,qsq_atrk,qsqfr;
      Int_t which_hrs;
      Float_t xfpd,yfpd,thfpd,phfpd;
      Float_t xgui,ygui,thgui,phgui;  // Guido's focal plane variables.
@@ -61,7 +62,6 @@ class hamcTrackOut : public hamcTrack {
      hamcTransVect *tvect_guido;
 
      hamcTrackOut(const hamcTrackOut& phys);
-     hamcTrackOut& operator=(const hamcTrackOut& phys);
 
      TH2F *htp;
 
