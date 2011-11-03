@@ -206,7 +206,16 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "phi0",
                           "Phi(transport) at target",
-                          &phtgt, nbin, -0.04, 0.04);
+                          &ph0, nbin, -0.04, 0.04);
+
+   expt->inout->BookHisto(kTRUE, kTRUE, ICOLLIM, "phtrans1",
+                          "Phi(transport) with mult. scatt",
+                          &phtrans, nbin, -0.04, 0.04);
+
+   expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "phtrans2",
+                          "Phi(transport) with mult. scatt",
+                          &phtrans, nbin, -0.04, 0.04);
+
 
 // For designing the collimator
    expt->inout->BookHisto(kFALSE, kFALSE, ICOLLIM, "xycoll",
@@ -227,6 +236,17 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 
    expt->inout->BookHisto(kFALSE, kTRUE, ICOLLIM2, "xycoll2a",
 			  "X-Y at collimator2 in acceptance",
+			  &ytrans, nbin, -0.5, 0.5,
+                          &xtrans, nbin, -0.5, 0.5);
+
+// For designing the collimator3
+   expt->inout->BookHisto(kFALSE, kFALSE, ICOLLIM3, "xycoll3",
+			  "X-Y at collimator3",
+			  &ytrans, nbin, -0.5, 0.5,
+                          &xtrans, nbin, -0.5, 0.5);
+
+   expt->inout->BookHisto(kFALSE, kTRUE, ICOLLIM3, "xycoll3a",
+			  "X-Y at collimator3 in acceptance",
 			  &ytrans, nbin, -0.5, 0.5,
                           &xtrans, nbin, -0.5, 0.5);
 
@@ -417,6 +437,7 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
     expt->inout->AddToNtuple("dpp",&dpp);
     expt->inout->AddToNtuple("qsq",&qsq);
     expt->inout->AddToNtuple("qsq_obs",&qsq_obs);
+    expt->inout->AddToNtuple("qsq_atrk",&qsq_atrk);
     expt->inout->AddToNtuple("qsqfr",&qsqfr);
     expt->inout->AddToNtuple("theta",&theta);
     expt->inout->AddToNtuple("phi",&phi);
@@ -434,6 +455,8 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
     expt->inout->AddToNtuple("phtgt",&phtgt);
     
     expt->inout->AddToNtuple("thchk",&thchk);
+    expt->inout->AddToNtuple("phms",&ph_ms);
+    expt->inout->AddToNtuple("thms",&th_ms);
 
     if (use_guido) {
       expt->inout->AddToNtuple("xgui",&xgui);
