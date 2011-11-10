@@ -160,7 +160,7 @@ class hamcTrack {
   protected:
 
      virtual Int_t Init();
-     virtual Int_t InitMass();
+     virtual Int_t InitVars();
      virtual void UpdateTrans();
 
      std::string trktype;  // "beam", "out", etc
@@ -179,6 +179,8 @@ class hamcTrack {
      Float_t xdet, ydet;   // detector frame vars. (in focal plane)
  
      Bool_t did_init, inaccept;     
+
+     Int_t use_mscat;
       
      static const Int_t debug=0;
 

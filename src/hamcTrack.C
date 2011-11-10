@@ -29,14 +29,14 @@ hamcTrack::hamcTrack(string pd) : origin(ITARGET),pid(pd),E0(0),P0(0),P0sigma(0)
   trktype="none";
   tvect = new hamcTransVect();
   tvect_orig = new hamcTransVect();
-  InitMass();
+  InitVars();
 }
 
 hamcTrack::hamcTrack(string pd, Float_t ee, Float_t x, Float_t th, Float_t y, Float_t ph, Float_t dp) : origin(ITARGET),pid(pd),E0(ee),P0sigma(0),energy(ee),theta(0),phi(0),ms_collim(0),inaccept(kFALSE) {
   trktype="none";
   tvect = new hamcTransVect(x, th, y, ph, dp);   // gets modified by transport
   tvect_orig = new hamcTransVect(x, th, y, ph, dp);  // origin of track.
-  InitMass();
+  InitVars();
 }
 
 hamcTrack::~hamcTrack() {
@@ -87,7 +87,9 @@ hamcTrack& hamcTrack::operator=(const hamcTrack& rhs) {
 }
 
 
-Int_t hamcTrack::InitMass() {
+Int_t hamcTrack::InitVars() {
+
+  use_mscat = 1;  // default should be 1, but can turn it off here.
 
   mass=0;
   if (pid=="electron") mass=5.11e-4;
@@ -297,12 +299,7 @@ void hamcTrack::MultScatt(Float_t radlen, Int_t where) {
 // Resets track origin to present location.
 // The transport model must provide transport from this new origin.
 
-// Ideally these variables should NOT be here; it makes the class opaque.  
-// Should fix this later.
-
   Int_t use_resol = 0;
-
-  Int_t use_mscat = 1;
 
   Float_t vresol,hresol,vkick,hkick;
 
@@ -392,12 +389,7 @@ void hamcTrack::MultScatt(hamcMultScatt *ms, Int_t where) {
 // Resets track origin to present location.
 // The transport model must provide transport from this new origin.
 
-// Ideally these variables should NOT be here; it makes the class opaque.  
-// Should fix this later.
-
   Int_t use_resol = 0;
-
-  Int_t use_mscat = 1;
 
   Float_t vresol,hresol,vkick,hkick;
 
