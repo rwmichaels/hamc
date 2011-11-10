@@ -59,6 +59,8 @@ class hamcKine {
      void Clear();
      Int_t CheckInit();
 
+     Int_t use_eloss;
+
      Int_t iproc;
      static const Int_t proc_undef = -1 ;
      static const Int_t proc_elastic = 0;

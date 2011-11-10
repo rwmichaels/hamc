@@ -31,6 +31,9 @@ ClassImp(hamcKine)
 
 hamcKine::hamcKine(): did_init(kFALSE)
 {
+
+  use_eloss = 1;  // default is to use Eloss, but it can be turned off here.
+
   xbjlo = 0.01;  // Default cuts for DIS
   xbjhi = 0.99;
   qsqlo = 1;
@@ -296,7 +299,7 @@ Int_t hamcKine::GenerateElastic() {
   if (iteration == 0)
 
     eprime = ebeam / ( 1 + ((ebeam/mass_tgt) * 
-			    (1 - TMath::Cos(theta))) );
+		    	    (1 - TMath::Cos(theta))) );
 
   else if (iteration == 1) {
 
@@ -324,7 +327,7 @@ Int_t hamcKine::GenerateElastic() {
 // (the beam already had it's energy subtracted, and further subtraction will happen
 //  on the weay out of the target in GenerateOut called by hamcEvent)
 
-  eprime = eprime - dE_int;  
+  if (use_eloss) eprime = eprime - dE_int;  
 
   return 1;
 }
@@ -353,7 +356,7 @@ Int_t hamcKine::GenerateOut(hamcExpt *expt) {
   if (eloss) dE = eloss->GetDeExternOut() 
                 + eloss->GetDeIonOut();
 
-  eprime = eprime - dE;
+  if (use_eloss) eprime = eprime - dE;
 
   track->UpdateFourMom(eprime);
 
@@ -395,7 +398,6 @@ Int_t hamcKine::GenerateOut(hamcExpt *expt) {
   // The following is the correct formula because it uses MS applied to Transport angles
 
   qsq_obs =  2*bene*mcp1*(1-((TMath::Cos(theta)+(xsign*(TMath::Sin(theta))*mcph1))/(TMath::Sqrt(1+mcth1*mcth1+mcph1*mcph1))));
-
   mcph = track->ph0;
   mcth = track->th0;
   mcp  = track->GetPmom();
@@ -405,8 +407,14 @@ Int_t hamcKine::GenerateOut(hamcExpt *expt) {
 // In Podd, this would be qsq_atrk for left HRS (L) with xsign = -1.  (For R-HRS, xsign = +1).
 //T->Draw("EK_L.Q2:2*(3.484)*(L.gold.p)*(1-((TMath::Cos(14.0*3.14159/180))+(xsign*(TMath::Sin(14.0*3.14159/180.))*L.gold.ph))/(TMath::Sqrt(1+L.gold.th*L.gold.th+L.gold.ph*L.gold.ph)))>>hqlc",ccut);
 
+  qsqfr = -1;
+  if (qsq != 0) {
+    qsqfr = (qsq_obs-qsq)/qsq;
+    //   cout << "Fractional "<<qsqfr <<endl;
+  }
+
   if (ldebug) {
-     cout << "\n\nObserved Qsq "<<endl;
+     cout << "\nObserved Qsq "<<endl;
      cout << "Beam "<<ebeam<<"  "<<px1<<"  "<<py1<<"  "<<pz1<<endl;
      cout << "Track "<<eprime<<"  "<<px2<<"  "<<py2<<"  "<<pz2<<endl;
      cout << "Qsq_obs  = "<<qsq_obs<<"   diff "<<qsq_obs-qsq<<endl;
@@ -414,13 +422,10 @@ Int_t hamcKine::GenerateOut(hamcExpt *expt) {
      cout << "Phi "<<mcph1 << "  "<<mcph<<endl;
      cout << "theta "<<mcth1<<"   "<<mcth<<endl;
      cout << "mcp " << mcp1<<"    "<<mcp<<endl;
+     cout << "qsqfr = "<<qsqfr<<endl;
+     if (TMath::Sqrt(qsqfr*qsqfr) > 2e-2) cout << "Large qsqfr !!"<<endl;
   }
 
-  qsqfr = -1;
-  if (qsq != 0) {
-    qsqfr = (qsq_obs-qsq)/qsq;
-    //   cout << "Fractional "<<qsqfr <<endl;
-  }
 
   return 1;
 }
@@ -462,6 +467,7 @@ Int_t hamcKine::GenerateDis() {
  
 Int_t hamcKine::ComputeKine() {
 
+  Int_t ldebug = 0;
 
   Float_t px1,py1,pz1,px2,py2,pz2;
   Float_t sts, cts, sps, cps;
@@ -498,10 +504,18 @@ Int_t hamcKine::ComputeKine() {
 
   qsq = -1.0*((ebeam-eprime)*(ebeam-eprime)-((px1-px2)*(px1-px2)+(py1-py2)*(py1-py2)+(pz1-pz2)*(pz1-pz2)));
 
-  //  cout << "\n\nTrue Qsq "<<endl;
-  // cout << "Beam "<<ebeam<<"  "<<px1<<"  "<<py1<<"  "<<pz1<<endl;
-  // cout << "Track "<<pprime<<"  "<<px2<<"  "<<py2<<"  "<<pz2<<endl;
-  // cout << "Qsq = "<<qsq<<endl;
+  Float_t x1 = TMath::Sqrt(px1*px1 + py1*py1 + pz1*pz1);
+  Float_t x2 = TMath::Sqrt(px2*px2 + py2*py2 + pz2*pz2);
+  Float_t cloc = (px1*px2 + py1*py2 + pz1*pz2)/(x1*x2);
+
+  if (ldebug) {
+    cout << "\n\nTrue Qsq "<<endl;
+    cout << "Beam "<<ebeam<<"  "<<px1<<"  "<<py1<<"  "<<pz1<<endl;
+    cout << "eprime "<<eprime<<endl;
+    cout << "Track "<<pprime<<"  "<<px2<<"  "<<py2<<"  "<<pz2<<endl;
+    cout << "Qsq = "<<qsq<<endl;
+    cout << "Cosines "<<cts<<"  "<<cloc<<"  "<<cloc-cts<<endl;
+  }
 
   Float_t mass = mass_tgt;
   if (iproc == proc_dis) mass = mass_proton;
