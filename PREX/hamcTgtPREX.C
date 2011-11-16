@@ -33,19 +33,28 @@ Int_t hamcTgtPREX::Init(hamcExpt *expt) {
   vector<string> sdata; 
 
   Int_t islead=1;
+  Int_t isleadonly=0;
   Int_t isthinc12=0;
 
   sdata = expt->inout->GetStrVect("PREX_target");
   if (sdata.size()>=1) {
     strin = sdata[0];
     if (strin.CmpNoCase("thinc12")==0) {
+      islead = 0;
+      isthinc12 = 1;
+    }
+    if (strin.CmpNoCase("leadonly")==0) {
+      isleadonly = 1;
+      isthinc12 = 0;
+    }
+  }
+
+  cout << "PREX target choices.  islead = "<<islead<<"   isleadonly = "<<isleadonly<<"  isthinc12 = "<<isthinc12<<endl;
+
+  if (isthinc12) {
        cout << "hamcTgtPREX:: Using the thin C12 target only !"<<endl;
        components.push_back(new hamcTgtSlab(
            "diamond", 0, 0.0005, 0.00005, 0.0188, 12, 6, 11.25, 3.52));
-
-       islead = 0;
-       isthinc12 = 1;
-    }
   }
 
   
@@ -73,15 +82,17 @@ Int_t hamcTgtPREX::Init(hamcExpt *expt) {
   // Tgt_eff = 0.27 * Tgt_Len, accounts for radiative tail
   // not already in hamc event generation.
 
-  
   if (islead && !isthinc12) {
-    components.push_back(new hamcTgtSlab(
+    if (!isleadonly) components.push_back(new hamcTgtSlab(
        // name  id   len        elen     rlen   a   z   m      d
       "diamond", 0, 0.00015, 0.000041, 0.0188, 12, 6, 11.25, 3.52));
+
     components.push_back(new hamcTgtSlab(
       "lead",    1, 0.00050, 0.000135, 0.0056, 208, 82, 195, 11.35));
-    components.push_back(new hamcTgtSlab(
+
+    if (!isleadonly) components.push_back(new hamcTgtSlab(
       "diamond", 0, 0.00015, 0.000041, 0.0188, 12, 6, 11.25, 3.52));
+
   }
 
   expt->inout->AddToNtuple("zscat",&zscatt);
