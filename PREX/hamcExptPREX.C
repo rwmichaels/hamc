@@ -53,6 +53,10 @@ Int_t hamcExptPREX::Init(string sfile) {
   spectrom[0]->Init(this);
   spectrom[0]->Print();
 
+  prex_th0 = new TH1F("prex_th0","Theta generated and in fp (unweighted)", 600,2.0,8.0);
+  prex_th1 = new TH1F("prex_th1","Theta generated and in detector (unweighted)", 600,2.0,8.0);
+
+  prex_xy0 = new TH2F("prex_xy0","XY in focal plane",100,-0.7,0.2,100,-0.1,0.1);
   prex_xy1 = new TH2F("prex_xy1","XY at det (main peak)",100,-0.7,0.2,100,-0.1,0.1);
   prex_xy2 = new TH2F("prex_xy2","XY at det (A_T hole)",100,-0.7,0.2,100,-0.1,0.1);
   prex_xy3 = new TH2F("prex_xy3","XY at det (A_T and in Y band)",
@@ -146,6 +150,11 @@ void hamcExptPREX::EventAnalysis() {
 
   Float_t qsqloc = physics->kine->qsq;
 
+  Float_t theta = (180./3.14159)*physics->kine->theta;
+  Float_t sth = TMath::Sin(physics->kine->theta);
+  Float_t thwt = 1;
+  if (sth > 0) thwt = 1./sth;
+
   Float_t th0 = event->trackout[0]->th0;
   Float_t ph0 = event->trackout[0]->ph0;
 
@@ -153,7 +162,7 @@ void hamcExptPREX::EventAnalysis() {
   Float_t th = event->trackout[0]->thtrans;
   Float_t y = event->trackout[0]->ytrans;
   Float_t ph = event->trackout[0]->phtrans;
-  Float_t z = physics->GetCrossSection();
+  Float_t wt = 1e5*physics->GetCrossSection();
 
   Float_t th_deg = (180.0/PI) * event->trackout[0]->GetTheta();
 
@@ -161,105 +170,105 @@ void hamcExptPREX::EventAnalysis() {
 
   if (event->inaccept == 1) {
 
-    hpx1->Fill(x, z);
+    hpx1->Fill(x, wt);
 
     if (x > -0.07) { // 7 cm = 6 MeV (12.4 cm/%)
 
-      hqsq00->Fill(qsqloc, z);
-      hth00->Fill(th0, z);
-      hph00->Fill(ph0, z);
+      hqsq00->Fill(qsqloc, wt);
+      hth00->Fill(th0, wt);
+      hph00->Fill(ph0, wt);
 
       if (ph0 > -0.008 && ph0 < 0.010 && th0 > -0.035 && th0 < 0.035) {
-	hqsqmid->Fill(qsqloc, z);
+	hqsqmid->Fill(qsqloc, wt);
       }
 
 
 // tg_th slices here
 
       if (th0 > -0.06 && th0 < -0.035) {
-        hqsq01->Fill(qsqloc, z);
-        hth01->Fill(th0, z);
-        hph01->Fill(ph0, z);
+        hqsq01->Fill(qsqloc, wt);
+        hth01->Fill(th0, wt);
+        hph01->Fill(ph0, wt);
       }
 
       if (th0 > -0.035 && th0 < -0.025) {
-        hqsq02->Fill(qsqloc, z);
-        hth02->Fill(th0, z);
-        hph02->Fill(ph0, z);
+        hqsq02->Fill(qsqloc, wt);
+        hth02->Fill(th0, wt);
+        hph02->Fill(ph0, wt);
       }
 
       if (th0 > -0.025 && th0 < -0.010) {
-        hqsq03->Fill(qsqloc, z);
-        hth03->Fill(th0, z);
-        hph03->Fill(ph0, z);
+        hqsq03->Fill(qsqloc, wt);
+        hth03->Fill(th0, wt);
+        hph03->Fill(ph0, wt);
       }
 
       if (th0 > -0.010 && th0 < 0.010) {
-        hqsq04->Fill(qsqloc, z);
-        hth04->Fill(th0, z);
-        hph04->Fill(ph0, z);
+        hqsq04->Fill(qsqloc, wt);
+        hth04->Fill(th0, wt);
+        hph04->Fill(ph0, wt);
       }
 
       if (th0 > 0.01 && th0 < 0.025) {
-        hqsq05->Fill(qsqloc, z);
-        hth05->Fill(th0, z);
-        hph05->Fill(ph0, z);
+        hqsq05->Fill(qsqloc, wt);
+        hth05->Fill(th0, wt);
+        hph05->Fill(ph0, wt);
       }
 
       if (th0 > 0.025 && th0 < 0.035) {
-        hqsq06->Fill(qsqloc, z);
-        hth06->Fill(th0, z);
-        hph06->Fill(ph0, z);
+        hqsq06->Fill(qsqloc, wt);
+        hth06->Fill(th0, wt);
+        hph06->Fill(ph0, wt);
       }
 
       if (th0 > 0.035 && th0 < 0.06) {
-        hqsq07->Fill(qsqloc, z);
-        hth07->Fill(th0, z);
-        hph07->Fill(ph0, z);
+        hqsq07->Fill(qsqloc, wt);
+        hth07->Fill(th0, wt);
+        hph07->Fill(ph0, wt);
       }
 
 // tg_ph slices here
 
       if (ph0 > -0.02 && ph0 < -0.010) {
-        hqsq10->Fill(qsqloc, z);
-        hth10->Fill(th0, z);
-        hph10->Fill(ph0, z);
+        hqsq10->Fill(qsqloc, wt);
+        hth10->Fill(th0, wt);
+        hph10->Fill(ph0, wt);
       }
 
       if (ph0 > -0.01 && ph0 < -0.008) {
-        hqsq20->Fill(qsqloc, z);
-        hth20->Fill(th0, z);
-        hph20->Fill(ph0, z);
+        hqsq20->Fill(qsqloc, wt);
+        hth20->Fill(th0, wt);
+        hph20->Fill(ph0, wt);
       }
 
       if (ph0 > -0.008 && ph0 < -0.004) {
-        hqsq30->Fill(qsqloc, z);
-        hth30->Fill(th0, z);
-        hph30->Fill(ph0, z);
+        hqsq30->Fill(qsqloc, wt);
+        hth30->Fill(th0, wt);
+        hph30->Fill(ph0, wt);
       }
 
       if (ph0 > -0.004 && ph0 < 0.004) {
-        hqsq40->Fill(qsqloc, z);
-        hth40->Fill(th0, z);
-        hph40->Fill(ph0, z);
+        hqsq40->Fill(qsqloc, wt);
+        hth40->Fill(th0, wt);
+        hph40->Fill(ph0, wt);
       }
 
       if (ph0 > 0.004 && ph0 < 0.010) {
-        hqsq50->Fill(qsqloc, z);
-        hth50->Fill(th0, z);
-        hph50->Fill(ph0, z);
+        hqsq50->Fill(qsqloc, wt);
+        hth50->Fill(th0, wt);
+        hph50->Fill(ph0, wt);
       }
 
       if (ph0 > 0.01 && ph0 < 0.015) {
-        hqsq60->Fill(qsqloc, z);
-        hth60->Fill(th0, z);
-        hph60->Fill(ph0, z);
+        hqsq60->Fill(qsqloc, wt);
+        hth60->Fill(th0, wt);
+        hph60->Fill(ph0, wt);
       }
 
       if (ph0 > 0.015 ) {
-        hqsq70->Fill(qsqloc, z);
-        hth70->Fill(th0, z);
-        hph70->Fill(ph0, z);
+        hqsq70->Fill(qsqloc, wt);
+        hth70->Fill(th0, wt);
+        hph70->Fill(ph0, wt);
       }
 
 
@@ -301,7 +310,7 @@ void hamcExptPREX::EventAnalysis() {
 
   prex_theta->Fill(th_deg);
 
-// Extrapolate to Z of A_T detector (42.5 cm from focal plane)
+// Extrapolate to z of A_T detector (42.5 cm from focal plane)
   Float_t zextr = 0.425;
   Float_t xextr = x + th*zextr;
   Float_t yextr = y + ph*zextr;
@@ -310,17 +319,20 @@ void hamcExptPREX::EventAnalysis() {
 
   if (event->inaccept == 1) {
 
+    prex_xy0->Fill(xextr,yextr,wt);
+    prex_th0->Fill(theta, thwt);
+
     if (event->trackout[0]->ms_collim == 0) {
 
-       prex_xy1->Fill(xextr,yextr,z);
+       prex_xy1->Fill(xextr,yextr,wt);
 
-       if (yextr > ydetlo && yextr < ydethi) prex_x1->Fill(xextr,z);  // All within Y band
+       if (yextr > ydetlo && yextr < ydethi) prex_x1->Fill(xextr,wt);  // All within Y band
 
     } else {
 
       if( event->trackout[0]->ms_collim == 1) {
-           prex_xy2->Fill(xextr,yextr,z);
-           prex_x2->Fill(xextr,z);
+           prex_xy2->Fill(xextr,yextr,wt);
+           prex_x2->Fill(xextr,wt);
       }
 
 
@@ -329,8 +341,8 @@ void hamcExptPREX::EventAnalysis() {
 
         inatdet = 1;
 
-        prex_xy3->Fill(xextr,yextr,z);
-        if (event->trackout[0]->ms_collim==1) prex_x3->Fill(xextr,z);  // from A_T hole and in det.
+        prex_xy3->Fill(xextr,yextr,wt);
+        if (event->trackout[0]->ms_collim==1) prex_x3->Fill(xextr,wt);  // from A_T hole and in det.
 
         Int_t mtl_idx = target->GetMtlIndex();
         if (mtl_idx < 0 || mtl_idx >= target->GetNumMtl()) {
@@ -365,8 +377,9 @@ void hamcExptPREX::EventAnalysis() {
     if (xextr > xmain_lo && xextr < xmain_hi && 
         yextr > ymain_lo && yextr < ymain_hi) {
 
-         qsqf->Fill(qsqloc,z);
-         prex_xy4->Fill(xextr,yextr,z);
+         qsqf->Fill(qsqloc,wt);
+         prex_xy4->Fill(xextr,yextr,wt);
+         prex_th1->Fill(theta, thwt);
          prex_indet->Fill(th_deg);
 
     }

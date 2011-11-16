@@ -27,7 +27,8 @@ class hamcExptPREX : public hamcSingles {
      hamcExptPREX(const hamcExptPREX& expt);
      hamcExptPREX& operator=(const hamcExptPREX& expt);
 
-     TH2F *prex_xy1, *prex_xy2, *prex_xy3, *prex_xy4, *prex_xy5;
+     TH1F *prex_th0, *prex_th1;
+     TH2F *prex_xy0, *prex_xy1, *prex_xy2, *prex_xy3, *prex_xy4, *prex_xy5;
      TH1F *prex_x1, *prex_x2, *prex_x2a, *prex_x3;
      TH1F *prex_theta, *prex_indet;
      TH1F *hqsq1, *hqsq2, *hqsq3, *hqsq4, *hqsq5, *hqsq6, *hqsq7, *hqsq8;
