@@ -342,7 +342,8 @@ Int_t hamcKine::GenerateOut(hamcExpt *expt) {
   Float_t dE;
 
   beam = expt->event->beam;
-  track = expt->event->tracksieve;  // use tracks in sieve slit region
+  track = expt->event->trackout[0];  
+
   hamcEloss *eloss = expt->physics->eloss;
 
   if (!beam || !track) {
@@ -358,7 +359,7 @@ Int_t hamcKine::GenerateOut(hamcExpt *expt) {
 
   if (use_eloss) eprime = eprime - dE;
 
-  track->UpdateFourMom(eprime);
+  track->UpdateFourMom(eprime);  // because of this, must use trackout[0] above
 
   ebeam = beam->GetEnergy();  
   px1 = beam->GetNoMsPx();  // Want to use the no-Mult-Scatt variable for true Qsq
@@ -398,6 +399,7 @@ Int_t hamcKine::GenerateOut(hamcExpt *expt) {
   // The following is the correct formula because it uses MS applied to Transport angles
 
   qsq_obs =  2*bene*mcp1*(1-((TMath::Cos(theta)+(xsign*(TMath::Sin(theta))*mcph1))/(TMath::Sqrt(1+mcth1*mcth1+mcph1*mcph1))));
+
   mcph = track->ph0;
   mcth = track->th0;
   mcp  = track->GetPmom();
