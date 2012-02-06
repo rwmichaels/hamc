@@ -198,7 +198,7 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
   if (accept_test) {
     FILE *fd;
     char schar[200]; 
-    fd=fopen("./PREX/accept.dat", "r");
+    fd=fopen("accept.dat", "r");
     Double_t weisum=0;
     Double_t crcsum=0;
     Double_t asyavg;    
@@ -235,87 +235,47 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
 
     Float_t theta_degr, theta_rad, ene, crsec2;
 
-    for (Int_t itry=0; itry<20; itry++) {
+    for (Int_t itry=0; itry<10; itry++) {
 
       theta_degr = 5.0;
-      Float_t E0nom = 1.05;
+      Float_t E0nom = 2.2;
       ene = E0nom;
 
       if (itry==1) {
-	theta_degr = 3.5;
+	theta_degr = 4.5;
         ene = E0nom;
       }
       if (itry==2) {
-	theta_degr = 4.0;
-        ene = E0nom;
-      }
-      if (itry==3) {
-	theta_degr = 4.2;
-        ene = E0nom;
-      }
-      if (itry==4) {
-	theta_degr = 4.4;
-        ene = E0nom;
-      }
-      if (itry==5) {
-	theta_degr = 4.6;
-        ene = E0nom;
-      }
-      if (itry==6) {
 	theta_degr = 4.8;
         ene = E0nom;
       }
-      if (itry==7) {
+      if (itry==3) {
 	theta_degr = 5.0;
         ene = E0nom;
       }
-      if (itry==8) {
-	theta_degr = 5.2;
+      if (itry==4) {
+	theta_degr = 5.5;
         ene = E0nom;
       }
-      if (itry==9) {
-	theta_degr = 5.4;
-        ene = E0nom;
-      }
-      if (itry==10) {
-	theta_degr = 5.6;
-        ene = E0nom;
-      }
-      if (itry==11) {
-	theta_degr = 5.8;
-        ene = E0nom;
-      }
-      if (itry==12) {
+      if (itry==5) {
 	theta_degr = 6.0;
         ene = E0nom;
       }
-      if (itry==13) {
-	theta_degr = 6.2;
-        ene = E0nom;
-      }
-      if (itry==14) {
-	theta_degr = 6.4;
-        ene = E0nom;
-      }
-      if (itry==15) {
-	theta_degr = 6.6;
-        ene = E0nom;
-      }
-      if (itry==16) {
-	theta_degr = 6.8;
-        ene = E0nom;
-      }
-      if (itry==17) {
-	theta_degr = 7.0;
-        ene = E0nom;
-      }
-      if (itry==18) {
+      if (itry==6) {
 	theta_degr = 5.0;
-        ene = 1.055;
+        ene = 1.8;
       }
-      if (itry==19) {
+      if (itry==7) {
 	theta_degr = 5.0;
-        ene = 1.050;
+        ene = 2.4;
+      }
+      if (itry==8) {
+	theta_degr = 5.2;
+        ene = 2.4;
+      }
+      if (itry==9) {
+	theta_degr = 5.5;
+        ene = 2.4;
       }
 
       theta_rad = 3.1415926*theta_degr/180.0;
@@ -330,7 +290,7 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
       cout << "CHECK :  energy "<<ene<<"  theta "<<theta_degr<<endl;
       cout << "crsec  "<<crsec<<"    A0= "<<asy0<<"  A1= "<<asy1<<endl;
 // Warning: CalculateCrossSection needs qsq, a variable member of this class.
-      crsec2 = CalculateCrossSection(0, ene, theta_degr);  
+      crsec2 = CalculateCrossSection(2, ene, theta_degr);  
 
       cout << "crsec2 = "<<crsec2<<endl;
       Float_t xdif = (crsec - crsec2)/crsec;
@@ -432,60 +392,40 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
 
 
   if (quick_fom) {  
-
     
-    Float_t dcor[27];
-
-    // May 2, 2010: these corrections are B.S.   Don't use !
-    dcor[0] = 0.38;  dcor[1] = 0.33;  dcor[2]  = 0.20;  dcor[3] = 0.34;
-    dcor[4] = 0.49;  dcor[5] = 0.78;  dcor[6]  = 1.03;  dcor[7] = 1.12;
-    dcor[8] = 1.22;  dcor[9] = 1.31;  dcor[10]  = 1.35;  dcor[11] = 1.39;
-    dcor[12] = 1.51;  dcor[13] = 1.61;  dcor[14]  = 1.73;  dcor[15] = 1.93;
-    dcor[16] = 2.0;  dcor[17] = 2.16;  dcor[18]  = 2.20;  dcor[19] = 2.41;
-    dcor[20] = 2.74;  dcor[21] = 4.2;  dcor[22]  = 5.6;  dcor[23] = 8.4;
-    dcor[24] = 12.;  dcor[25] = 14.;  dcor[26]  = 16.;  
-
-
-    Int_t use_MCcorr = 0;  // to use MC correcton or not
-    Float_t xnfact = 0.484;
-
     Int_t itgt = 0;
     if (whichmodel == HORPB) itgt = 1;
 
-    Float_t angcut = -2;     // degrees
+    Int_t fdebug = 0;
 
-  
     hd1 = new TH1F("hd1","Diff of crsec to lookup",200,-1,1);
-    hfom1 = new TH1F("hfom1","sensitivity vs energy",200,0.65,1.25);
-    hfom2 = new TH1F("hfom2","FOM (a.u.) vs energy",200,0.65,1.25);
-    hfom3 = new TH1F("hfom3","FOM (a.u.) vs qsq",200,0.004,0.01015);
-    hfom4 = new TH1F("hfom4","Raw dR/R(%) vs qsq",200,0.004,0.01015);
-    hfom5 = new TH1F("hfom5","Total dR/R(%) vs qsq",200,0.004,0.01015);
-    hfom6 = new TH1F("hfom6","1-arm Rate(MHz) vs qsq",200,0.004,0.01015);
-    hfom7 = new TH1F("hfom7","Sensitivity(dA/A %) vs qsq",200,0.004,0.01015);
-    hfom8 = new TH1F("hfom8","Phys Asym (p_e=1) vs qsq",200,0.004,0.01015);
-    hfom9 = new TH1F("hfom9","Avg qsq vs E",200,0.9,1.2);
-    hfom10 = new TH1F("hfom10","dA/A (%) vs qsq",200,0.004,0.01015);
-    hfom11 = new TH1F("hfom11","Old Acceptance Function",600,3,8);
-    hfom12 = new TH1F("hfom12","Correction factor to Acceptance",600,3,8);
-    hfom13 = new TH1F("hfom13","Data-Corrected Acceptance Function",600,3,8);
-
+    hfom1 = new TH1F("hfom1","sensitivity vs energy",200,0.5,3.4);
+    hfom2 = new TH1F("hfom2","FOM (a.u.) vs energy",200,0.5,3.4);
+    hfom3 = new TH1F("hfom3","FOM (a.u.) vs qsq",200,0.004,0.082);
+    hfom4 = new TH1F("hfom4","Raw dR/R(%) vs qsq",200,0.004,0.082);
+    hfom5 = new TH1F("hfom5","Total dR/R(%) vs qsq",200,0.004,0.082);
+    hfom6 = new TH1F("hfom6","1-arm Rate(MHz) vs qsq",200,0.002,0.082);
+    hfom7 = new TH1F("hfom7","Sensitivity(dA/A %) vs qsq",200,0.004,0.082);
+    hfom8 = new TH1F("hfom8","Phys Asym (p_e=1) vs qsq",200,0.004,0.082);
+    hfom9 = new TH1F("hfom9","Avg qsq vs E",200,0.6,3.4);
+    hfom10 = new TH1F("hfom10","dA/A (%) vs qsq",200,0.004,0.082);
 
     Float_t tdens = expt->target->GetMtlDensity(itgt);  // tgt density (g/cm^3)
-    Float_t tlen = expt->target->GetMtlEffLen(itgt);  // tgt len (m)
+    Float_t tlen = expt->target->GetMtlEffLen(itgt);    // tgt len (m)
     tlen = tlen*100;                        // need cm
     Float_t current = expt->event->beam->beam_current;  // microAmps (uA)
     current = current * 6.25e12;    // 100 uA = 6.25e14 e- / sec
     Float_t anum = expt->target->GetAscatt();    // atomic num.
+    Float_t mtgt = expt->target->GetMass();      // mass of target
     Float_t pol = 0.85;
-    Float_t polerr = 0.015;
-    Float_t domega = 0.0037;
-    Float_t datarate = 4.4e8;
+    Float_t polerr = 0.010;
+    Float_t domega = 0.0034;
 
     cout << "Check FOM vs Energy "<<endl;
+    if (anum == 48) cout << "Calcium 48 study "<<endl;
     cout << "Tgt  A = "<<anum<<"    tdens = "<<tdens<<"   tlen = "<<tlen<<endl;
-    cout << "Current = "<<current<<endl;
-    cout << "Polarization = "<<pol<<"    polerr "<<polerr<<endl;
+    cout << "Current = "<<current<<"  = "<<current/6.25e12<<" uA "<<endl;
+    cout << "Polarization = "<<pol<<"   polerr "<<polerr<<"  =  "<<100*polerr/pol<<" % "<<endl;
 
     FILE *fd;
     char schar[200]; 
@@ -505,11 +445,10 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
       Float_t blowup, drrtot;
 
       Float_t x1sum=0;  
-      Float_t x2sum=0;
 
-      for (Int_t iene=0; iene < 96; iene++) {
+      for (Int_t iene=0; iene < 62; iene++) {
  
-        ene = 0.72 + 0.005*((Float_t)iene); // GeV
+        ene = 0.6 + 0.05*((Float_t)iene); // GeV
 
         ratesum = 0;
         xnorm=0;
@@ -523,79 +462,51 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
         while(fgets(schar,100,fd)!=NULL) {
           sscanf(schar, "%f  %f", &theta_degr, &xacc);
 
-	  //          if (theta_degr < angcut) continue;
-
-	  // offset to simulate shift in Qsq
-	  //  theta_degr += 0.25;
-
           theta_rad = 3.1415926*theta_degr/180.0;
 
           CrossSection(ene,theta_rad,0);  // uses lookup
 
-          Float_t frecoil = 1 + (ene/195.)*(1-TMath::Cos(theta_rad));
+          Float_t frecoil = 1 + (ene/mtgt)*(1-TMath::Cos(theta_rad));
           Float_t eprime = ene/frecoil;
           qsq = 2*ene*eprime*(1-TMath::Cos(theta_rad));
-          xcrsec = CalculateCrossSection(0, ene, theta_degr);
-          xdiff = xcrsec - crsec;
-          hd1->Fill(xdiff); 
 
-  // Lookup correction to MC
-          Float_t xcor = 1;
-
-          for (Int_t icc=0; icc<26; icc++) {
-	    Float_t anglo = 0.068 + ((Float_t)(icc-1)) * 0.002;
-            if (theta_rad > anglo && theta_rad < anglo+0.002) {
-	      xcor = dcor[icc] + ((theta_rad-anglo)/0.002) * (dcor[icc+1]-dcor[icc]);
-              xcor = xcor * xnfact;
-              goto done1;
-	    }
-	  }
- done1:
-          if (iene == 0) {
-	    hfom11->Fill(theta_degr,xacc);
-	    hfom12->Fill(theta_degr,xcor);
-	    hfom13->Fill(theta_degr,xcor*xacc);
-            x1sum += xacc;
-            x2sum += xcor*xacc;
-	  }
+	  // this was a cross-check for Pb but doesn't work well for Ca48 yet
+	  //          xcrsec = CalculateCrossSection(0, ene, theta_degr);
+	  //          xdiff = xcrsec - crsec;
+	  //          hd1->Fill(xdiff); 
 
           daa = InterpAsym(ene, theta_rad);  // This sets asy0 and asy1 too
 
-          Float_t xfact = xacc;
-          if (use_MCcorr) xfact = xfact * xcor;
-
-          rate = xfact * current * xcrsec * 0.602 * tlen * tdens * domega / anum;
+          rate = xacc * current * crsec * 0.602 * tlen * tdens * domega / anum;
          
+          if (fdebug) {
+	     cout << "----------------------------------------"<<endl;
+             cout << "Angle "<<theta_degr<<"   degr.  crsec "<<crsec;
+             cout << "  accept  "<<xacc<<endl;
+             cout << "E = "<<ene<<"   mtgt "<<mtgt<<"    frecoil "<<frecoil<<endl;
+             cout << "qsq =  "<<qsq<<"     daa = "<<daa<<"     rate "<<rate<<endl;
+             cout << "target dens "<<tdens<<"    tlen "<<tlen<<"   anum "<<anum<<endl<<endl;
+	  }
+
           ratesum += rate;  
           daasum += daa * rate;
           asysum += asy0 * rate;
           qsqsum += qsq * rate;
           xnorm += xacc;
 
-	  if (ene > 0.9 && ene <= 1.2) { 
-	     if (use_MCcorr) {
-	        cout << "dont use MCcorr for now";
-                exit(0);
-	     }
-	     cout << "energy "<<ene<<"  theta "<<theta_degr<<endl;
-             cout << "qsq "<<qsq<<endl;
-	     cout << "accept  "<<xacc<<"  A= "<<asy0<<"  "<<asy1<<"  daa = "<<daa<<endl;
-	     cout << "crsec  "<<crsec<<"   "<<xcrsec<<endl;
-	     cout << "rate "<<rate<<"  "<<ratesum<<"  cnt = "<<xnorm<<endl;
-             cout << "data rate "<<datarate<<endl;
-	  }
-	}
+	}  // sum over angle
+
         if (ratesum > 0) {        
-          asyavg = asysum / ratesum;  // does NOT have the p_e in it yet
+          asyavg = (1./pol) * asysum / ratesum;  // Accounts for polarization "pol"
           sensi = daasum / ratesum;
           rate = ratesum / xnorm;
           qsqavg = qsqsum / ratesum;
           fom = 1e9 * rate * (asyavg*asyavg) * (sensi*sensi);
-// For 2 HRS and 30 days.  Use datarate (observed) instead of MC rate
-          xcnt = 2.0 * datarate * 34. * 24. * 3600;
+// For 2 HRS and 30 days.
+          xcnt = 2.0 * rate * 30. * 24. * 3600;
           asy_err = 0;   
           if (xcnt != 0) asy_err = 1.0 / TMath::Sqrt(xcnt);
-          daa = asy_err / (pol * asyavg);  // stat. error.
+          daa = asy_err / asyavg;   // stat. error.
           drr = 1;
           if (sensi != 0) drr = 0.01 * daa / sensi;
           blowup = 1;
@@ -604,9 +515,14 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
 	} else {
           asyavg=0; sensi=0; rate=0; fom=0; drr=1;
 	}
+
         cout << "E= "<<ene<<"  <qsq> "<<qsqavg<<"   <A> = "<<1e6*asyavg<<" ppm";
-        cout << "  rate = "<<rate<<"  actuallly "<<datarate<<" Hz     sensi = "<<sensi<<endl;
+        cout << "  rate = "<<rate<<" Hz     sensi = "<<sensi<<endl;
         cout << "daa(stat) "<<daa<<"    dR/R   "<<drr<<"   dR/R tot =  "<<drrtot<<endl;
+
+        cout << "FOMS  "<<ene<<"  "<<qsqavg<<"  "<<1e6*asyavg<<"   "<<rate<<"  "<<sensi<<"  "<<daa<<"  "<<drr<<"  "<<drrtot<<endl;
+
+
         hfom1->Fill(ene,sensi);
         hfom2->Fill(ene,fom);
         hfom3->Fill(qsqavg,fom);
@@ -619,7 +535,6 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
         hfom10->Fill(qsqavg,daa);
       }
 
-      cout << "sums xxx "<<x1sum<<"  "<<x2sum<<endl;
     }
 
 
@@ -863,6 +778,9 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
     Int_t use_multsc = 1;
     Int_t use_brehms = 1;
     
+    Int_t quad1_off = 0;   // turn off quad(1) or leave on (0)
+    Int_t quad2_off = 1;   // turn off quad(1) or leave on (0)
+
     Float_t theta_degr, dtheta_rad, steptheta_degr;
     Float_t ene0, ene, xcrsec, xnorm;
     Float_t frecoil, eprime;
@@ -881,8 +799,9 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
     histphi = new TH1F("histphi","Phi chk",100,-0.2,6.5);
     histrast = new TH2F("histrast","Rast chk",100,-1,1,100,-1,1);
     histene  = new TH1F("histene","Energy ",100,0.05,1.2);
-    histprob = new TH1F("histprob","prob vs angle",100,0.0,1.0);
+    histprob = new TH1F("histprob","prob vs angle",500,0.0,5.0);
     histinacc = new TH1F("histinacc","In acceptance",10,-0.5,2.0);
+    histmsc = new TH1F("histmsc","MScatt chk ",100,-0.2,0.2);
 
     histz1a = new TH1F("histz1a","Radius (cm) at entrance to SEPTUM",100,-0.2,100.0);
     histz1b = new TH1F("histz1b","X angle at Z1",100,-0.17,0.17);
@@ -891,7 +810,7 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
     histz1e = new TH1F("histz1e","(inacc) X angle at Z1",100,-0.17,0.17);
     histz1f = new TH1F("histz1f","(inacc) Y angle at Z1",100,-0.17,0.17);
 
-    histz2a = new TH1F("histz2a","Radius (cm) at ",100,-0.2,100.0);
+    histz2a = new TH1F("histz2a","Radius (cm) after SEPTUM",100,-0.2,100.0);
     histz2b = new TH1F("histz2b","X angle at Z2",100,-0.17,0.17);
     histz2c = new TH1F("histz2c","Y angle at Z2",100,-0.17,0.17);
     histz2d = new TH1F("histz2d","(inacc) Radius (cm) at Z2",100,-0.2,100.0);
@@ -928,7 +847,7 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
 
 // Transport model is D Q D Q D to dump.  
 // radcut after each each element (units: cm)                       
-    radcut1 = 12;  radcut2 = 20;   radcut3 = 30;  radcut4 = 40;  radcut5 = 80;
+    radcut1 = 5;  radcut2 = 7;   radcut3 = 9;  radcut4 = 9;  radcut5 = 90;
 
     xptcut1 = 0.08; 
     xptcut2 = 0.08; 
@@ -953,7 +872,7 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
     Float_t anglo_deg, anghi_deg;   // degrees
     Float_t anglolo = 0.002;        // lowest we'll go
     Float_t angbite;                // angle bite
-    Float_t anghihi = 10.0;         // highest we'd go
+    Float_t anghihi = 6.0;         // highest we'd go
     Float_t angp0_lo;               // lowest where we believe rate
     Float_t angp1_lo, angp1_hi;     // limits for PREX I (2010)
     Float_t angp2_lo, angp2_hi;     // poss. limits for PREX II 
@@ -1089,23 +1008,31 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
              Float_t radlen = 0.1;
              Float_t theta_sigma = (0.0136/ene) * TMath::Sqrt(radlen);
 
-             Float_t dtheta1, dtheta2, prob;
+             Float_t dtheta1, dtheta2, prob, prob2, xsign;;
 
              prob = gRandom->Rndm();
+             xsign = 1;
              if (prob < 0.02) {
-                 dtheta1 = 5 * theta_sigma * gRandom->Rndm();  // flat tail
+    	         prob2 = gRandom->Rndm();
+	         if (prob2 > 0.5) xsign = -1;
+                 dtheta1 = 5 * xsign * theta_sigma * gRandom->Rndm();  // flat tail
             } else {
                  dtheta1 = theta_sigma * gRandom->Gaus();
             }
+	     histmsc->Fill(dtheta1);
 
             xpt = xpt + dtheta1;
       
             prob = gRandom->Rndm();
+            xsign = 1;
             if (prob < 0.02) {
-               dtheta2 = 5 * theta_sigma * gRandom->Rndm();  // flat tail
+               prob2 = gRandom->Rndm();
+               if (prob2 > 0.5) xsign = -1;
+               dtheta2 = 5 * xsign * theta_sigma * gRandom->Rndm();  // flat tail
             } else {
                dtheta2 = theta_sigma * gRandom->Gaus();
             }
+	     histmsc->Fill(dtheta2);
 
             ypt = ypt + dtheta2;
 
@@ -1124,27 +1051,35 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
             cout << "radius at z1  "<<rrad << endl;
 	  }
 
-          if (rrad > radcut1 || xpt > xptcut1 || -1*xpt > xptcut1 ||
-	       ypt > yptcut1 || -1*ypt > yptcut1 ) {
+          if (rrad > radcut1) {
+	    // || xpt > xptcut1 || -1*xpt > xptcut1 ||
+	    //	       ypt > yptcut1 || -1*ypt > yptcut1 ) {
    	           inacc = 0;               
    	  }
 
           histz1a->Fill(rrad,prob);
-          histz1b->Fill(xpt);
-          histz1c->Fill(ypt);
+          histz1b->Fill(xpt, prob);
+          histz1c->Fill(ypt, prob);
           if (inacc==0) {
 	    histz1d->Fill(rrad,prob);
-	    histz1e->Fill(xpt);
-	    histz1f->Fill(ypt);
+	    histz1e->Fill(xpt, prob);
+	    histz1f->Fill(ypt, prob);
 	  }
 
           xt0 = xt;  xpt0 = xpt;
-          xt  =  quad1->GetMatrix(ene,0) * xt0 + quad1->GetMatrix(ene,1) * xpt0;
-          xpt =  quad1->GetMatrix(ene,2) * xt0 + quad1->GetMatrix(ene,3) * xpt0;
-
           yt0 = yt;  ypt0 = ypt;
-          yt  =  quad1->GetMatrix(ene,4) * yt0 + quad1->GetMatrix(ene,5) * ypt0;
-          ypt =  quad1->GetMatrix(ene,6) * yt0 + quad1->GetMatrix(ene,7) * ypt0;
+
+          if (quad1_off) {   // To turn off the quad
+	      xt  =  xt0 + xpt0 * quad2->GetLen();
+              xpt =  xpt0;
+              yt  =  yt0 + ypt0 * quad2->GetLen();
+              ypt = ypt0;
+	  } else {
+              xt  =  quad1->GetMatrix(ene,0) * xt0 + quad1->GetMatrix(ene,1) * xpt0;
+              xpt =  quad1->GetMatrix(ene,2) * xt0 + quad1->GetMatrix(ene,3) * xpt0;
+              yt  =  quad1->GetMatrix(ene,4) * yt0 + quad1->GetMatrix(ene,5) * ypt0;
+              ypt =  quad1->GetMatrix(ene,6) * yt0 + quad1->GetMatrix(ene,7) * ypt0;
+	  }
 
           rrad = TMath::Sqrt(xt*xt + yt*yt);
 
@@ -1163,12 +1098,12 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
    	  }
 
           histz2a->Fill(rrad,prob);
-          histz2b->Fill(xpt);
-          histz2c->Fill(ypt);
+          histz2b->Fill(xpt, prob);
+          histz2c->Fill(ypt, prob);
           if (inacc==0) {
   	     histz2d->Fill(rrad,prob);
-             histz2e->Fill(xpt);
-             histz2f->Fill(ypt);
+             histz2e->Fill(xpt, prob);
+             histz2f->Fill(ypt, prob);
 	  }
 
           xt  =  xt + xpt * zdrift2;
@@ -1182,12 +1117,21 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
           if (inacc==0) histz3b->Fill(rrad,prob);
 
           xt0 = xt;  xpt0 = xpt;
-          xt  =  quad2->GetMatrix(ene,0) * xt0 + quad2->GetMatrix(ene,1) * xpt0;
-          xpt =  quad2->GetMatrix(ene,2) * xt0 + quad2->GetMatrix(ene,3) * xpt0;
-
           yt0 = yt;  ypt0 = ypt;
-          yt  =  quad2->GetMatrix(ene,4) * yt0 + quad2->GetMatrix(ene,5) * ypt0;
-          ypt =  quad2->GetMatrix(ene,6) * yt0 + quad2->GetMatrix(ene,7) * ypt0;
+
+          if (quad2_off) {   // To turn off the quad
+	      xt  =  xt0 + xpt0 * quad2->GetLen();
+              xpt =  xpt0;
+              yt  =  yt0 + ypt0 * quad2->GetLen();
+              ypt = ypt0;
+	  } else {
+              xt  =  quad2->GetMatrix(ene,0) * xt0 + quad2->GetMatrix(ene,1) * xpt0;
+              xpt =  quad2->GetMatrix(ene,2) * xt0 + quad2->GetMatrix(ene,3) * xpt0;
+              yt  =  quad2->GetMatrix(ene,4) * yt0 + quad2->GetMatrix(ene,5) * ypt0;
+              ypt =  quad2->GetMatrix(ene,6) * yt0 + quad2->GetMatrix(ene,7) * ypt0;
+	  }
+
+
 
           rrad = TMath::Sqrt(xt*xt + yt*yt);
  
@@ -1237,6 +1181,9 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
 
  done101:
 
+    cout << endl << endl << "Neutron power.  "<<endl;
+    if (quad2_off) cout << "Quad2 turned OFF "<<endl;
+    
     cout << endl << "Total rate "<<ratep0<<endl;
     cout << "Total prob "<<ptot<<endl;
     cout << "Power = "<<ratep0*ene*1.6e-10<<"  Watts "<<endl;
@@ -1607,6 +1554,7 @@ Float_t hamcPhyPREX::CalculateCrossSection(Int_t nuc, Float_t energy, Float_t an
 
   // nuc = 0  --> lead
   // nuc = 1  --> C12
+  // nuc = 2  --> use Z,A of Ca48 and FF of C12 (temporary, I hope)
   // no other choices !
 
   // energy in GeV,  angle in degrees.
@@ -1615,7 +1563,7 @@ Float_t hamcPhyPREX::CalculateCrossSection(Int_t nuc, Float_t energy, Float_t an
 
   Float_t pi = 3.1415926; 
 
-  if (nuc != 0 && nuc != 1) {
+  if (nuc != 0 && nuc != 1 && nuc != 2) {
     cout << "hamcPhyPREX::ERROR: invalid nucleus choice "<<endl;
     return 0;
   }
@@ -1806,9 +1754,9 @@ Int_t hamcPhyPREX::LoadHorowitzTable(vector<vector<Float_t> >& crsc_table, vecto
   }
   if (whichmodel == HORCA) {
      if (stretch==0) {
-       filename="./PREX/ca48.dat";
+       filename="./PREX/ca48_fsu.dat";
      }  else {
-       filename="./PREX/ca48s.dat";
+       filename="./PREX/ca48_fsu_stretched.dat";
      }
   }
   if (whichmodel == HORSN) {
@@ -1842,7 +1790,7 @@ Int_t hamcPhyPREX::LoadHorowitzTable(vector<vector<Float_t> >& crsc_table, vecto
       sscanf(strin, "E=%f", &energy);
       if (!isFirst) {
 	crsc_table.push_back(crsc_row); /*if it is not the first energy
-					  add row with data*/
+<					  add row with data*/
 	asymmetry_table.push_back(asymmetry_row);
 	didWriteAngle = true;
 	/* This is not first Energy value, therefore it has gone through angles and saved in the angle_row */

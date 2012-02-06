@@ -74,6 +74,7 @@ class hamcQuad {
     }
     return 0;
   }
+  Float_t GetLen() { return len; };
   void Print() {
     std::cout << "Quad values "<<std::endl;
     std::cout << "grad "<<grad<<"    kappa "<<kappa<<std::endl;
@@ -178,6 +179,7 @@ class hamcPhyPREX : public hamcPhysics {
      TH1F *histene;
      TH1F *histprob;
      TH2F *histrast;
+     TH1F *histmsc;
      TH1F *histinacc;
      TH1F *histz1a, *histz1b, *histz1c, *histz1d, *histz1e, *histz1f;
      TH1F *histz2a, *histz2b, *histz2c, *histz2d, *histz2e, *histz2f;
@@ -190,11 +192,11 @@ class hamcPhyPREX : public hamcPhysics {
      TH1F *hfom1,*hfom2,*hfom3,*hfom4,*hfom5, *hfom6;
      TH1F *hfom7, *hfom8, *hfom9, *hfom10, *hfom11, *hfom12, *hfom13;
      TH2F *hpph5;
-     static const Int_t histo_test=1; // to test(1) or not(0) this code
+     static const Int_t histo_test=0; // to test(1) or not(0) this code
      static const Int_t accept_test=0; // to test(1) or not(0) this acceptance
      static const Int_t quick_feasibility=0; 
      static const Int_t quick_check=0; 
-     static const Int_t quick_fom=0; 
+     static const Int_t quick_fom=1; 
      static const Int_t power_integ=0; 
      static const Int_t neutron_power=0; 
      static const Int_t check_ms_1D=0;
