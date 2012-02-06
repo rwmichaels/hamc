@@ -63,10 +63,11 @@ Int_t hamcTgtPREX::Init(hamcExpt *expt) {
     strin = sdata[0];
     if (strin.CmpNoCase("horca")==0) {
       cout << "Using a Calcium Target "<<endl;
-      // need to check RL and density
-     if (!isthinc12) components.push_back(new hamcTgtSlab(
-	  // 10% of RL = 0.66; Teff = 0.37*T (RL loss)
-          "calcium", 0, 0.0066, 0.0024, 6.6, 48, 20, 45, 1.6));
+      // Assume RL = 20 g/cm^2 = 12.9 cm.  5% RL = 0.65 cm.  
+      // for 5% RL, Tgt eff = 0.52 * tgt (instead of 0.37*) = 0.34 cm
+      components.push_back(new hamcTgtSlab(
+          // name   id   len    efflen  rlen   a   z    m   dens
+          "calcium", 0, 0.0065, 0.0034, 0.129, 48,  20, 45, 1.55));
      islead=0;
     }
     if (strin.CmpNoCase("horsn")==0) {
