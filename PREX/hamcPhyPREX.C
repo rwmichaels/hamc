@@ -76,10 +76,16 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
       whichmodel = HORPB;
       num_models = 2;
     }
-    if (strin.CmpNoCase("horca")==0) {
+    if (strin.CmpNoCase("horca40")==0) {
+      cout << "Using Calcium 40 model from Horowitz "<<endl;
+      cout << "With stretching of R_N by 1%"<<endl;
+      whichmodel = HORCA40;
+      num_models = 2;
+    }
+    if (strin.CmpNoCase("horca48")==0) {
       cout << "Using Calcium 48 model from Horowitz "<<endl;
       cout << "With stretching of R_N by 1%"<<endl;
-      whichmodel = HORCA;
+      whichmodel = HORCA48;
       num_models = 2;
     }
     if (strin.CmpNoCase("horsn")==0) {
@@ -422,6 +428,7 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
     Float_t domega = 0.0034;
 
     cout << "Check FOM vs Energy "<<endl;
+    if (anum == 40) cout << "Calcium 40 study "<<endl;
     if (anum == 48) cout << "Calcium 48 study "<<endl;
     cout << "Tgt  A = "<<anum<<"    tdens = "<<tdens<<"   tlen = "<<tlen<<endl;
     cout << "Current = "<<current<<"  = "<<current/6.25e12<<" uA "<<endl;
@@ -1531,7 +1538,8 @@ Int_t hamcPhyPREX::LoadFiles() {
   asymmetry_table_temp.clear();
 
   if (whichmodel == HORPB ||
-      whichmodel == HORCA ||
+      whichmodel == HORCA40 ||
+      whichmodel == HORCA48 ||
       whichmodel == HORSN ) {  
     stretch = 1; 
     LoadHorowitzTable(crsc_table_temp, asymmetry_table_temp,stretch);
@@ -1752,7 +1760,14 @@ Int_t hamcPhyPREX::LoadHorowitzTable(vector<vector<Float_t> >& crsc_table, vecto
        filename="./PREX/horpb1.dat";
      }
   }
-  if (whichmodel == HORCA) {
+  if (whichmodel == HORCA40) {
+     if (stretch==0) {
+       filename="./PREX/ca40_fsu.dat";
+     }  else {
+       filename="./PREX/ca40_fsu_stretched.dat";
+     }
+  }
+  if (whichmodel == HORCA48) {
      if (stretch==0) {
        filename="./PREX/ca48_fsu.dat";
      }  else {

@@ -16,15 +16,16 @@
 
 #define NOMODEL  0
 #define HORPB    1
-#define HORCA    2
-#define HORSN    3
-#define SI       4
-#define NL3P06   5
-#define SLY4     6
-#define SIII     7
-#define FSU      8
-#define NL3      9
-#define NL3M05  10
+#define HORCA40  2
+#define HORCA48  3
+#define HORSN    4
+#define SI       5
+#define NL3P06   6
+#define SLY4     7
+#define SIII     8
+#define FSU      9
+#define NL3     10
+#define NL3M05  11
 
 using namespace std;
 
