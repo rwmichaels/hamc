@@ -471,6 +471,9 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
 
           theta_rad = 3.1415926*theta_degr/180.0;
 
+ // weight the acceptance by sin(theta) -- solid angle factor
+          xacc = xacc * 100*TMath::Sin(theta_rad);
+
           CrossSection(ene,theta_rad,0);  // uses lookup
 
           Float_t frecoil = 1 + (ene/mtgt)*(1-TMath::Cos(theta_rad));
@@ -491,6 +494,7 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
              cout << "Angle "<<theta_degr<<"   degr.  crsec "<<crsec;
              cout << "  accept  "<<xacc<<endl;
              cout << "E = "<<ene<<"   mtgt "<<mtgt<<"    frecoil "<<frecoil<<endl;
+             cout << "Asy = "<<asy0 << "   stretched "<<asy1<<endl;
              cout << "qsq =  "<<qsq<<"     daa = "<<daa<<"     rate "<<rate<<endl;
              cout << "target dens "<<tdens<<"    tlen "<<tlen<<"   anum "<<anum<<endl<<endl;
 	  }
@@ -504,7 +508,7 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
 	}  // sum over angle
 
         if (ratesum > 0) {        
-          asyavg = (1./pol) * asysum / ratesum;  // Accounts for polarization "pol"
+          asyavg = asysum / ratesum;  // Accounts for polarization "pol"
           sensi = daasum / ratesum;
           rate = ratesum / xnorm;
           qsqavg = qsqsum / ratesum;
@@ -513,7 +517,7 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
           xcnt = 2.0 * rate * 30. * 24. * 3600;
           asy_err = 0;   
           if (xcnt != 0) asy_err = 1.0 / TMath::Sqrt(xcnt);
-          daa = asy_err / asyavg;   // stat. error.
+          daa = asy_err / (pol * asyavg);   // stat. error.
           drr = 1;
           if (sensi != 0) drr = 0.01 * daa / sensi;
           blowup = 1;
