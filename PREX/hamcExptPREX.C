@@ -46,6 +46,7 @@ Int_t hamcExptPREX::Init(string sfile) {
   hamcSingles::Init(sfile);
 
   // Defaults (can be over-ridden by input file)
+  // Warning: for C-REX, should comment out UseCollimator
   static_cast<hamcSpecHRS*>(spectrom[0])->UseCollimator();
   static_cast<hamcSpecHRS*>(spectrom[0])->UseWarmSeptum();
   static_cast<hamcSpecHRS*>(spectrom[0])->UseMatrixTrans();
@@ -163,6 +164,12 @@ void hamcExptPREX::EventAnalysis() {
   Float_t y = event->trackout[0]->ytrans;
   Float_t ph = event->trackout[0]->phtrans;
   Float_t wt = 1e5*physics->GetCrossSection();
+
+  Float_t anum = target->GetAscatt();    // atomic num.
+  if (anum == 0) {
+       cout << "hamcExptPREX::EventAna:ERROR:  A = 0 ?"<<endl;
+  }
+
 
   Float_t th_deg = (180.0/PI) * event->trackout[0]->GetTheta();
 
@@ -350,11 +357,6 @@ void hamcExptPREX::EventAnalysis() {
           return;
         }
  
-        Float_t anum = target->GetAscatt();    // atomic num.
-        if (anum == 0) {
-          cout << "hamcExptPREX::EventAna:ERROR:  A = 0 ?"<<endl;
-          return;
-        }
 
          Float_t tdens = target->GetMtlDensity(mtl_idx);  // tgt density (g/cm^3)
          Float_t tlen = target->GetMtlLen(mtl_idx);  // tgt len (m)
@@ -364,18 +366,19 @@ void hamcExptPREX::EventAnalysis() {
 
          Float_t crsec = physics->GetCrossSection();  // barns/str
          Float_t omega = solid_athole;   // steradians 
-         Float_t rate = current * crsec * 0.602 * tlen * tdens * omega / anum;
+         Float_t rate = current * crsec * 0.602 * tlen * tdens * omega / (anum + 0.000001);
          sumr_pc1 += rate;
          xcnt_pc1 += 1.0;
       }
 
     }
 
-    // In focal plane, now demand in main detector
+    // In focal plane, now demand in main detector and that electron came from lead.
 
 
     if (xextr > xmain_lo && xextr < xmain_hi && 
-        yextr > ymain_lo && yextr < ymain_hi) {
+        yextr > ymain_lo && yextr < ymain_hi
+	&& anum == 208 ) {
 
          qsqf->Fill(qsqloc,wt);
          prex_xy4->Fill(xextr,yextr,wt);
@@ -413,7 +416,7 @@ void hamcExptPREX::RunSummary(Int_t iteration) {
   Float_t polerr = event->beam->polerr;
   Float_t asy0 = 0;  // unstretched asy
   Float_t asy1 = 0;  // stretched R_N asy
-  Float_t daa, drr, sensi, blowup, drrtot;
+  Float_t daa, drr, sensi, blowup, drrtot,Rn,drrabs;
 
   for (Int_t imodel=0; imodel<num_phyt; imodel++) {
 
@@ -451,7 +454,7 @@ void hamcExptPREX::RunSummary(Int_t iteration) {
 // Evaluate sensitivity for lead (only) 
 
       if ( (target->GetMtlName(idx) == "lead") ||
-            (target->GetMtlName(idx) == "calcium") ||
+            (target->GetMtlName(idx) == "calcium48") ||
   	     (target->GetMtlName(idx) == "tin") ) {
 
         if (imodel==0) asy0 = asy;
@@ -477,11 +480,16 @@ void hamcExptPREX::RunSummary(Int_t iteration) {
           blowup = 1;
           if (daa != 0) blowup = (TMath::Sqrt(polerr*polerr + daa*daa))/daa;
           drrtot = drr * blowup;
+          Rn = 0;
+          if (target->GetMtlName(idx) == "calcium48") Rn = 3.47;
+          if (target->GetMtlName(idx) == "lead") Rn = 5.50;
+          drrabs = Rn * drrtot;
           cout << "Sensitivity =  "<<100*sensi<<" %"<<endl;
           cout << "dR/R = "<<drr<<endl;
           cout << "polerr "<<polerr<<endl;
           cout << "blowup factor "<<blowup<<endl;
           cout << "total dR/R = "<<drrtot<<endl;
+          cout << "drrabs = "<<drrabs<<"  fm"<< endl;
 
           Float_t qsqbl = hqsq00->GetMean();
           Float_t angcut = GetAngCut();
