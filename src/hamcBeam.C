@@ -24,8 +24,8 @@ hamcBeam::hamcBeam() : hamcTrack("electron"),rastered(kTRUE),xrast(0.4),yrast(0.
 {
   trktype = "beam";
   beam_current = 100; // uA
-  polarization = 0.8;
-  polerr = 0.01;  // fractional error (0.01 = 1%).
+  polarization = 0.85;
+  polerr = 0.018;  // fractional error (0.01 = 1%).
 }
 
 hamcBeam::hamcBeam(Float_t ebeam, Float_t esigma) : hamcTrack("electron"),rastered(kTRUE),xrast(0.4),yrast(0.4)
@@ -34,7 +34,8 @@ hamcBeam::hamcBeam(Float_t ebeam, Float_t esigma) : hamcTrack("electron"),raster
   E0 = ebeam;
   E0sigma = esigma;
   beam_current = 100; // uA
-  polarization = 0.8;
+  polarization = 0.85;
+  polerr = 0.018;  // fractional error (0.01 = 1%).
 }
 
 hamcBeam::~hamcBeam() {
@@ -229,7 +230,7 @@ Int_t hamcBeam::Generate(hamcExpt *expt) {
   */
 
   //  cout << "\n ******* Calling Mult Scatt in beam "<<endl;
-  MultScatt(expt->target->GetPartialScatt(pmom), ITARGET);    // this modifies/updates plab (momentum)
+   MultScatt(expt->target->GetPartialScatt(pmom), ITARGET);    // this modifies/updates plab (momentum)
                                  // Note, MultScatt is a member of hamcTrack
                                  // and hamcBeam inherits from hamcTrack.
 
