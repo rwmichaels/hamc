@@ -1,0 +1,47 @@
+# (optional) Setup parameters for hamc for CREX
+#
+# Since the code is expecting a file called "prex.dat"
+# you should copy this to prex.dat before running.
+
+# Setup choices for HRS 
+hrs_setup sept4deg uselerose 
+
+# HRS momentum and angle
+HRS_P0 2.2
+
+# Average of L and R-HRS 
+HRS_angle 4.0
+
+Angle_cut 3.6
+
+#HRS_arm left
+HRS_arm right
+
+
+
+# Calcium : horca40 or horca48.  Lead: horpb 
+PREX_model horca48
+
+# The HRS_acceptoff is normally commented out (or deleted)
+# When uncommented it's a way of testing the acceptance model.
+# Turn on one thing at a time to check the cuts at each point.
+# 0 means ignore the acceptance limit, 1 means use it.
+#  1         2       3        4             5     6       7  
+# target, septout, q1, dipin, dipexit,    q3in,  q3exit, focal
+#HRS_acceptoff 0 0 0 0 0 0 0 
+HRS_acceptoff 0 1 1 1 1 1 1 
+
+
+# Beam parameters.  Raster is in meters, typ 0.002 (means +/- this)
+# normally raster 0.003 x 0.002 
+# current in uA.
+
+beam  E0 2.199 E0sigma 0.00011   rastered  xraster 0.003  yraster 0.002 current 100
+
+# range of angles (scatt, azimuth) in degrees
+# phi=0 is up.  phi=90 is into HRS,  phi=180 is down.
+out_angles thetamin 0.00001 thetamax 20  phimin 0 phimax 180
+
+radcor genercone
+
+# hamc_inout nontup
