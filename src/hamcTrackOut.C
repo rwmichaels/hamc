@@ -143,7 +143,8 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 	        "Theta Accepted", &theta_deg, 600,2.0,8.0);
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "hthaccw", 
 	        "Theta Accepted, Weighted", &theta_deg, 600,2.0,8.0);
-
+   expt->inout->BookHisto(kTRUE, kTRUE, ITARGET, "xtg","X at target",&xtrans,200,-0.1,0.1);
+   expt->inout->BookHisto(kTRUE, kTRUE, ITARGET, "ytg","Y at target",&ytrans,200,-0.05,0.05);
    expt->inout->BookHisto(kFALSE, kFALSE, ITARGET, "ph", 
 		"Phi at target", &phi, nbin, -0.2,1.2*phimax);
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "mom", 
@@ -151,7 +152,7 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "momu", 
 	        "Momentum in HRS", &pmom, nbin, 0.5*P0,1.1*P0);
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "momz", 
-	   "Momentum in HRS (zoom)", &pmom, nbin, 0.95*P0,1.02*P0);
+	   "Momentum in HRS (zoom)", &pmom, nbin, 0.94*P0,1.01*P0);
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "momb", 
 	   "Momentum in HRS (hamc)", &pmom, 200, 1.01, 1.07);
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "momb2", 
@@ -174,12 +175,12 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 	  "Theta-Phi at target (collimated)",&ph0,nbin,-0.3,0.3,
 			  &th0,nbin,-0.3,0.3);
    expt->inout->BookHisto(kFALSE, kTRUE, IFOCAL, "thpha",
-	  "Theta-Phi at target (accepted)",&ph0,nbin,-0.3,0.3,
-			  &th0,nbin,-0.3,0.3);
+	  "Theta-Phi at ztarget (accepted)",&ph0,nbin,-0.032,0.032,
+			  &th0,nbin,-0.067,0.067);
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "thphaw",
 	  "Theta-Phi at target (accepted, weighted)",
-                          &ph0,nbin,-0.3,0.3,
-			  &th0,nbin,-0.3,0.3);
+                          &ph0,nbin,-0.1,0.1,
+			  &th0,nbin,-0.1,0.1);
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "thphawz",
 	  "Theta-Phi at target (accepted, weighted, zoom)",
                           &ph0,100,-0.032,0.032,
@@ -296,23 +297,23 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 
    expt->inout->BookHisto(kFALSE, kFALSE, IQ1EXIT, "xyq1", 
 		      "Transport X-Y at Q1 exit", 
-                            &ytrans, nbin,-0.3,0.3,
-                            &xtrans, nbin,-0.3,0.3);
+                            &ytrans, nbin,-0.8,0.8,
+                            &xtrans, nbin,-0.8,0.8);
 
    expt->inout->BookHisto(kFALSE, kTRUE, IQ1EXIT, "xyq1a", 
 		   "Transport X-Y inside Q1 acceptance", 
-                            &ytrans, nbin,-0.3,0.3,
-                            &xtrans, nbin,-0.3,0.3);
+                            &ytrans, nbin,-0.8,0.8,
+                            &xtrans, nbin,-0.8,0.8);
 
    expt->inout->BookHisto(kFALSE, kFALSE, IDIPIN, "xydipi", 
 		      "Transport X-Y at dipole entrance", 
- 			    &ytrans, nbin,-1,1,
-                            &xtrans, nbin,-6,-4);
+ 			    &ytrans, nbin,-1.4,1.4,
+                            &xtrans, nbin,-6.8,-5.5);
 
    expt->inout->BookHisto(kFALSE, kTRUE, IDIPIN, "xydipia", 
 		   "Transport X-Y inside dipole-in acceptance", 
-			  &ytrans, nbin,-1,1,
-			  &xtrans, nbin,-6,-4);
+			  &ytrans, nbin,-1.4,1.4,
+			  &xtrans, nbin,-6.8,-5.5);
 
    expt->inout->BookHisto(kFALSE, kFALSE, IDIPIN, "xydipsi", 
 		      "(std) Trans X-Y at dipole entrance", 
@@ -376,13 +377,13 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "xyfoc6", 
 		      "Weighted X-Y at focal plane (X on X-axis)", 
-                            &xtrans, nbin,-1,1,
-                            &ytrans, nbin,-0.25,0.25);
+                            &xtrans, nbin,-1.2,0.5,
+                            &ytrans, nbin,-0.4,0.3);
 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "xyfoc6z", 
 		      "Weighted X-Y at focal plane (X on X-axis)", 
-                            &xtrans, nbin,-0.2,0.1,
-                            &ytrans, nbin,-0.1,0.1);
+                            &xtrans, nbin,-0.3,0.1,
+                            &ytrans, nbin,-0.2,0.2);
 
     expt->inout->BookHisto(kTRUE, kTRUE, IPLANE1, "xyfoc7", 
 		      "Weighted X-Y at 1.0 m (X on X-axis)", 
@@ -419,15 +420,15 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "qsq",
 			   "Qsq (weighted, in accept)",
-			   &qsq, 200,  0.0, 0.02);
+			   &qsq, 200,  0.2, 0.85);
 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "qsq_obs",
 			   "Qsq (weighted, in accept)",
-			   &qsq_obs, 200,  0.0, 0.02);
+			   &qsq_obs, 200,  0.2, 0.85);
 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "qsq_atrk",
 			   "Qsq (weighted, in accept)",
-			   &qsq_atrk, 200,  0.0, 0.02);
+			   &qsq_atrk, 200,  0.2, 0.85);
 
 
     // Add some variables to the event ntuple
@@ -486,7 +487,11 @@ Int_t hamcTrackOut::Generate(hamcExpt *expt) {
   xfpd  = 0;
   yfpd  = 0;
 
-  expt->physics->kine->Generate(expt);
+  Int_t status =  expt->physics->kine->Generate(expt);
+
+  if (status == -1) {
+    return status;
+  }
 
   theta = expt->physics->kine->theta;
   phi = expt->physics->kine->phi;
