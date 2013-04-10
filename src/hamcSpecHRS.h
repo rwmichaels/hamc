@@ -58,11 +58,9 @@ public:
  	 accept_cut = kTRUE;
       }
   }
-  /*
   void DefineRadLen(Int_t index, Float_t rl) {
     if (aperture) aperture->DefineRadLen(index,rl);
   }
-  */
   void DefineMaterial(Int_t index, Float_t a, Float_t z, Float_t t) {
     if (aperture) aperture->DefineMaterial(index,a, z, t);
   }
@@ -130,6 +128,7 @@ class hamcSpecHRS {
      void UseAngleColl();     // To use empirically derived angle collimation
 
      void UseHRSOnly();      // HRS without septum
+     void Use4degSeptum();   // To use with the 4 degree Septum
      void UseWarmSeptum();   // To use with the Warm Septum
      void UseColdSeptum();   // Use with Cold Septum (ca 2005)
 
@@ -144,6 +143,7 @@ class hamcSpecHRS {
      Bool_t IsPaulCollim() { return collim_choice==paul_coll; };
      Bool_t IsAngleCollim() { return collim_choice==angle_coll; };
      Bool_t IsColdSeptum()  { return sept_choice==coldsept; };
+     Bool_t Is4degSeptum()  { return sept_choice==sept4deg; };
      Bool_t IsWarmSeptum()  { return sept_choice==warmsept; };
      Bool_t IsMatrixTrans() { return trans_choice==tmatrix; };
      Bool_t IsLeroseTrans() { return trans_choice==tlerose; };
@@ -170,6 +170,7 @@ class hamcSpecHRS {
      static const Int_t noseptum  =0;
      static const Int_t warmsept  =1;
      static const Int_t coldsept  =2;
+     static const Int_t sept4deg  =3;
      static const Int_t tmatrix   =1;
      static const Int_t tlerose   =2;
      static const Int_t nocollim  =0;

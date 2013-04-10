@@ -9,6 +9,7 @@
 #include "hamcTransLerHRS.h"
 #include "hamcTransLerColdSeptum.h"
 #include "hamcTransLerWarmSeptum.h"
+#include "hamcTransLer4deg.h"
 #include "hamcTransGuido.h"
 #include "hamcTrans.h"
 #include "hamcAperture.h"
@@ -56,6 +57,7 @@ hamcSpecHRS::~hamcSpecHRS() {
 
 void hamcSpecHRS::UseCollimator(void) {
   collim_choice = reg_coll;
+  cout << "Using regular collimator "<<endl;
 }
 
 void hamcSpecHRS::UsePaulColl(void) {
@@ -69,6 +71,10 @@ void hamcSpecHRS::UseAngleColl(void) {
 
 void hamcSpecHRS::UseHRSOnly() {
   sept_choice = noseptum;
+}
+
+void hamcSpecHRS::Use4degSeptum() {
+  sept_choice = sept4deg;
 }
 
 void hamcSpecHRS::UseWarmSeptum() {
@@ -111,6 +117,10 @@ Int_t hamcSpecHRS::Init(hamcExpt *expt) {
    if (parser.IsFound("coldseptum")) {
      cout << "hamcSpecHRS: Using cold septum"<<endl;
      UseColdSeptum();
+   }   
+   if (parser.IsFound("sept4deg")) {
+     cout << "hamcSpecHRS: Using the 4-degree septum"<<endl;
+     Use4degSeptum();
    }   
    if (parser.IsFound("warmseptum")) {
      cout << "hamcSpecHRS: Using warm septum"<<endl;
@@ -216,14 +226,21 @@ Int_t hamcSpecHRS::BuildSpectrom() {
 
   if (IsLeroseTrans()) {   // LeRose functions
 
+    if (Is4degSeptum()) {
+      transport = new hamcTransLer4deg();  // 4-degree Septum
+    }
     if (IsWarmSeptum()) {
       transport = new hamcTransLerWarmSeptum();  // Warm Septum
     } 
     if (IsColdSeptum()) {
       transport = new hamcTransLerColdSeptum();  // Cold Septum
     } 
-    if (!IsWarmSeptum() && !IsColdSeptum()) {    // HRS w/o Septum
+    if (!IsWarmSeptum() && !IsColdSeptum() && !Is4degSeptum()) {    // HRS w/o Septum
       transport = new hamcTransLerHRS();
+    }
+
+    if (Is4degSeptum()) {
+       AddBreakPoint(ISEPTOUT);  // setpum out
     }
 
     if (IsWarmSeptum() || IsColdSeptum()) {
@@ -280,23 +297,23 @@ void hamcSpecHRS::AddBreakPoint(Int_t where) {
     case ICOLLIM:
       if (IsWarmSeptum() || IsColdSeptum()) {
         if (IsWarmSeptum()) {
-         break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.088,0.382,-0.12,0.12)));
-	} else {
-	  break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.30,-0.2156,-0.10,0.10)));  // cold septum
-	}
-      } else { // HRS alone  collimator: (horiz)62.9 mm x  (vert)121.8 mm 
-	//	break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.0609,0.0609,-0.03145,0.03145)));  // collimator entrance
-	//	break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.06485,0.06485,-0.0334,0.0334)));  // collimator exit
+  	   break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.125,0.12,-0.12,0.12)));
+ 	} else {
+ 	  break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.30,-0.2156,-0.10,0.10)));  // cold septum
+ 	}
+       } else { // HRS alone  collimator: (horiz)62.9 mm x  (vert)121.8 mm 
+       //	break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.0609,0.0609,-0.03145,0.03145)));  // collimator entrance
+       //	break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.06485,0.06485,-0.0334,0.0334)));  // collimator exit
 	
 	// blank out Diancheng's collim below
-	//	break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.06485,0.06485,-0.0285,0.0334)));  // collimator exit
+ 	//	break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.06485,0.06485,-0.0285,0.0334)));  // collimator exit
 
-	// tmpoffsets are offsets to collimator, used to move hapIII collimator
-	// correct signs now
-	// 13Oct10, rupesh
-	Float_t tmpoffsetx = 0.0, tmpoffsety=0.0 ;
+ 	// tmpoffsets are offsets to collimator, used to move hapIII collimator
+ 	// correct signs now
+ 	// 13Oct10, rupesh
+ 	Float_t tmpoffsetx = 0.0, tmpoffsety=0.0 ;
 
-	// unblank below for hap III
+ 	// unblank below for hap III
 // 	// 0.67 mm towards beamline for LHRS
 // 	if (which_spectrom == LEFTHRS) tmpoffsetx = 0.00067;  //0.67mm
 // 	// 1.04 mm towards beamline for RHRS
@@ -304,118 +321,118 @@ void hamcSpecHRS::AddBreakPoint(Int_t where) {
 	
 // 	cout << "The collimator offset in x is "<< tmpoffsetx << endl;
 
-        // tmpsizeoffset is used to change collim size for HRS acceptance tests for hapIII
-	Float_t tmpsizeoffset = 0.00;  // +0.005 changes collim size by - 5mm	
+         // tmpsizeoffset is used to change collim size for HRS acceptance tests for hapIII
+ 	Float_t tmpsizeoffset = 0.00;  // +0.005 changes collim size by - 5mm	
 
-        break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.0609+tmpoffsety+tmpsizeoffset,
-								 0.0609-tmpoffsety-tmpsizeoffset,
-								 -0.03145-tmpoffsetx+tmpsizeoffset
-								 ,0.03145-tmpoffsetx-tmpsizeoffset)));  
+         break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.0609+tmpoffsety+tmpsizeoffset,
+  								 0.0609-tmpoffsety-tmpsizeoffset,
+     								 -0.03145-tmpoffsetx+tmpsizeoffset
+ 								 ,0.03145-tmpoffsetx-tmpsizeoffset)));  
 
-      }
-      idx = break_point.size()-1;
-      break_point[idx]->aperture->SetCenter(0,0);
-      break;
+       }
+       idx = break_point.size()-1;
+       break_point[idx]->aperture->SetCenter(0,0);
+       break;
 
 // Collim2 is in the Q1 coordinate system (center = 0,0).
-    case ICOLLIM2:
-      if (IsWarmSeptum()) { 
-       break_point.push_back(new hamcSpecBrk(where, new hamcPaulCollim(
-         0.032, 0.041,  0.20, 0.229,  // A_T hole (low, right, and R,C of arc)
-	 0.205, 0.145,  0.20, 0.229,     // outer, inner circles
-         0.117, 0.04,       // top, right
-         0.1474, -1.88)));  // Champhor line.
-        idx = break_point.size()-1; 
+     case ICOLLIM2:
+       if (IsWarmSeptum()) { 
+        break_point.push_back(new hamcSpecBrk(where, new hamcPaulCollim(
+          0.032, 0.041,  0.20, 0.229,  // A_T hole (low, right, and R,C of arc)
+  	 0.205, 0.145,  0.20, 0.229,     // outer, inner circles
+          0.117, 0.04,       // top, right
+          0.1474, -1.88)));  // Champhor line.
+         idx = break_point.size()-1; 
 //        break_point[idx]->aperture->DefineRadLen(0,collim2_radlen1);
-        break_point[idx]->aperture->DefineMaterial(0,collim2_a, collim2_z, collim2_t);
-	printf("%f %f %f\n", collim2_a, collim2_z, collim2_t);
-      }
-      break;
+         break_point[idx]->aperture->DefineMaterial(0,collim2_a, collim2_z, collim2_t);
+ 	printf("%f %f %f\n", collim2_a, collim2_z, collim2_t);
+       }
+       break;
 
 // Collim3 is the empirical angle collimation which is a tighter cut than COLLIM2.
-    case ICOLLIM3:
-      if (IsWarmSeptum()) { 
-	break_point.push_back(new hamcSpecBrk(where, new  hamcAngleCollim()));
-        idx = break_point.size()-1; 
-      }
-      break;
+     case ICOLLIM3:
+       if (IsWarmSeptum()) { 
+ 	break_point.push_back(new hamcSpecBrk(where, new  hamcAngleCollim()));
+         idx = break_point.size()-1; 
+       }
+       break;
 
-    case ISEPTIN:
-      if (IsWarmSeptum()) break_point.push_back(new hamcSpecBrk(where, new hamcBox(0.088,0.382,-0.12,0.12)));
-      if (IsColdSeptum()) break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.1486,-0.0887,-0.110,0.110)));
-      break;
+     case ISEPTIN:
+       if (IsWarmSeptum()) break_point.push_back(new hamcSpecBrk(where, new hamcBox(0.088,0.382,-0.12,0.12)));
+       if (IsColdSeptum()) break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.1486,-0.0887,-0.110,0.110)));
+       break;
 
-    case ISEPTOUT:
-      if (IsWarmSeptum()) break_point.push_back(new hamcSpecBrk(where, new hamcBox(0.088,0.382,-0.12,0.12)));
-      if (IsColdSeptum()) break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.3485,-0.2156,-0.110,0.110)));
+     case ISEPTOUT:
+       if (IsWarmSeptum()) break_point.push_back(new hamcSpecBrk(where, new hamcBox(0.088,0.382,-0.12,0.12)));
+       if (IsColdSeptum()) break_point.push_back(new hamcSpecBrk(where, new hamcBox(-0.3485,-0.2156,-0.110,0.110)));
+       if (Is4degSeptum()) {
+          break_point.push_back(new hamcSpecBrk(where, new hamcBox(0.088,0.382,-0.12,0.12)));
+       }
+       break;
 
-      break;
+     case IDIPIN:
+       if (IsWarmSeptum() || IsColdSeptum()) {
+         break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-5.22, -4.98, -0.1924, -0.1924)));
+         break;
+       }
+       if (Is4degSeptum()) {
+         break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-6.19, -5.9, -0.161, -0.1924)));
+         break;
+       }
+       break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, -0.0186)));  // standard HRS
+       break;
 
-    case IDIPIN:
-      if (IsWarmSeptum() || IsColdSeptum()) {
-        break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-5.22, -4.98, -0.1924, -0.1924)));
-        break;
-      }
-      //      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, 0.149)));  // standard HRS (slope wrong)
-      //      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, 0.0186)));  // standard HRS
-      //      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, 0.0)));  // test
-      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, -0.0186)));  // standard HRS
-      break;
+     case IDIPEXIT:
+       if (IsWarmSeptum() || IsColdSeptum()) {
+         break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.462, 0.462, 0.125, -0.0161)));
+         break;
+       }
+       if (Is4degSeptum()) {
+         break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.462, 0.462, 0.125, -0.0161)));
+         break;
+       }
+       break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, -0.0186)));  // standard HRS
 
-    case IDIPEXIT:
-      if (IsWarmSeptum() || IsColdSeptum()) {
-        break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.462, 0.462, 0.125, -0.0161)));
-        break;
-      }
-      //      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, 0.149)));  // standard HRS
-      //      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, 0.0186)));  // standard HRS
-      //      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, 0.0)));  // test
-      //      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, -0.0186)));  // standard HRS
-      break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.34, 0.34, 0.12, -0.05)));  // test
+       break;
 
-      break;
+     case IQ1EXIT:
+       break_point.push_back(new hamcSpecBrk(where, new hamcCircle(0.1492)));
+       break;
 
-    case IQ1EXIT:
-      break_point.push_back(new hamcSpecBrk(where, new hamcCircle(0.1492)));
-      break;
+     case IQ3IN:
+       break_point.push_back(new hamcSpecBrk(where, new hamcCircle(0.3)));
+       break;
 
-    case IQ3IN:
-      //      break_point.push_back(new hamcSpecBrk(where, new hamcCircle(0.3)));
-      break_point.push_back(new hamcSpecBrk(where, new hamcCircle(0.3)));
+     case IQ3EXIT:
+       break_point.push_back(new hamcSpecBrk(where, new hamcCircle(0.3)));
 
-      break;
+       break;
 
-    case IQ3EXIT:
-      //      break_point.push_back(new hamcSpecBrk(where, new hamcCircle(0.3)));
-      break_point.push_back(new hamcSpecBrk(where, new hamcCircle(0.29)));
+     case IFOCAL:
+       break_point.push_back(new hamcSpecBrk(where));
+       break;
 
-      break;
-
-    case IFOCAL:
-      break_point.push_back(new hamcSpecBrk(where));
-      break;
-
-    default:
-      cout << "hamcSpecHRS::WARNING: undefined location "<<where<<endl;
+     default:
+       cout << "hamcSpecHRS::WARNING: undefined location "<<where<<endl;
   }
 }
 
-hamcAperture* hamcSpecHRS::Aperture(Int_t idx) {
-  if (ChkIdx(idx) == ERROR) return 0;
-  return break_point[idx]->aperture;
-}
+ hamcAperture* hamcSpecHRS::Aperture(Int_t idx) {
+   if (ChkIdx(idx) == ERROR) return 0;
+   return break_point[idx]->aperture;
+ }
 
-Int_t hamcSpecHRS::GetNumBrk() {
-  return break_point.size();
-}
+ Int_t hamcSpecHRS::GetNumBrk() {
+   return break_point.size();
+ }
 
-Int_t hamcSpecHRS::ChkIdx(Int_t idx) {
-  if (idx < 0 || idx > (Int_t)break_point.size()-1) {
-    cout << "hamcSpecHRS::Warning: index out of range"<<endl;
-    return ERROR;
-  }
+ Int_t hamcSpecHRS::ChkIdx(Int_t idx) {
+   if (idx < 0 || idx > (Int_t)break_point.size()-1) {
+     cout << "hamcSpecHRS::Warning: index out of range"<<endl;
+     return ERROR;
+   }
   return OK;
-}
+ }
 
 void hamcSpecHRS::Print() {
   cout << endl << "hamcSpecHRS  print "<<endl;
