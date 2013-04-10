@@ -64,19 +64,19 @@ Int_t hamcTgtPREX::Init(hamcExpt *expt) {
     if (strin.CmpNoCase("horca40")==0) {
         cout << "Using a Calcium 40 Target "<<endl;
         // Assume RL = 20 g/cm^2 = 12.9 cm.  5% RL = 0.65 cm.  
-        // for 5% RL, Tgt eff = 0.52 * tgt (instead of 0.37*) = 0.34 cm
+        // for 5% RL, Tgt eff = 0.37 * tgt (instead of 0.27*) = 0.24 cm
         components.push_back(new hamcTgtSlab(
             // name   id   len    efflen  rlen     a    z    m    dens
-            "calcium40", 0, 0.0065, 0.0034, 0.129, 40,  20, 37.5, 1.55));
+            "calcium40", 0, 0.0065, 0.0024, 0.129, 40,  20, 37.5, 1.55));
         islead=0;
     }
     if (strin.CmpNoCase("horca48")==0) {
         cout << "Using a Calcium 48 Target "<<endl;
         // Assume RL = 20 g/cm^2 = 12.9 cm.  5% RL = 0.65 cm.  
-        // for 5% RL, Tgt eff = 0.52 * tgt (instead of 0.37*) = 0.34 cm
+        // for 5% RL, Tgt eff = 0.37 * tgt (instead of 0.27*) = 0.24 cm
         components.push_back(new hamcTgtSlab(
             // name   id   len    efflen  rlen   a  z    m   dens
-            "calcium48", 0, 0.0065, 0.0034, 0.129, 48,  20, 45, 1.55));
+            "calcium48", 0, 0.0065, 0.0024, 0.129, 48,  20, 45, 1.55));
        islead=0;
     }
     if (strin.CmpNoCase("horsn")==0) {
