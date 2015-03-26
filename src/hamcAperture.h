@@ -25,18 +25,6 @@ public:
       return CheckAccept(trk->tvect->GetX(), trk->tvect->GetY());
     };
 // An aperture may have material (degrader) or multiple materials.
-    /*
-    void DefineRadLen(Int_t idx, Float_t rl) { 
-      if (idx < (Int_t)radlen.size()) {
-         radlen[idx] = rl;
-      } else {
-        for (Int_t ix = (Int_t)radlen.size(); ix < idx; ix++) {
-  	    radlen.push_back(0);
-	}
-	radlen.push_back(rl);
-      }
-    }
-    */
     void DefineMaterial(Int_t idx, Float_t ta, Float_t tz, Float_t tt) { 
       if (idx < (Int_t) a.size()) {
          a[idx] = ta;
@@ -87,8 +75,6 @@ public:
 
     virtual Float_t GetRadLen(Float_t x, Float_t y) const {
 	double X0;
- // default (virtual) method.  normally defined by inheriting class.
-//      if (radlen.size()>0) return radlen[0];
       if (a.size()>0){
         X0 = 716.4*a[0]/(z[0]*(z[0]+1.0)*log(287.0/sqrt(z[0])));
 	  return t[0]/X0;

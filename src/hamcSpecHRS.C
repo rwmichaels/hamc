@@ -343,7 +343,6 @@ void hamcSpecHRS::AddBreakPoint(Int_t where) {
           0.117, 0.04,       // top, right
           0.1474, -1.88)));  // Champhor line.
          idx = break_point.size()-1; 
-//        break_point[idx]->aperture->DefineRadLen(0,collim2_radlen1);
          break_point[idx]->aperture->DefineMaterial(0,collim2_a, collim2_z, collim2_t);
  	printf("%f %f %f\n", collim2_a, collim2_z, collim2_t);
        }

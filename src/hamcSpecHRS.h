@@ -58,9 +58,6 @@ public:
  	 accept_cut = kTRUE;
       }
   }
-  void DefineRadLen(Int_t index, Float_t rl) {
-    if (aperture) aperture->DefineRadLen(index,rl);
-  }
   void DefineMaterial(Int_t index, Float_t a, Float_t z, Float_t t) {
     if (aperture) aperture->DefineMaterial(index,a, z, t);
   }
