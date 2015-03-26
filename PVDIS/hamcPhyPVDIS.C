@@ -76,7 +76,7 @@ Int_t hamcPhyPVDIS::Generate(hamcExpt *expt) {
    asymmetry = float(asymm);
    if(crsec!=crsec) crsec=0.0;
 
-   cout<<"energy="<<energy<<"\teprime="<<eprime<<"\txsection="<<crsec<<"\tasymm="<<asymmetry<<endl;
+   //   cout<<"energy="<<energy<<"\teprime="<<eprime<<"\txsection="<<crsec<<"\tasymm="<<asymmetry<<endl;
 
    return OK;
 }
