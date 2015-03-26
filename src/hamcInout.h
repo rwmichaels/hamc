@@ -172,6 +172,7 @@ class hamcInout {
      Int_t Process(hamcExpt*);
      Int_t NumInMap(std::string);
      void SetWeight(Float_t wei) { weight = wei; };
+     Float_t GetWeight() { return weight; };  
      Bool_t FoundString(std::string);
      std::vector<std::string> GetStrVect(std::string, Int_t i=0);
      Int_t AddToNtuple(std::string var, Float_t* dptr);
