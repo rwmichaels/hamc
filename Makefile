@@ -26,7 +26,7 @@ ifeq ($(OSNAME),SunOS)
    ET_AC_FLAGS = -D_REENTRANT -D_POSIX_THREAD_SEMANTICS
    ET_CFLAGS = -mt -fast -xO5 -KPIC $(ET_AC_FLAGS) -DSUNVERS
    ONLIBS = -lposix4 -lnsl -lsocket -lresolv
-   LIBS = $(GLIB) /usr/lib/libg2c.so.0
+   LIBS = $(GLIB) /usr/lib64/libg2c.so.0
 
 endif
 
@@ -45,7 +45,7 @@ ifeq ($(OSNAME),Linux)
    ET_AC_FLAGS = -D_REENTRANT -D_POSIX_PTHREAD_SEMANTICS
    ET_CFLAGS = -02 -fPIC -I. $(ET_AC_FLAGS) -DLINUXVERS
    ONLIBS = -lieee -lpthread -ldl -lresolv 
-   LIBS = $(GLIBS) $(ROOTLIBS) $(ROOTGLIBS) /usr/lib/libg2c.so.0
+   LIBS = $(GLIBS) $(ROOTLIBS) $(ROOTGLIBS) /usr/lib64/libg2c.so.0
 
 endif
 
@@ -157,55 +157,55 @@ $(HAMCLIBS): $(LOBJS) $(LSRC) $(HEAD)
 # 4 degree Septum (April 2013)
 $(SRCDIR)/crex_4degr.o: $(SRCDIR)/crex_4degr.f
 	rm -f $@
-	cd $(SRCDIR) ; g77 -c crex_4degr.f ; cd ../
+	cd $(SRCDIR) ; g77 -c -fPIC crex_4degr.f ; cd ../
 
 # Tune B (what was used during production)
 $(SRCDIR)/prex_forward.o: $(SRCDIR)/prex_forward.f
 	rm -f $@
-	cd $(SRCDIR) ; g77 -c prex_forward.f ; cd ../
+	cd $(SRCDIR) ; g77 -c -fPIC prex_forward.f ; cd ../
 #Replace 3 lines below with 3 lines above for standard HRS optics
 # Tune Y:
 #$(SRCDIR)/prex_retune_for.o: $(SRCDIR)/prex_retune_for.f
 #	rm -f $@
-#	cd $(SRCDIR) ; g77 -c prex_retune_for.f ; cd ../
+#	cd $(SRCDIR) ; g77 -c -fPIC prex_retune_for.f ; cd ../
 
 $(SRCDIR)/monte_trans_hrs.o: $(SRCDIR)/monte_trans_hrs.f
 	rm -f $@
-	cd $(SRCDIR) ; g77 -c monte_trans_hrs.f ; cd ../
+	cd $(SRCDIR) ; g77 -c -fPIC monte_trans_hrs.f ; cd ../
 
 $(SRCDIR)/ls_6d_forward.o: $(SRCDIR)/ls_6d_forward.f
 	rm -f $@
-	cd $(SRCDIR) ; g77 -c ls_6d_forward.f ; cd ../
+	cd $(SRCDIR) ; g77 -c -fPIC ls_6d_forward.f ; cd ../
 
 $(SRCDIR)/R6_forward.o: $(SRCDIR)/R6_forward.f
 	rm -f $@
-	cd $(SRCDIR) ; g77 -c R6_forward.f ; cd ../
+	cd $(SRCDIR) ; g77 -c -fPIC R6_forward.f ; cd ../
 
 #############################   PVDIS OBJS   ###############
 
 ./PVDIS/getpdf_mrst2003c.o: ./PVDIS/getpdf_mrst2003c.f ./PVDIS/mrst2003c.o ./PVDIS/NextUn.o ./PVDIS/r1998.o ./PVDIS/readpdf_single.o
 	rm -f $@
-	cd ./PVDIS/; g77 -c getpdf_mrst2003c.f mrst2003c.o NextUn.o r1998.o readpdf_single.o; cd ../
+	cd ./PVDIS/; g77 -c -fPIC getpdf_mrst2003c.f mrst2003c.o NextUn.o r1998.o readpdf_single.o; cd ../
 
 ./PVDIS/mrst2003c.o: ./PVDIS/mrst2003c.f
 	rm -f $@
-	cd ./PVDIS/; g77 -c mrst2003c.f; cd ../
+	cd ./PVDIS/; g77 -c -fPIC mrst2003c.f; cd ../
 
 ./PVDIS/NextUn.o: ./PVDIS/NextUn.f
 	rm -f $@
-	cd ./PVDIS/; g77 -c NextUn.f; cd ../
+	cd ./PVDIS/; g77 -c -fPIC NextUn.f; cd ../
 
 ./PVDIS/r1998.o: ./PVDIS/r1998.f
 	rm -f $@
-	cd ./PVDIS/; g77 -c r1998.f; cd ../
+	cd ./PVDIS/; g77 -c -fPIC r1998.f; cd ../
 
 ./PVDIS/readpdf_single.o: ./PVDIS/readpdf_single.f
 	rm -f $@
-	cd ./PVDIS/; g77 -c readpdf_single.f; cd ../
+	cd ./PVDIS/; g77 -c -fPIC readpdf_single.f; cd ../
 
 ./PVDIS/xsec.o: ./PVDIS/xsec.f
 	rm -f $@
-	cd ./PVDIS/; g77 -c xsec.f; cd ../
+	cd ./PVDIS/; g77 -c -fPIC xsec.f; cd ../
 
 ################################################################
 
