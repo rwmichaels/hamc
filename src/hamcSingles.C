@@ -107,7 +107,7 @@ Int_t hamcSingles::Init(string sfile) {
 
   bxy1 = new TH2F("bxy1","X-Y in accept",100,-1,1,100,-0.2,0.2);
   bxy2 = new TH2F("bxy2","X-Y in det",100,-1,1,100,-0.2,0.2);
-  bqsq = new TH1F("bqsq","Qsq in det",200,0.2,1.2);
+  bqsq = new TH1F("bqsq","Qsq in det",200,0.0015,0.024);
 
 
   return OK;

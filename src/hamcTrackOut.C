@@ -420,15 +420,15 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "qsq",
 			   "Qsq (weighted, in accept)",
-			   &qsq, 200,  0.2, 0.85);
+			   &qsq, 200,  0.0015, 0.025);
 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "qsq_obs",
 			   "Qsq (weighted, in accept)",
-			   &qsq_obs, 200,  0.2, 0.85);
+			   &qsq_obs, 200, 0.0015, 0.025);
 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "qsq_atrk",
 			   "Qsq (weighted, in accept)",
-			   &qsq_atrk, 200,  0.2, 0.85);
+			   &qsq_atrk, 200, 0.0015, 0.025);
 
 
     // Add some variables to the event ntuple
