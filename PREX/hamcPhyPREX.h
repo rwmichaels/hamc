@@ -197,7 +197,7 @@ class hamcPhyPREX : public hamcPhysics {
      static const Int_t accept_test=0; // to test(1) or not(0) this acceptance
      static const Int_t quick_feasibility=0; 
      static const Int_t quick_check=0; 
-     static const Int_t quick_fom=1; 
+     static const Int_t quick_fom=0; 
      static const Int_t power_integ=0; 
      static const Int_t neutron_power=0; 
      static const Int_t check_ms_1D=0;
