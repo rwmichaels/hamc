@@ -7,7 +7,8 @@ hrs_setup warmseptum uselerose useempiricalangle
 # for empirical, need HRS_arm left; or change "osign" in hamcAperture.h
 
 # this is the A_T hole in paulcollim.
-spreader_collim radlen1 0.117
+# t (thickness) is in g/cm2, this gives t/X0 ~ 0.117
+spreader_collim a 9 z 4 t 7.6
 
 # HRS momentum and angle
 HRS_P0 1.0629
@@ -24,6 +25,7 @@ HRS_angle 5.053
 Angle_cut 4.58
 
 HRS_arm left
+# HRS_arm right
 
 PREX_model horpb
 
@@ -64,9 +66,5 @@ detector dist 1.23
 
 # to turn off ntup (good for high stats).  
 # comment this out to receive an ntuple output.
-hamc_inout nontup
-
-
-
-
+# hamc_inout nontup
 
