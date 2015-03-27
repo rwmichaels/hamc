@@ -116,7 +116,8 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
      
      if (!track) continue;
 
-     track->Generate(expt);
+     Int_t trkstat = track->Generate(expt);
+
      //     cout << "\n\nInitial track out "<<endl;
      //     track->Print();
 
@@ -127,9 +128,9 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
 
      *tracksieve = *track;
 
-     track->GenerateOut(expt);
-
      expt->physics->Generate(expt); 
+
+     track->GenerateOut(expt);
 
      Float_t angcut = expt->GetAngCut();
 
@@ -148,6 +149,10 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
      Float_t weight = 100.*expt->physics->GetCrossSection(); 
  
      expt->inout->SetWeight(weight);
+
+     if (trkstat == -1) {  // but kill event if track not generated
+       expt->inout->SetWeight(0);  
+     }
 
 // Loop over break points in spectrometer
 

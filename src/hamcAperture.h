@@ -106,7 +106,6 @@ public:
 
     virtual void FlipPhi() { };
 protected:
-//    std::vector<Float_t> radlen;
     std::vector<Float_t> a;
     std::vector<Float_t> z;
     std::vector<Float_t> t;

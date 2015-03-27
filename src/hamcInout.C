@@ -31,6 +31,7 @@ ClassImp(hamcInout)
   hamcInout::hamcInout() : numiter(0),did_init(kFALSE),root_disable(kFALSE),ntup_disable(kFALSE),weight(1),setupfile("hamc.dat"),hFile(0),fntup(0) {
   ntup  = 0;
   sntup = "";
+  isdone=kFALSE;
 }
 
 hamcInout::~hamcInout() {
@@ -173,6 +174,10 @@ Int_t hamcInout::Process(hamcExpt *expt) {
 
 Int_t hamcInout::Finish() {
 
+  if (isdone) {
+     cout << "ALREADY DONE"<<endl;
+     return 1;
+  }
   if (root_disable) {
     cout << "hamcInout: Warning: root output disabled (see hamc_inout in ctl file) "<<endl;
     return 0;
@@ -191,6 +196,7 @@ Int_t hamcInout::Finish() {
   if (deriv.is_open())
     deriv.close();
   
+  isdone=kTRUE;
   return OK;
 }
 
