@@ -5,9 +5,9 @@
     Int_t toshift = 0;  // = 1 if shifting to new_central
  
     Float_t theta_central = 5;
-    Float_t new_central = 4;
+    Float_t new_central = 4.5;
 
-    Int_t MAXPOINT=291;
+    Int_t npts=0;
     FILE *fd1, *fd2;
     char schar[200],scout[200];
     fd1=fopen("accept.dat", "r");
@@ -22,22 +22,26 @@
     TH2F *h2 = new TH2F("hacc","Acceptance Function",200,2.5,8,100,0,1.0);
     
     Float_t theta_degr, xacc; 
-    Float_t th[2*MAXPOINT],acc[2*MAXPOINT];
-    Float_t thshift[2*MAXPOINT], accshift[2*MAXPOINT];
     Int_t ipt=0;
 
     h2->Draw();
 
     while(fgets(schar,100,fd1)!=NULL) {
         sscanf(schar, "%f  %f", &theta_degr, &xacc);
-	//        cout << "theta "<<theta_degr<<"   acc "<<xacc<<endl;
+        npts++;
+    }
+
+    Float_t th[npts],acc[npts];
+    Float_t thshift[npts], accshift[npts];
+
+    fclose(fd1);
+    fd1=fopen("accept.dat", "r");
+    while(fgets(schar,100,fd1)!=NULL) {
+        sscanf(schar, "%f  %f", &theta_degr, &xacc);
+        cout << "theta "<<theta_degr<<"   acc "<<xacc<<endl;
         th[ipt] = theta_degr;
         acc[ipt] = 100.*xacc;
         ipt++;
-        if (ipt > MAXPOINT) {
-	  cout << "ERROR in ipt"<<endl;
-          exit(0);
-        }
     }
 
     // Analysis: find the peak, and the 1/2 peak.  This determines the
@@ -46,20 +50,20 @@
 
     Float_t accmax = -999;
     Int_t imax=0;
-    for (Int_t i=0; i < MAXPOINT; i++) {
+    for (Int_t i=0; i < npts; i++) {
       if (acc[i] > accmax) {
         accmax = acc[i];
         imax = i;
       }
     }
-    cout << "Max accept "<<accmax<<"   "<<imax<<endl;
+    cout << "Max accept "<<npts<<"  "<<accmax<<"   "<<imax<<endl;
 
     Float_t thetaL = 0;
     Float_t thetaR = 0;
     Float_t minleft = 999;
     Float_t minright = 999;
     Float_t diff;
-    for (Int_t i=0; i < MAXPOINT; i++) {
+    for (Int_t i=0; i < npts; i++) {
       diff = acc[i]-0.5*accmax;
       if (diff < 0)  diff = -1.0*diff;
       if (th[i] < theta_central && diff < minleft) {
@@ -74,7 +78,7 @@
     cout << "thetaL = "<<thetaL<<"   thetaR = "<<thetaR<<endl;
 
     Int_t ncentral=0;
-    for (Int_t i=0; i < MAXPOINT; i++) {
+    for (Int_t i=0; i < npts; i++) {
       if (th[i] > thetaL && th[i] < thetaR) ncentral++;
     }
     cout << "number in central region  "<<ncentral<<endl;
@@ -88,7 +92,7 @@
 
     Int_t ipt=0;
     Int_t icenter=0;
-    for (Int_t i=0; i < MAXPOINT; i++) {
+    for (Int_t i=0; i < npts; i++) {
       if ((i > imax-nreduce) && (i < imax+nreduce)) {
         icenter = ipt;
         continue;
@@ -115,7 +119,7 @@
       fputs(scout,fd2);
     }
 
-    gr1 = new TGraph(MAXPOINT, th, acc);
+    gr1 = new TGraph(npts, th, acc);
     gr1->SetMarkerColor(4);
     gr1->SetMarkerSize(1.2);
     gr1->SetMarkerStyle(3);
