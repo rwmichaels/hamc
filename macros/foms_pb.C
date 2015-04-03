@@ -23,9 +23,9 @@
 
    Int_t i;
 
-   Int_t which = 1; // 1 = Rate vs E;  2 = A vs E;  3 = daa vs E;  4 = drr vs E;  5 = drrtot vs E;  6 = 4&5; 7 = sensi
+   Int_t which = 5; // 1 = Rate vs E;  2 = A vs E;  3 = daa vs E;  4 = drr vs E;  5 = drrtot vs E;  6 = 4&5; 7 = sensi
 
-   Int_t logy   = 1;   // 0 or 1  (to use Log scale for Y)
+   Int_t logy   = 0;   // 0 or 1  (to use Log scale for Y)
 
    Float_t energypb[npt], qsqpb[npt], asypb[npt], ratepb[npt], sensipb[npt];
    Float_t daapb[npt], drrpb[npt], drrtotpb[npt];
@@ -69,8 +69,8 @@
      ratepb[i] = rr;
      sensipb[i] = -1.0*ss;
      daapb[i] = ddaa;
-     drrpb[i] = -1*ddrr;
-     drrtotpb[i] = -1*ddrrtt;
+     drrpb[i] = ddrr;
+     drrtotpb[i] = ddrrtt;
 
      cout << "\n\n ----------- \n"<<endl;
 
@@ -98,7 +98,7 @@
 
     if (which == 6) {
        gr2 = new TGraph(npt, energypb, drrtotpb);
-       gr2->SetMarkerColor(3);
+       gr2->SetMarkerColor(2);
        gr2->SetMarkerSize(1.2);
        gr2->SetMarkerStyle(3);
        gr2->Draw("P");
