@@ -3,23 +3,18 @@
 
      hamc  =  Hall  A  Monte  Carlo
 
-     R. Michaels,  Jan 2009
+     R. Michaels,  Jan 2009; updated Mar 2015
 
 ============================================================================
 
-To checkout hamc from cvs
+This is a single-arm Monte Carlo used by the parity experiments
+in Hall A.  It was used by HAPPEX-III, PVDIS, PREX, anc C-REX.
 
-  cvs -d ":ext:rom@cvs.jlab.org:/group/halla/parity/cvs" checkout hamc
-
-To commit changes, for example
-
-  cvs commit -m 'comment here' hamcEloss.C
-
-Book about cvs:
-
-  www.jlab.org/~rom/cvsbook.ps.gz
-  (must gunzip, then its a postscript file)
-
+For version control, I'm using github now.  (Formerly in CVS).  
+A good way to proceed is to make your repository on github.com,
+the Fork https://github.com/rwmichaels/hamc, then "git clone"
+it to your local PC, and if you have useful changes you can 
+make a "pull request" to me.
 
 To proceed do the following
 
