@@ -5,7 +5,7 @@
     Int_t toshift = 0;  // = 1 if shifting to new_central
  
     Float_t theta_central = 5;
-    Float_t new_central = 4.5;
+    Float_t new_central = 5;
 
     Int_t npts=0;
     FILE *fd1, *fd2;
