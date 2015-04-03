@@ -204,7 +204,7 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
   if (accept_test) {
     FILE *fd;
     char schar[200]; 
-    fd=fopen("accept.dat", "r");
+    fd=fopen("./PREX/accept.dat", "r");
     Double_t weisum=0;
     Double_t crcsum=0;
     Double_t asyavg;    
@@ -400,9 +400,18 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
   if (quick_fom) {  
     
     Int_t itgt = 0;
-    if (whichmodel == HORPB) itgt = 1;
+ 
+    Float_t ehlo = 0.7;
+    Float_t ehhi = 3.5;
 
-    Int_t fdebug = 0;
+    if (whichmodel == HORPB) {
+        ehlo = 0.60;
+        ehhi = 1.20;
+        itgt = 1;
+    }
+
+
+    Int_t fdebug = 1;
 
     hd1 = new TH1F("hd1","Diff of crsec to lookup",200,-1,1);
     hfom1 = new TH1F("hfom1","sensitivity vs energy",200,0.5,3.4);
@@ -415,6 +424,9 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
     hfom8 = new TH1F("hfom8","Phys Asym (p_e=1) vs qsq",200,0.004,0.082);
     hfom9 = new TH1F("hfom9","Avg qsq vs E",200,0.6,3.4);
     hfom10 = new TH1F("hfom10","dA/A (%) vs qsq",200,0.004,0.082);
+    hfom11 = new TH1F("hfom11","dA vs Energy",200,ehlo, ehhi);
+    hfom12 = new TH1F("hfom12","dR(stat) vs Energy",200,ehlo, ehhi);
+    hfom13 = new TH1F("hfom13","dR(tot) vs Energy",200,ehlo, ehhi);
 
     Float_t tdens = expt->target->GetMtlDensity(itgt);  // tgt density (g/cm^3)
     Float_t tlen = expt->target->GetMtlEffLen(itgt);    // tgt len (m)
@@ -452,10 +464,12 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
       Float_t blowup, drrtot;
 
       Float_t x1sum=0;  
+      Int_t nepts = 20;
+      Float_t xepts = 1.0*nepts;
 
-      for (Int_t iene=0; iene < 62; iene++) {
+      for (Int_t iene=0; iene < nepts; iene++) {
  
-        ene = 0.6 + 0.05*((Float_t)iene); // GeV
+        ene = ehlo + ((ehhi-ehlo)/xepts)*((Float_t)iene); // GeV
 
         ratesum = 0;
         xnorm=0;
@@ -464,7 +478,7 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
         qsqsum = 0;
 
         fclose(fd);
-        fd=fopen("./PREX/accept.dat", "r");
+        fd=fopen("accept.dat", "r");
 
         while(fgets(schar,100,fd)!=NULL) {
           sscanf(schar, "%f  %f", &theta_degr, &xacc);
@@ -496,6 +510,8 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
              cout << "E = "<<ene<<"   mtgt "<<mtgt<<"    frecoil "<<frecoil<<endl;
              cout << "Asy = "<<asy0 << "   stretched "<<asy1<<endl;
              cout << "qsq =  "<<qsq<<"     daa = "<<daa<<"     rate "<<rate<<endl;
+             cout << "crsec "<<crsec<<endl;
+             cout << "other stuff "<<xacc<<"  "<<current<<"  "<<tlen<<"  "<< tdens<<"  "<<domega<<endl;
              cout << "target dens "<<tdens<<"    tlen "<<tlen<<"   anum "<<anum<<endl<<endl;
 	  }
 
@@ -513,13 +529,14 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
           rate = ratesum / xnorm;
           qsqavg = qsqsum / ratesum;
           fom = 1e9 * rate * (asyavg*asyavg) * (sensi*sensi);
-// For 2 HRS and 30 days.
+// For 2 HRS and 30 days (PREX), 35 days (CREX)
           xcnt = 2.0 * rate * 30. * 24. * 3600;
           asy_err = 0;   
           if (xcnt != 0) asy_err = 1.0 / TMath::Sqrt(xcnt);
           daa = asy_err / (pol * asyavg);   // stat. error.
           drr = 1;
           if (sensi != 0) drr = 0.01 * daa / sensi;
+          if (drr < 0) drr = -1.0*drr;
           blowup = 1;
           if (daa != 0) blowup = (TMath::Sqrt(polerr*polerr + daa*daa))/daa;
           drrtot = drr * blowup;
@@ -544,6 +561,9 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
         hfom8->Fill(qsqavg,asyavg);
         hfom9->Fill(ene,qsqavg);
         hfom10->Fill(qsqavg,daa);
+        hfom11->Fill(ene,daa);
+        hfom12->Fill(ene,drr);
+        hfom13->Fill(ene,drrtot);
       }
 
     }
@@ -1319,17 +1339,21 @@ Int_t hamcPhyPREX::CrossSection(Float_t energy, Float_t angle_rad, Int_t stretch
     return -1;
   }
 
-  Int_t debug = 0;
+  Int_t debug = 1;
   // Lookup the cross section for this E,theta(angle)
 
   /*find the index of angle and energy in the class variables angle_row and energy_row respectively */
   Int_t indxAngle = FindAngleIndex(angle); 
 
-  if (indxAngle <= 0) return -1; 
+  if (debug) cout << "indxAngle "<<indxAngle<<endl;
+
+  if (indxAngle < 0) return -1; 
 
   Int_t indxEnergy = FindEnergyIndex(energy);
 
-  if (indxEnergy <= 0) return -1;
+  if (debug) cout << "indxEnergy "<<indxEnergy<<"   energy "<<energy<<endl;
+
+  if (indxEnergy < 0) return -1;
 
   if (debug) {
      cout << "\n\nenergy "<<energy<<"        angle "<<angle<<endl;
