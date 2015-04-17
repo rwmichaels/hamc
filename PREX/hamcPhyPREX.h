@@ -26,6 +26,7 @@
 #define FSU      9
 #define NL3     10
 #define NL3M05  11
+#define ZIDUPB  12
 
 using namespace std;
 

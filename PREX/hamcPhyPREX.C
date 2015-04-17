@@ -76,6 +76,12 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
       whichmodel = HORPB;
       num_models = 2;
     }
+    if (strin.CmpNoCase("zidupb")==0) {
+      cout << "Using Zidu Lin's model for Pb "<<endl;
+      cout << "With stretching of R_N by 1%"<<endl;
+      whichmodel = ZIDUPB;
+      num_models = 2;
+    }
     if (strin.CmpNoCase("horca40")==0) {
       cout << "Using Calcium 40 model from Horowitz "<<endl;
       cout << "With stretching of R_N by 1%"<<endl;
@@ -244,11 +250,11 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
     for (Int_t itry=0; itry<10; itry++) {
 
       theta_degr = 5.0;
-      Float_t E0nom = 2.2;
+      Float_t E0nom = 1.05;
       ene = E0nom;
 
       if (itry==1) {
-	theta_degr = 4.5;
+	theta_degr = 5.0;
         ene = E0nom;
       }
       if (itry==2) {
@@ -256,32 +262,32 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
         ene = E0nom;
       }
       if (itry==3) {
-	theta_degr = 5.0;
+	theta_degr = 5.5;
         ene = E0nom;
       }
       if (itry==4) {
-	theta_degr = 5.5;
-        ene = E0nom;
+	theta_degr = 5.0;
+        ene = 1.2;
       }
       if (itry==5) {
 	theta_degr = 6.0;
-        ene = E0nom;
+        ene = 1.8;
       }
       if (itry==6) {
 	theta_degr = 5.0;
-        ene = 1.8;
+        ene = 2.0;
       }
       if (itry==7) {
 	theta_degr = 5.0;
-        ene = 2.4;
+        ene = 0.55;
       }
       if (itry==8) {
-	theta_degr = 5.2;
-        ene = 2.4;
+	theta_degr = 7.0;
+        ene = 1.2;
       }
       if (itry==9) {
-	theta_degr = 5.5;
-        ene = 2.4;
+	theta_degr = 8.0;
+        ene = 1.5;
       }
 
       theta_rad = 3.1415926*theta_degr/180.0;
@@ -479,6 +485,10 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
 
         fclose(fd);
         fd=fopen("accept.dat", "r");
+        if (fd == NULL) {
+          cout <<"ERROR :  accept.dat not found!  Exiting "<<endl;
+          exit(0);
+	}
 
         while(fgets(schar,100,fd)!=NULL) {
           sscanf(schar, "%f  %f", &theta_degr, &xacc);
@@ -1345,13 +1355,9 @@ Int_t hamcPhyPREX::CrossSection(Float_t energy, Float_t angle_rad, Int_t stretch
   /*find the index of angle and energy in the class variables angle_row and energy_row respectively */
   Int_t indxAngle = FindAngleIndex(angle); 
 
-  if (debug) cout << "indxAngle "<<indxAngle<<endl;
-
   if (indxAngle < 0) return -1; 
 
   Int_t indxEnergy = FindEnergyIndex(energy);
-
-  if (debug) cout << "indxEnergy "<<indxEnergy<<"   energy "<<energy<<endl;
 
   if (indxEnergy < 0) return -1;
 
@@ -1566,6 +1572,7 @@ Int_t hamcPhyPREX::LoadFiles() {
   asymmetry_table_temp.clear();
 
   if (whichmodel == HORPB ||
+      whichmodel == ZIDUPB ||
       whichmodel == HORCA40 ||
       whichmodel == HORCA48 ||
       whichmodel == HORSN ) {  
@@ -1768,7 +1775,7 @@ Int_t hamcPhyPREX::LoadHorowitzTable(vector<vector<Float_t> >& crsc_table, vecto
   vector<float> crsc_row;  //temporary variables
   vector<float> asymmetry_row;
 
-  Int_t debug = 0;
+  Int_t debug = 1;
 
   energy_row.clear();
   asymmetry_row.clear();
@@ -1786,6 +1793,13 @@ Int_t hamcPhyPREX::LoadHorowitzTable(vector<vector<Float_t> >& crsc_table, vecto
        filename="./PREX/horpb.dat";
      }  else {
        filename="./PREX/horpb1.dat";
+     }
+  }
+  if (whichmodel == ZIDUPB) {
+     if (stretch==0) {
+       filename="./PREX/elastic_full_table.dat";
+     }  else {
+       filename="./PREX/elastic_full_table_stretched.dat";
      }
   }
   if (whichmodel == HORCA40) {
@@ -1831,9 +1845,10 @@ Int_t hamcPhyPREX::LoadHorowitzTable(vector<vector<Float_t> >& crsc_table, vecto
   while(fgets(strin,100,fd)!=NULL) {
     if (strstr(strin, "E=")!=NULL) { //Line for energy
       sscanf(strin, "E=%f", &energy);
+      cout << "Energy ?  "<<energy<<endl;
       if (!isFirst) {
 	crsc_table.push_back(crsc_row); /*if it is not the first energy
-<					  add row with data*/
+					  add row with data*/
 	asymmetry_table.push_back(asymmetry_row);
 	didWriteAngle = true;
 	/* This is not first Energy value, therefore it has gone through angles and saved in the angle_row */
