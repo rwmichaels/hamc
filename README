@@ -1,23 +1,21 @@
-
 ============================================================================
 
      hamc  =  Hall  A  Monte  Carlo
 
-     R. Michaels,  Jan 2009; updated Mar 2015
+     R. Michaels,  initial version Jan 2009; updated Jan 2018
 
 ============================================================================
 
 This is a single-arm Monte Carlo used by the parity experiments
 in Hall A.  It was used by HAPPEX-III, PVDIS, PREX, anc C-REX.
 
-For version control, I'm using github now.  (Formerly in CVS).  
+For version control, I'm using github.  
 A good way to proceed is to make your repository on github.com,
 the Fork https://github.com/rwmichaels/hamc, then "git clone"
 it to your local PC, and if you have useful changes you can 
 make a "pull request" to me.
 
 To proceed do the following
-
 
 Compile:
 
@@ -51,22 +49,6 @@ I/O control of code
     prex.dat   to control prex
     happex.dat to control happex
 
-
-Notes on Guido Transport (Mar 2009)
-
-   An appropriate line in prex.dat:
-
-hrs_setup coldseptum uselerose useguido
-
-   LeRose functions produce xfoc,yfoc, etc and "inaccept".
-   In ntuple you'll see Guido's new xgui,ygui,thgui,phgui 
-   for transport variables at the focal plane.
-   Impose the accepance cut from LeRose transport model
-   and compare the variables.
-
-Issues
-
-   radcor numer is best for prex.
-   genercone radiative tail is best for happex.
-
-
+New in 2018 is the transport code THRSTrans.  The old fortran
+code (LeRose functions) still exist but are effectively turned
+off (USEFORTRAN flag in Makefile).
