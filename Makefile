@@ -1,12 +1,16 @@
 # hamc = Hall A Monte Carlo
 # R. Michaels, May 2008
-
+# Update  Jan 2018  with USEFORTRAN option
 
 # Choose the compiler.
 GCC=g++
 GLD=g++
 
 MAKENODICTIONARY=1
+
+# Using fortran-dependent code (=1) or not (=0), soon to be obsolete.
+# If not, then rely on HRSTRans (libhrstrans) for transport.
+# USEFORTRAN=1
 
 export OSNAME := $(shell uname)
 
@@ -37,7 +41,7 @@ ifeq ($(OSNAME),Linux)
    ROOTGLIBS     = $(shell root-config --glibs)
    INCLUDES      = -I$(ROOTSYS)/include
    CXX           = $(GCC)
-   CXXFLAGS      = -Wall -fno-exceptions -fPIC $(INCLUDES)
+   CXXFLAGS      = -Wall -Wunused-variable -fno-exceptions -fpermissive -std=c++11 -fPIC $(INCLUDES)
    LD            = $(GLD)
    LDFLAGS       = 
    SOFLAGS       = -shared 
@@ -49,12 +53,15 @@ ifeq ($(OSNAME),Linux)
 
 endif
 
+HRSTRANSLIB   = /home/rom/hrstrans1/lib
+
 MAKEDEPEND    = $(GCC)
 
-ALL_LIBS = $(LIBS) 
+ALL_LIBS = $(LIBS) $(HRSTRANSLIB)/libhrstrans.so
 
 SRCDIR=./src
 INCLUDES += -I$(SRCDIR)
+INCLUDES += -I$(HRSTRANSLIB)
 
 ifdef PROFILE
    CXXFLAGS += -pg
@@ -71,20 +78,31 @@ SRC = $(SRCDIR)/hamcExpt.C $(SRCDIR)/hamcSingles.C $(SRCDIR)/hamcPhysics.C \
       $(SRCDIR)/hamcTrans.C $(SRCDIR)/hamcTransMat.C \
       $(SRCDIR)/hamcAccAvg.C \
       $(SRCDIR)/hamcTransGuido.C \
-      $(SRCDIR)/hamcTransLer4deg.C \
-      $(SRCDIR)/hamcTransLerWarmSeptum.C \
-      $(SRCDIR)/hamcTransLerColdSeptum.C \
-      $(SRCDIR)/hamcTransLerHRS.C \
+      $(SRCDIR)/hamcTHRSTrans.C \
       $(SRCDIR)/hamcTarget.C \
       $(SRCDIR)/hamcEloss.C $(SRCDIR)/hamcKine.C \
       $(SRCDIR)/hamcTrack.C $(SRCDIR)/hamcBeam.C $(SRCDIR)/hamcTrackOut.C \
       $(SRCDIR)/hamcInout.C $(SRCDIR)/THaString.C $(SRCDIR)/hamcMultScatt.C
 
+# Fortran-dependent sources
+FORSRC=$(SRCDIR)/hamcTransLer4deg.C \
+      $(SRCDIR)/hamcTransLerWarmSeptum.C \
+      $(SRCDIR)/hamcTransLerColdSeptum.C \
+      $(SRCDIR)/hamcTransLerHRS.C 
+
+ifdef USEFORTRAN 
+   SRC+=$FORSRC
+   CXXFLAGS += -DUSEFORTRAN
+endif
+
 DEPS = $(SRC:.C=.d)
 DEP  = $(SRC:.C=.d)
 HEAD = $(SRC:.C=.h) 
 
-PROGS = prex happex pvdis
+PROGS = prex happex 
+ifdef USEFORTRAN
+  PROGS += pvdis
+endif
 HAMCLIBS = libhamc.a
 HAMCLIBS_NODICT = libhamc_NODICT.a
 
@@ -95,9 +113,12 @@ else
   OBJS = $(SRC:.C=.o)
   OBJS += hamcDict.o
 endif
+
+ifdef USEFORTRAN
 OBJS += $(SRCDIR)/crex_4degr.o $(SRCDIR)/prex_forward.o $(SRCDIR)/monte_trans_hrs.o $(SRCDIR)/R6_forward.o $(SRCDIR)/ls_6d_forward.o
 #Replace line below with line above for standard HRS optics
 #OBJS += $(SRCDIR)/prex_retune_for.o $(SRCDIR)/monte_trans_hrs.o $(SRCDIR)/R6_forward.o $(SRCDIR)/ls_6d_forward.o
+endif
 
 # PREX experiment
 PREX_SRC = ./PREX/main_PREX.C ./PREX/hamcExptPREX.C ./PREX/hamcPhyPREX.C ./PREX/hamcTgtPREX.C
@@ -125,7 +146,9 @@ else
   PVDIS_OBJS = $(PVDIS_SRC:.C=.o)
 endif
 
+ifdef USEFORTRAN
   PVDIS_OBJS += ./PVDIS/getpdf_mrst2003c.o ./PVDIS/mrst2003c.o ./PVDIS/NextUn.o ./PVDIS/r1998.o ./PVDIS/readpdf_single.o ./PVDIS/xsec.o
+endif
 
 install: all
 
@@ -139,12 +162,12 @@ happex: $(HAPPEX_OBJS) $(HAPPEX_HEAD) $(OBJS) $(SRC)  $(HEAD)
 	rm -f $@
 	$(LD) $(CXXFLAGS) -o $@ $(OBJS) $(HAPPEX_OBJS) $(ALL_LIBS)
 
-#Add PVDIS here when it exists
+# Note, PVDIS relies heavily on Fortran.  This needs to be fixed if
+# we care about it (noted, Jan 2018).
 
 pvdis: $(PVDIS_OBJS) $(PVDIS_HEAD) $(OBJS) $(SRC) $(HEAD)
 	rm -f $@
 	$(LD) $(CXXFLAGS) -o $@ $(OBJS) $(PVDIS_OBJS) $(ALL_LIBS)
-#IT EXISTS NOW!
 
 $(HAMCLIBS_NODICT): $(LOBJS_NODICT) $(LSRC) $(HEAD)
 	rm -f $@
@@ -154,6 +177,10 @@ $(HAMCLIBS): $(LOBJS) $(LSRC) $(HEAD)
 	rm -f $@
 	ar cr $@ $(LOBJS)
 
+# These are FORTRAN-dependent codes.
+# They are obsolescent (soon to be obsolete), to be replaced
+# by hrstranslib.
+ifdef USEFORTRAN
 # 4 degree Septum (April 2013)
 $(SRCDIR)/crex_4degr.o: $(SRCDIR)/crex_4degr.f
 	rm -f $@
@@ -165,9 +192,9 @@ $(SRCDIR)/prex_forward.o: $(SRCDIR)/prex_forward.f
 	cd $(SRCDIR) ; g77 -c -fPIC prex_forward.f ; cd ../
 #Replace 3 lines below with 3 lines above for standard HRS optics
 # Tune Y:
-#$(SRCDIR)/prex_retune_for.o: $(SRCDIR)/prex_retune_for.f
-#	rm -f $@
-#	cd $(SRCDIR) ; g77 -c -fPIC prex_retune_for.f ; cd ../
+$(SRCDIR)/prex_retune_for.o: $(SRCDIR)/prex_retune_for.f
+	rm -f $@
+	cd $(SRCDIR) ; g77 -c -fPIC prex_retune_for.f ; cd ../
 
 $(SRCDIR)/monte_trans_hrs.o: $(SRCDIR)/monte_trans_hrs.f
 	rm -f $@
@@ -180,9 +207,12 @@ $(SRCDIR)/ls_6d_forward.o: $(SRCDIR)/ls_6d_forward.f
 $(SRCDIR)/R6_forward.o: $(SRCDIR)/R6_forward.f
 	rm -f $@
 	cd $(SRCDIR) ; g77 -c -fPIC R6_forward.f ; cd ../
+endif
 
 #############################   PVDIS OBJS   ###############
 
+# The PVDIS code wont work until we fix or replace fortran, I believe.
+ifdef USEFORTRAN
 ./PVDIS/getpdf_mrst2003c.o: ./PVDIS/getpdf_mrst2003c.f ./PVDIS/mrst2003c.o ./PVDIS/NextUn.o ./PVDIS/r1998.o ./PVDIS/readpdf_single.o
 	rm -f $@
 	cd ./PVDIS/; g77 -c -fPIC getpdf_mrst2003c.f mrst2003c.o NextUn.o r1998.o readpdf_single.o; cd ../
@@ -206,6 +236,7 @@ $(SRCDIR)/R6_forward.o: $(SRCDIR)/R6_forward.f
 ./PVDIS/xsec.o: ./PVDIS/xsec.f
 	rm -f $@
 	cd ./PVDIS/; g77 -c -fPIC xsec.f; cd ../
+endif
 
 ################################################################
 
