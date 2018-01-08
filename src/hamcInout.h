@@ -22,6 +22,8 @@ class THaString;
 class TFile;
 class TNtuple;
 
+using namespace std;
+
 class hamcHist {
 // Utility class for histograms (see BookHisto method)
  public: 
