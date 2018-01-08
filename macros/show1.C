@@ -3,7 +3,7 @@
 // Show some histograms
 // Most of these are defined in hamcTrackOut::Init at the moment.
 
-TCanvas c1;
+TCanvas *c1 = new TCanvas;
 
 c1->Divide(2,2);
 
@@ -14,8 +14,7 @@ c1->cd(2);
 xyfoc2->Draw();
 
 c1->cd(3);
-// weighted by cross section
-xyfoc3->Draw("LEGO");
+xyfoc2->Draw("LEGO");
 
 
 }

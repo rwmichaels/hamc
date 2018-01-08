@@ -4,7 +4,7 @@
 // iterate
 // kick:track P0 0.003
 
-TCanvas c1;
+TCanvas *c1 = new TCanvas;
 
 c1->Divide(2,1);
 

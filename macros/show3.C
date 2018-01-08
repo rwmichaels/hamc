@@ -4,7 +4,7 @@
 // Ntuple:
 hamc->Print();
 
-TCanvas c1;
+TCanvas *c1 = new TCanvas;
 
 c1->Divide(2,2);
 
