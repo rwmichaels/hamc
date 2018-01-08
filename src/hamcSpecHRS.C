@@ -6,6 +6,7 @@
 #include "hamcInout.h"
 #include "hamcExpt.h"
 #include "hamcTransMat.h"
+#include "hamcTHRSTrans.h"
 #include "hamcTransLerHRS.h"
 #include "hamcTransLerColdSeptum.h"
 #include "hamcTransLerWarmSeptum.h"
@@ -30,6 +31,21 @@ hamcSpecHRS::hamcSpecHRS(Int_t which, Float_t pmom, Float_t angle) : P0(pmom), c
   desc = "Hall A High Resolution Spectrometer";
   P0_sigma = P0*1e-4;       // default resolution
   collim_distance = 1.1825;   // <- meters, used to be 1.24
+  // Formula to get quad values:  Take HRS current (A) and apply this
+  // factor:  1.458e-3 for Q1 and 2.025e-3 for Q2,Q3
+  // Signs are + - -
+  // Ryan's defaults (Nov, 2017)
+  quad1 = 0.096255;    //  490 A
+  quad2 = -0.131739;   // 429 A
+  quad3 = -0.170480;   // 579 A
+  // Here is for Tune B (PREX-I) with a focus 1.43m after VDC1.
+  //  quad1 = 0.116;   // 582 A
+  // quad2 = -0.128;    // 462 A
+  // quad3 = -0.158;    // 570 A
+  // And I think these dipole parameters never change
+  dipk1 = 0.050178;
+  dipk2 = 0.037056;
+  fTune = THRSTrans::kPREX;
 
   // set collim_distance (numbers from Kiad's pointing diagrams), 13Dec10, rupesh
   // collim_distance below are for hapIII
@@ -85,6 +101,10 @@ void hamcSpecHRS::UseColdSeptum() {
   sept_choice = coldsept;
 }
 
+void hamcSpecHRS::UseTHRSTrans() {
+  trans_choice = hrstrans;
+}
+
 void hamcSpecHRS::UseMatrixTrans() {
   trans_choice = tmatrix;
 }
@@ -113,6 +133,10 @@ Int_t hamcSpecHRS::Init(hamcExpt *expt) {
    //   parser.Print();
    if (parser.IsFound("noseptum")) {
      UseHRSOnly();
+   }   
+   if (parser.IsFound("thrstrans") || parser.IsFound("hrstrans")) {
+     cout << "hamcSpecHRS: Using THRSTrans 2nd order matrix model"<<endl;
+     UseTHRSTrans();
    }   
    if (parser.IsFound("coldseptum")) {
      cout << "hamcSpecHRS: Using cold septum"<<endl;
@@ -224,6 +248,40 @@ Int_t hamcSpecHRS::BuildSpectrom() {
      return OK;
   } 
 
+  if (IsTHRSTrans()) { // Seamus's 2nd order TRANSPORT model
+
+     transport = new hamcTHRSTrans();
+
+     if (IsCollimated()) {
+        if (IsPaulCollim()) {
+ 	   AddBreakPoint(ICOLLIM2);
+	} else {
+	   if (IsAngleCollim()) {
+   	      AddBreakPoint(ICOLLIM3);
+	   } else {
+              AddBreakPoint(ICOLLIM);
+	   }
+        }
+     }
+     if (IsWarmSeptum() || IsColdSeptum()) {
+        AddBreakPoint(ISEPTIN);   // septum input
+        AddBreakPoint(ISEPTOUT);  // setpum out
+     } 
+
+     AddBreakPoint(IQ1IN);
+     AddBreakPoint(IQ1EXIT);
+     AddBreakPoint(IQ2IN);
+     AddBreakPoint(IQ2EXIT);
+     AddBreakPoint(IDIPIN);
+     AddBreakPoint(IDIPEXIT);
+     AddBreakPoint(IQ3IN);
+     AddBreakPoint(IQ3EXIT);
+     AddBreakPoint(IFOCAL);
+
+  }
+
+#ifdef USEFORTRAN
+
   if (IsLeroseTrans()) {   // LeRose functions
 
     if (Is4degSeptum()) {
@@ -239,17 +297,8 @@ Int_t hamcSpecHRS::BuildSpectrom() {
       transport = new hamcTransLerHRS();
     }
 
-    if (Is4degSeptum()) {
-       AddBreakPoint(ISEPTOUT);  // setpum out
-    }
 
-    if (IsWarmSeptum() || IsColdSeptum()) {
-
-       AddBreakPoint(ISEPTIN);   // septum input
-       AddBreakPoint(ISEPTOUT);  // setpum out
-    }
-        
-     if (IsCollimated()) {
+    if (IsCollimated()) {
         if (IsPaulCollim()) {
  	   AddBreakPoint(ICOLLIM2);
 	} else {
@@ -261,6 +310,12 @@ Int_t hamcSpecHRS::BuildSpectrom() {
         }
      }
 
+    if (IsWarmSeptum() || IsColdSeptum() || Is4degSeptum())  {
+
+       AddBreakPoint(ISEPTIN);   // septum input
+       AddBreakPoint(ISEPTOUT);  // setpum out
+    }
+        
     AddBreakPoint(IQ1EXIT);
     AddBreakPoint(IDIPIN);
     AddBreakPoint(IDIPEXIT);
@@ -270,6 +325,15 @@ Int_t hamcSpecHRS::BuildSpectrom() {
      
     return OK;
   }
+
+#else
+
+  if (IsLeroseTrans()) {   // LeRose functions
+    cout << "hamcSpecHRS::WARNING: No Fortran functions allowed in this version"<<endl;
+    cout << "Therefore, no LeRose functions for Transport defined"<<endl;
+    return -1;
+  }
+#endif
 
 // If there are Guido functions, add the choice here.
 
@@ -315,7 +379,7 @@ void hamcSpecHRS::AddBreakPoint(Int_t where) {
 
  	// unblank below for hap III
 // 	// 0.67 mm towards beamline for LHRS
-// 	if (which_spectrom == LEFTHRS) tmpoffsetx = 0.00067;  //0.67mm
+// 	if (which_spectrom == LEFHRS) tmpoffsetx = 0.00067;  //0.67mm
 // 	// 1.04 mm towards beamline for RHRS
 // 	else if (which_spectrom == RIGHTHRS) tmpoffsetx = -0.00104; //1.04mm
 	
@@ -370,15 +434,20 @@ void hamcSpecHRS::AddBreakPoint(Int_t where) {
        break;
 
      case IDIPIN:
-       if (IsWarmSeptum() || IsColdSeptum()) {
-         break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-5.22, -4.98, -0.1924, -0.1924)));
-         break;
+       // Needs some logic here for THRSTrans ... the -5.22 to -4.98 cut is for LeRose only
+       if (IsLeroseTrans()) {   // LeRose functions
+         if (IsWarmSeptum() || IsColdSeptum()) {
+           break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-5.22, -4.98, -0.1924, -0.1924)));
+           break;
+         }
+         if (Is4degSeptum()) {
+           break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-6.19, -5.9, -0.161, -0.1924)));
+           break;
+         }
+         break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, -0.0186)));  // standard HRS
+       } else {  // IsTHRSTrans() or other model
+         break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, -0.0186)));  
        }
-       if (Is4degSeptum()) {
-         break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-6.19, -5.9, -0.161, -0.1924)));
-         break;
-       }
-       break_point.push_back(new hamcSpecBrk(where, new hamcTrapezoid(-0.4, 0.4, 0.125, -0.0186)));  // standard HRS
        break;
 
      case IDIPEXIT:
@@ -443,6 +512,8 @@ void hamcSpecHRS::Print() {
   cout << "Collimator choice "<<collim_choice<<endl;
   cout << "Collim distance = "<<GetCollimDist()<<endl;
   cout << "Number of break points = "<<break_point.size();
+  cout << "Quads "<<quad1<<"  "<<quad2<<"  "<<quad3<<"   dipole "<<dipk1<<"  "<<dipk2<<endl;
+  cout << "Tune "<<fTune<<endl;
   for (Int_t i=0; i<(Int_t)break_point.size(); i++) {
     break_point[i]->Print();
   }

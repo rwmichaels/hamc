@@ -6,6 +6,7 @@
 
 #include "Rtypes.h"
 #include "hamcAperture.h"
+#include "THRSTrans.h"
 #include <iostream>
 #include <vector>
 #include <string>
@@ -13,20 +14,23 @@
 
 // mnemonic constants
 #define ITARGET       0
-#define ITARGET_FULL 21
-#define ICOLLIM       1
-#define ICOLLIM2      2
-#define ICOLLIM3     20
-#define ISEPTIN       3
-#define ISEPTOUT      4
-#define IQ1EXIT       5
-#define IDIPIN        6
-#define IDIPEXIT      7
-#define IQ3IN         8
-#define IQ3EXIT       9
-#define IFOCAL       10
-#define IPLANE1      11
-#define IPLANE2      12
+#define ITARGET_FULL  1
+#define ICOLLIM       2
+#define ICOLLIM2      3
+#define ICOLLIM3      4
+#define ISEPTIN       5
+#define ISEPTOUT      6
+#define IQ1IN         7 
+#define IQ1EXIT       8
+#define IQ2IN         9
+#define IQ2EXIT      10
+#define IDIPIN       11
+#define IDIPEXIT     12
+#define IQ3IN        13
+#define IQ3EXIT      14
+#define IFOCAL       15
+#define IPLANE1      16
+#define IPLANE2      17
 
 #define LEFTHRS      1
 #define RIGHTHRS     2
@@ -37,6 +41,7 @@ class hamcTrack;
 class hamcAperture;
 class hamcTrans;
 class hamcSpecHRS;
+class THRSTrans;  // Seamus's class for 2nd order Transport. 
 
 // class hamcDetector;
 
@@ -122,12 +127,14 @@ class hamcSpecHRS {
 
      void UseCollimator();   // To use the front-end collmator 
      void UsePaulColl();     // To use Paul's 2-piece collimator.
-     void UseAngleColl();     // To use empirically derived angle collimation
+     void UseAngleColl();    // To use empirically derived angle collimation
 
      void UseHRSOnly();      // HRS without septum
      void Use4degSeptum();   // To use with the 4 degree Septum
      void UseWarmSeptum();   // To use with the Warm Septum
      void UseColdSeptum();   // Use with Cold Septum (ca 2005)
+
+     void UseTHRSTrans();    // To use Seamus's 2nd order TRANSPORT model
 
      void UseMatrixTrans();  // To use 1st order TRANSPORT
      void UseLeroseTrans();  // To use LeRose Transfer functions
@@ -144,6 +151,7 @@ class hamcSpecHRS {
      Bool_t IsWarmSeptum()  { return sept_choice==warmsept; };
      Bool_t IsMatrixTrans() { return trans_choice==tmatrix; };
      Bool_t IsLeroseTrans() { return trans_choice==tlerose; };
+     Bool_t IsTHRSTrans() { return trans_choice==hrstrans; };
      Bool_t IsGuidoTrans() { return use_guido; };
 
      Float_t GetP0() const { return P0;};
@@ -156,6 +164,8 @@ class hamcSpecHRS {
      Float_t P0, P0_sigma, central_angle;
      Float_t collim2_radlen1, collim2_radlen2;
      Float_t collim2_a, collim2_z, collim2_t;
+     double quad1,quad2,quad3,dipk1,dipk2;
+     THRSTrans::tune_t fTune; 
  
   private:
 
@@ -168,6 +178,7 @@ class hamcSpecHRS {
      static const Int_t warmsept  =1;
      static const Int_t coldsept  =2;
      static const Int_t sept4deg  =3;
+     static const Int_t hrstrans  =5;
      static const Int_t tmatrix   =1;
      static const Int_t tlerose   =2;
      static const Int_t nocollim  =0;
