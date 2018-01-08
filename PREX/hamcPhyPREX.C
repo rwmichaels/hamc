@@ -184,7 +184,7 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
       Float_t eprime = energy[iene]/frecoil;
       qsq = 2*energy[iene]*eprime*(1-TMath::Cos(theta_rad));
       Float_t crsec2 = CalculateCrossSection(0, energy[iene], theta_degr);
-
+  
       if (iene==0) hpph1->Fill(theta_degr,crsec);
       if (iene==1) hpph2->Fill(theta_degr,crsec2);
       if (iene==2) hpph3->Fill(theta_degr,crsec2);
@@ -247,43 +247,47 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
 
     Float_t theta_degr, theta_rad, ene, crsec2;
 
-    for (Int_t itry=0; itry<10; itry++) {
+    for (Int_t itry=0; itry<9; itry++) {
 
-      theta_degr = 5.0;
-      Float_t E0nom = 1.05;
+      theta_degr = 4;
+      Float_t E0nom = 2.2;
       ene = E0nom;
+      Float_t xdays = 35;
 
       if (itry==1) {
 	theta_degr = 5.0;
-        ene = E0nom;
+        ene = 2.2;
       }
       if (itry==2) {
-	theta_degr = 4.8;
-        ene = E0nom;
+	theta_degr = 4.0;
+        ene = 2.5;
       }
       if (itry==3) {
-	theta_degr = 5.5;
-        ene = E0nom;
-      }
-      if (itry==4) {
-	theta_degr = 5.0;
-        ene = 1.2;
-      }
-      if (itry==5) {
-	theta_degr = 6.0;
-        ene = 1.8;
-      }
-      if (itry==6) {
 	theta_degr = 5.0;
         ene = 2.0;
       }
-      if (itry==7) {
+      if (itry==4) {
 	theta_degr = 5.0;
-        ene = 0.55;
+        ene = 1.8;
+      }
+      if (itry==5) {
+	theta_degr = 5.0;
+        ene = 2.4;
+      }
+      if (itry==6) {
+	theta_degr = 6.3;
+        ene = 4.0;
+        xdays = 15;
+      }
+      if (itry==7) {
+	theta_degr = 7.6;
+        ene = 4.0;
+        xdays = 23;
       }
       if (itry==8) {
-	theta_degr = 7.0;
-        ene = 1.2;
+	theta_degr = 5.7;
+        ene = 3.55;
+        xdays = 20;
       }
       if (itry==9) {
 	theta_degr = 8.0;
@@ -299,14 +303,66 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
       Float_t eprime = ene/frecoil;
       qsq = 2*ene*eprime*(1-TMath::Cos(theta_rad));
 
-      cout << "CHECK :  energy "<<ene<<"  theta "<<theta_degr<<endl;
+      cout << endl << endl<<"CHECK :  energy "<<ene<<"  theta "<<theta_degr<<endl;
+      Float_t asym0 = asy0;
       cout << "crsec  "<<crsec<<"    A0= "<<asy0<<"  A1= "<<asy1<<endl;
+      Float_t sensi = (asy1 - asy0)/asy0;
+      if (sensi < 0) sensi = -1.0*sensi;
+      Float_t qfermi = TMath::Sqrt(qsq)/0.197;
+      cout << "q =  "<<qfermi<<"  f^-1 "<<endl;
 // Warning: CalculateCrossSection needs qsq, a variable member of this class.
-      crsec2 = CalculateCrossSection(2, ene, theta_degr);  
+      if (whichmodel == HORCA48) crsec2 = CalculateCrossSection(2, ene, theta_degr);  
+      if (whichmodel == HORPB) crsec2 = CalculateCrossSection(0, ene, theta_degr);  
+      Float_t asycalc = 0;
 
-      cout << "crsec2 = "<<crsec2<<endl;
-      Float_t xdif = (crsec - crsec2)/crsec;
-      cout << "Rel. diff  = "<<xdif<<"   ratio = "<<crsec/crsec2<<endl;
+      if (whichmodel == HORCA48) asycalc = CalculateAsymmetry(1);
+      if (whichmodel == HORPB) asycalc = CalculateAsymmetry(0);
+
+      //      Float_t xdif = (crsec - crsec2)/crsec;
+      //      cout << "Rel. diff  = "<<xdif<<"   ratio = "<<crsec/crsec2<<endl;
+
+      Float_t tdens = expt->target->GetMtlDensity(0);  // tgt density (g/cm^3)
+      Float_t tlen = expt->target->GetMtlEffLen(0);  // tgt len (m)
+      // over-ride with Nikki's assumptions
+      tdens = 1.855;
+      tlen = 0.005 * 0.33;
+
+      tlen = tlen*100;                        // need cm
+      Float_t current = expt->event->beam->beam_current;  // microAmps (uA)
+      current = current * 6.25e12;    // 100 uA = 6.25e14 e- / sec
+      Float_t anum = expt->target->GetAscatt();    // atomic num.
+
+      cout << "Checking rates  "<<endl;
+      cout << "Tgt  A = "<<anum<<"    tdens = "<<tdens<<"   tlen = "<<tlen<<endl;
+      cout << "Current = "<<current<<endl;
+
+      Float_t domega = 0.00293 * 2; // 2 HRS, Nickie's model
+  
+// Use crsec from table, if possible
+      Float_t rate = current * crsec * 0.602 * tlen * tdens * domega / anum;
+
+      cout << "domega "<<domega<<"   rate "<<rate<<endl;
+
+// For "xdays" days 
+      Float_t xcnt = rate * xdays * 24. * 3600;
+      Float_t asy_err = 0;   
+// Energy resolution effect
+      Float_t eresol = 1.06;
+      if (xcnt != 0) asy_err = eresol * (1.0 / TMath::Sqrt(xcnt));
+      Float_t pol=0.85;
+      Float_t daa = asy_err / (pol * asym0);   // stat. error.
+      // Add systematic error (nominally 1.25%) in quadrature
+      Float_t daa_sys = 0.0125;
+      Float_t daa_tot;
+      daa_tot = TMath::Sqrt(daa*daa + daa_sys*daa_sys);
+      Float_t dRn_rel = daa_tot/sensi;
+      Float_t dRn_abs = 3.59 * dRn_rel/100;
+
+      cout << "num days  "<<xdays<<"   counts "<<xcnt<<"   asy err "<<asy_err<<endl;
+      cout << "stuff "<<asy_err<<"   "<<pol<<"   "<<asym0<<endl;
+      cout << "asy stat err "<<daa<<"   Total error in A "<<daa_tot<<endl;      
+      cout << "sensitivity of Asy to 1% change in Rn  "<<sensi<<endl;
+      cout << "error in Rn if CREX, relative "<<dRn_rel<<" %  absolute "<<dRn_abs<<"  fm "<<endl;
 
       cout << endl << "-------------------------------------------- "<<endl;
 
@@ -592,19 +648,23 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
     Float_t radlen, prob, xfact, xinv, eloss; 
     
     Int_t Npts = 1000;
+
     xpts = ((Float_t)Npts);
 
     Float_t tdens = 11.35;          // g/cm^3
     Float_t tlen = 0.05;            // cm
-    Float_t current = 100;          // uA
-    current = current * 6.25e12;    // 100 uA = 6.25e14 e- / sec
+    Float_t current_uA = 1.0;          // uA
+    Float_t current;
+    current = current_uA * 6.25e12;    // 100 uA = 6.25e14 e- / sec
     Float_t anum = 208;             // atomic num.
     Float_t pi = 3.1415926;
 
-    Float_t anglo_deg = 10;  // degrees
-    Float_t anghi_deg = 30;
+    Float_t anglo_deg = 0.05;  // degrees
+    Float_t anghi_deg = 3.5;
+    Float_t ztarget = 30270.0;   // mm
+    Float_t rrad, xarea, deltar, xpower;
 
-    Int_t use_brehms = 1;  // DONT TOUCH
+    Int_t use_brehms = 1;  // normally 1
 
     cout << "Check Power in solid angle from "<<endl;
     cout <<  anglo_deg << "   to  "<<anghi_deg<<"   degrees "<<endl;
@@ -614,6 +674,7 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
 
     steptheta = (anghi_deg-anglo_deg)/xpts;
     dtheta = (pi/180.)*steptheta;
+    deltar = (anghi_deg-anglo_deg)*(pi/180.)*ztarget/xpts;
 
     ratesum = 0;
 
@@ -649,6 +710,16 @@ Int_t hamcPhyPREX::Init(hamcExpt* expt) {
       // Weight the rate by energy 
       rate = rate * ene/1.063;
 
+      // power per unit area per uA in this element
+      xarea = 2 * 3.14159 * rrad * deltar;
+      cout << "stuff "<<rrad<<"  "<<deltar<<"   "<<xarea<<endl;
+
+      xpower = (rate*eprime*1.6e-10)/(current_uA*xarea);
+
+      rrad = ztarget*theta_rad;
+
+      cout << "theta(degr), R, power  "<<theta_degr<<"  "<<rrad<<"   "<<xpower<<endl;
+      
       ratesum += rate;  
 
       cout << "energy "<<ene<<"  theta "<<theta_degr<<endl;
@@ -1349,7 +1420,7 @@ Int_t hamcPhyPREX::CrossSection(Float_t energy, Float_t angle_rad, Int_t stretch
     return -1;
   }
 
-  Int_t debug = 1;
+  Int_t debug = 0;
   // Lookup the cross section for this E,theta(angle)
 
   /*find the index of angle and energy in the class variables angle_row and energy_row respectively */
@@ -1405,7 +1476,7 @@ Int_t hamcPhyPREX::CrossSection(Float_t energy, Float_t angle_rad, Int_t stretch
   }
 
   if (debug) {
-     cout << "\n LEAD Cross section : "<<endl;
+     cout << "\n Cross section : "<<endl;
      cout << "stretch "<<stretch<<"   indices "<<indxEnergy<<"   "<<indxAngle+1<<endl;
      cout << "energy " << energy << " GeV " << "angle " << angle << endl;
      cout << "e1 "<<e1<<"    e2 "<<e2<<endl;
@@ -1413,9 +1484,16 @@ Int_t hamcPhyPREX::CrossSection(Float_t energy, Float_t angle_rad, Int_t stretch
      
   }
 
-  Float_t calccrsec = CalculateCrossSection(0, energy, angle);
+  Float_t calccrsec = 0;
+  qsq = 2*energy*energy*(1-TMath::Cos(angle*3.14159/180.));
+  if (whichmodel == HORCA48) {
+          calccrsec = CalculateCrossSection(2, energy, angle);  
+  }
+
+  if (whichmodel == HORPB) calccrsec = CalculateCrossSection(0, energy, angle);  
   if (debug) {
-       cout <<"calculated lead cross section " << calccrsec <<endl;
+       cout << "which model "<<whichmodel<<"   "<<HORCA48<<"   "<<HORPB<<endl;
+       cout <<"calculated cross section ??? " << calccrsec <<endl;
        cout <<" fractional diff "<< (calccrsec - crsec)/crsec<<endl;
   }
 
@@ -1597,14 +1675,16 @@ Float_t hamcPhyPREX::CalculateCrossSection(Int_t nuc, Float_t energy, Float_t an
 
   // nuc = 0  --> lead
   // nuc = 1  --> C12
-  // nuc = 2  --> use Z,A of Ca48 and FF of C12 (temporary, I hope)
-  // no other choices !
+  // nuc = 2  --> use Z,A of Ca48 and very crude FF parameterization
+  // No other nuclei supported yet.
 
   // energy in GeV,  angle in degrees.
 
   Int_t ldebug=0;
 
   Float_t pi = 3.1415926; 
+
+  Float_t qinvf;
 
   if (nuc != 0 && nuc != 1 && nuc != 2) {
     cout << "hamcPhyPREX::ERROR: invalid nucleus choice "<<endl;
@@ -1614,6 +1694,7 @@ Float_t hamcPhyPREX::CalculateCrossSection(Int_t nuc, Float_t energy, Float_t an
   if (qsq == 0) {  // wasn't calculated yet.  (qsq is class member)
     qsq = 2*energy*energy*(1-TMath::Cos(angle*pi/180.));
   }
+  qinvf = TMath::Sqrt(qsq)/0.197;
 
   Float_t calcrsec, mott, form_factor;
 
@@ -1626,15 +1707,20 @@ Float_t hamcPhyPREX::CalculateCrossSection(Int_t nuc, Float_t energy, Float_t an
   Float_t znuc;
   if (nuc == 0) {
     znuc = 82;
-  } else {
+  } 
+  if (nuc == 1) {
     znuc = 6;
   }
+  if (nuc == 2) {
+    znuc = 20;
+  }
 
-  Float_t ascreen = 5e5;  // units: fm (1e-15 m)
+  Float_t ascreen = 3.7e5;  // units: fm (1e-15 m) ; 3e5 is about right
 
   Float_t xscreen = 38.0 / (ascreen * ascreen);
 
   mott = pow(((znuc*0.197*cos(halfangle_rad))/137),2)/ (xscreen + 400*pow(energy,2)*sin4);
+  //  cout << "Mott  "<<znuc<<"  "<<energy<<"   "<<angle<<"   "<<mott<<endl;
 
   // qsq comes from hamcKine 
 
@@ -1656,7 +1742,8 @@ Float_t hamcPhyPREX::CalculateCrossSection(Int_t nuc, Float_t energy, Float_t an
     form_factor = Interpolate(qsq1, qsq2, qsq, form_factor1, form_factor2);
 
 
-  } else { // carbon
+  } 
+  if (nuc == 1) { // carbon
 
     vector<Float_t>::const_iterator iterQsq = upper_bound(c12qsq_row.begin(), c12qsq_row.end(), qsq); //search for the first value of qsq which is larger or equal than actual   
     int indxQsq = iterQsq - c12qsq_row.begin(); 
@@ -1672,6 +1759,15 @@ Float_t hamcPhyPREX::CalculateCrossSection(Int_t nuc, Float_t energy, Float_t an
     form_factor = Interpolate(qsq1, qsq2, qsq, form_factor1, form_factor2);
 
   }
+  if (nuc == 2) {
+    form_factor = 0.00018;
+    if (qinvf < 0.377) form_factor = 0.575;
+    if (qinvf >= 0.377 && qinvf < 0.57) form_factor = 0.27;
+    if (qinvf >= 0.57 && qinvf < 0.92) form_factor = 0.019;
+    if (qinvf >= 0.92 && qinvf < 1.2) form_factor = 0.0012;
+    //    cout << "Ca48   q = "<<qinvf<<"    FF = "<<form_factor<<endl;
+  }
+
 
   calcrsec = mott*form_factor; //result is in barn/seradians multiply by 1000 to compare with the value from Horowitchs table where it is milibars/stereadians 
 
@@ -1711,7 +1807,7 @@ Float_t hamcPhyPREX::CalculateAsymmetry(Int_t nuc) {
   if (nuc == 0) {  
     A0 = 184.74;  // lead
   } else {
-    A0 = 128.3;   // C12
+    A0 = 174.4;   // Ca48
   }
 
   Float_t xasy = A0*qsq*pow(10.0,-6);
@@ -1775,7 +1871,7 @@ Int_t hamcPhyPREX::LoadHorowitzTable(vector<vector<Float_t> >& crsc_table, vecto
   vector<float> crsc_row;  //temporary variables
   vector<float> asymmetry_row;
 
-  Int_t debug = 1;
+  Int_t debug = 0;
 
   energy_row.clear();
   asymmetry_row.clear();
