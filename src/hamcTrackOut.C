@@ -240,6 +240,20 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 			  &ytrans, nbin, -0.5, 0.5,
                           &xtrans, nbin, -0.5, 0.5);
 
+   // Plots to compare to data
+  expt->inout->BookHisto(kFALSE, kFALSE, IFOCAL, "thph2",
+		     "Theta-Phi at target (Monte Carlo)",&ph0,nbin,-0.06,0.06,
+			  &th0,nbin,-0.1,0.1);
+   expt->inout->BookHisto(kFALSE, kTRUE, ICOLLIM, "thphc2",
+		  "Theta-Phi at target (collimated)",&ph0,nbin,-0.06,0.06,
+			  &th0,nbin,-0.1,0.1);
+   expt->inout->BookHisto(kFALSE, kTRUE, IFOCAL, "thpha2",
+	  "Theta-Phi at target (accepted)",&ph0,nbin,-0.06,0.06,
+			  &th0,nbin,-0.1,0.1);
+   expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "thpha4",
+	  "Theta-Phi at target (accepted, weighted)",&ph0,nbin,-0.06,0.06,
+			  &th0,nbin,-0.1,0.1);
+
 // For designing the collimator3
    expt->inout->BookHisto(kFALSE, kFALSE, ICOLLIM3, "xycoll3",
 			  "X-Y at collimator3",
@@ -305,15 +319,25 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
                             &ytrans, nbin,-0.8,0.8,
                             &xtrans, nbin,-0.8,0.8);
 
+   Float_t xdlo,xdhi;
+   parser.Load(expt->inout->GetStrVect("hrs_setup"));
+   if (parser.IsFound("thrstrans") || parser.IsFound("hrstrans")) {
+     cout << "hamcTrackOut:: Is THRSTrans "<<endl;
+     xdlo = -1; xdhi = 1;
+   } else {
+     cout << "hamcTrackOut:: Is NOT THRSTrans "<<endl;
+     xdlo = -5.5; xdhi = -4.8;
+   }
+
    expt->inout->BookHisto(kFALSE, kFALSE, IDIPIN, "xydipi", 
 		      "Transport X-Y at dipole entrance", 
- 			    &ytrans, nbin,-1.4,1.4,
-                            &xtrans, nbin,-6.8,-5.5);
+			  &ytrans, nbin,-0.4,0.4,
+			  &xtrans, nbin,xdlo,xdhi);
 
    expt->inout->BookHisto(kFALSE, kTRUE, IDIPIN, "xydipia", 
 		   "Transport X-Y inside dipole-in acceptance", 
-			  &ytrans, nbin,-1.4,1.4,
-			  &xtrans, nbin,-6.8,-5.5);
+			  &ytrans, nbin,-0.4,0.4,
+			  &xtrans, nbin,xdlo,xdhi);
 
    expt->inout->BookHisto(kFALSE, kFALSE, IDIPIN, "xydipsi", 
 		      "(std) Trans X-Y at dipole entrance", 
@@ -354,65 +378,26 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 
    expt->inout->BookHisto(kFALSE, kFALSE, IFOCAL, "xyfoc1", 
 		      "X-Y at focal plane (even if not accepted)", 
-                            &ytrans, nbin,-0.5,0.5,
-                            &xtrans, nbin,-1,1); 
-   expt->inout->BookHisto(kFALSE, kTRUE, IFOCAL, "xyfoc2", 
+                            &ytrans, nbin,-0.4,0.4,
+                            &xtrans, nbin,-1.2,0.2); 
+
+   expt->inout->BookHisto(kFALSE, kTRUE, IFOCAL, "xyfoc1a", 
 		      "Accepted X-Y at focal plane", 
-                            &ytrans, nbin,-0.1,0.1,
-                            &xtrans, nbin,-0.6,0.2); 
-    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "xyfoc3", 
-		      "Weighted X-Y at focal plane", 
-                            &ytrans, nbin,-0.1,0.1,
-                            &xtrans, nbin,-0.6,0.2); 
+                            &ytrans, nbin,-0.4,0.4,
+                            &xtrans, nbin,-1.2,0.2); 
 
-    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "xyfoc4", 
-		      "Weighted X-Y at focal plane", 
-                            &ytrans, nbin,-0.1,0.1,
-                            &xtrans, nbin,-0.6,0.2); 
-
-    expt->inout->BookHisto(kFALSE, kTRUE, IFOCAL, "xyfoc5", 
-		      "Unweighted X-Y at focal plane (X on X-axis)", 
-                            &xtrans, nbin,-0.8,0.3,
-                            &ytrans, nbin,-0.1,0.1);
-
-    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "xyfoc6", 
-		      "Weighted X-Y at focal plane (X on X-axis)", 
-                            &xtrans, nbin,-1.2,0.5,
-                            &ytrans, nbin,-0.4,0.3);
-
-    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "xyfoc6z", 
-		      "Weighted X-Y at focal plane (X on X-axis)", 
-                            &xtrans, nbin,-0.3,0.1,
-                            &ytrans, nbin,-0.2,0.2);
-
-    expt->inout->BookHisto(kTRUE, kTRUE, IPLANE1, "xyfoc7", 
-		      "Weighted X-Y at 1.0 m (X on X-axis)", 
-                            &xtrans, nbin,-1,1,
-                            &ytrans, nbin,-0.25,0.25);
-
-    expt->inout->BookHisto(kTRUE, kTRUE, IPLANE1, "xyfoc7z", 
-		      "Weighted X-Y at 1.0 m (X on X-axis)", 
-                            &xtrans, nbin,-0.2,0.1,
-                            &ytrans, nbin,-0.1,0.1);
-
-    expt->inout->BookHisto(kTRUE, kTRUE, IPLANE2, "xyfoc8", 
-		      "Weighted X-Y at 1.48 m (X on X-axis)", 
-                            &xtrans, nbin,-1,1,
-                            &ytrans, nbin,-0.25,0.25);
-
-    expt->inout->BookHisto(kTRUE, kTRUE, IPLANE2, "xyfoc8z", 
-		      "Weighted X-Y at 1.48 m (X on X-axis)", 
-                            &xtrans, nbin,-0.2,0.1,
-                            &ytrans, nbin,-0.1,0.1);
-
+    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "xyfoc2", 
+		      "Weighted  X-Y at focal plane", 
+                            &xtrans, nbin,-0.5,0.02,
+                            &ytrans, nbin,-0.04,0.04); 
 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "xfoc",
                          "X at focal plane",
-			   &xtrans, nbin, -0.5, 0.1);
+			   &xtrans, nbin, -0.5, 0.02);
 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "yfoc",
                          "Y at focal plane",
-			   &ytrans, nbin, -0.1, 0.1);
+			   &ytrans, nbin, -0.04, 0.04);
 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "xdet",
                          "X (det. frame)",
