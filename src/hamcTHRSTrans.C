@@ -80,6 +80,7 @@ Int_t hamcTHRSTrans::TransForm(hamcTrack *trk, Int_t where) const {
 
   TVectorD iv(20),v(20);
   TMatrixD hrsmatrix(20,20);
+  Int_t idx=0;
 
   Int_t debug_trans = 0; // to get do some debugging here.
   Int_t origin = trk->origin;
@@ -115,42 +116,66 @@ Int_t hamcTHRSTrans::TransForm(hamcTrack *trk, Int_t where) const {
 
       case IQ1IN: 
 
-        hrsmatrix = *(trans->GetTransport(6));
+        idx=6;
+        if (fTune==THRSTrans::kStd) idx=1;
+
+        hrsmatrix = *(trans->GetTransport(idx));
         break;
 
       case IQ1EXIT: 
 
-        hrsmatrix = *(trans->GetTransport(7));
+        idx=7;
+        if (fTune==THRSTrans::kStd) idx=2;
+
+        hrsmatrix = *(trans->GetTransport(idx));
         break;
 
       case IQ2IN: 
 
-        hrsmatrix = *(trans->GetTransport(8));
+        idx=8;
+        if (fTune==THRSTrans::kStd) idx=3;
+
+        hrsmatrix = *(trans->GetTransport(idx));
         break;
 
       case IQ2EXIT: 
+
+        idx=9;
+        if (fTune==THRSTrans::kStd) idx=4;
 
         hrsmatrix = *(trans->GetTransport(9));
         break;
 
       case IDIPIN:
 
-        hrsmatrix = *(trans->GetTransport(10));
+        idx=10;
+        if (fTune==THRSTrans::kStd) idx=5;
+
+        hrsmatrix = *(trans->GetTransport(idx));
         break;
 
       case IDIPEXIT:
 
-        hrsmatrix = *(trans->GetTransport(11));
+        idx=11;
+        if (fTune==THRSTrans::kStd) idx=6;
+
+        hrsmatrix = *(trans->GetTransport(idx));
         break;
 
       case IQ3IN:
 
-        hrsmatrix = *(trans->GetTransport(12));
+        idx=12;
+        if (fTune==THRSTrans::kStd) idx=7;
+
+        hrsmatrix = *(trans->GetTransport(idx));
         break;
 
       case IQ3EXIT:
 
-        hrsmatrix = *(trans->GetTransport(13));
+        idx=13;
+        if (fTune==THRSTrans::kStd) idx=8;
+
+        hrsmatrix = *(trans->GetTransport(idx));
         break;
 
       case IFOCAL:
