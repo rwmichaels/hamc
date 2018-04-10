@@ -137,7 +137,10 @@ Int_t hamcSpecHRS::Init(hamcExpt *expt) {
    if (parser.IsFound("thrstrans") || parser.IsFound("hrstrans")) {
      cout << "hamcSpecHRS: Using THRSTrans 2nd order matrix model"<<endl;
      UseTHRSTrans();
-   }   
+   } else {
+     cout << "Warning:  Should be using thrstrans, the fortran transport"<<endl;
+     cout << "  becoming obsolete ! "<<endl;
+   }  
    if (parser.IsFound("coldseptum")) {
      cout << "hamcSpecHRS: Using cold septum"<<endl;
      UseColdSeptum();
@@ -179,6 +182,25 @@ Int_t hamcSpecHRS::Init(hamcExpt *expt) {
      tguido = new hamcTransGuido();
      tguido->Init(this);
    }   
+
+   parser.Load(expt->inout->GetStrVect("quad_fields"));
+   // Field gradients (Tesla/m)
+   if (parser.IsFound("q1")) {
+     quad1 = parser.GetData(); 
+   }      
+   if (parser.IsFound("q2")) {
+     quad2 = parser.GetData(); 
+   }      
+   if (parser.IsFound("q3")) {
+     quad3 = parser.GetData(); 
+   }      
+   if (parser.IsFound("tune")) {
+     quad3 = parser.GetData(); 
+   }      
+   parser.Load(expt->inout->GetStrVect("quad_tune"));
+   if (parser.IsFound("std")) fTune = THRSTrans::kStd;
+   if (parser.IsFound("prex")) fTune = THRSTrans::kPREX;
+   if (parser.IsFound("crex")) fTune = THRSTrans::kCREX;
 
    collim2_radlen1 = 0;
 
@@ -511,7 +533,7 @@ void hamcSpecHRS::Print() {
   cout << "Septum choice "<<sept_choice<<endl;
   cout << "Collimator choice "<<collim_choice<<endl;
   cout << "Collim distance = "<<GetCollimDist()<<endl;
-  cout << "Number of break points = "<<break_point.size();
+  cout << "Number of break points = "<<break_point.size()<<endl;
   cout << "Quads "<<quad1<<"  "<<quad2<<"  "<<quad3<<"   dipole "<<dipk1<<"  "<<dipk2<<endl;
   cout << "Tune "<<fTune<<endl;
   for (Int_t i=0; i<(Int_t)break_point.size(); i++) {
