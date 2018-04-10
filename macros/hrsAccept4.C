@@ -11,21 +11,21 @@
    gStyle->SetLabelSize(0.052,"y");
    gROOT->ForceStyle();
 
-   TCanvas *c1 = new TCanvas();
-   c1->Divide(2,2);
+   TCanvas *c4a = new TCanvas();
+   c4a->Divide(2,2);
 
    thpha2->SetMarkerColor(2);
 
-   c1->cd(1);
+   c4a->cd(1);
 
    thph2->Draw();
    thpha2->Draw("same");
 
-   c1->cd(2);
+   c4a->cd(2);
 
    thpha2->Draw("");
 
-   c1->cd(3);
+   c4a->cd(3);
 
 
 }

@@ -11,8 +11,8 @@
    gStyle->SetLabelSize(0.052,"y");
    gROOT->ForceStyle();
 
-   TCanvas *c1 = new TCanvas();
-   c1->Divide(2,2);
+   TCanvas *c2a = new TCanvas();
+   c2a->Divide(2,2);
 
    xydipia->SetMarkerColor(2);
    xydipoa->SetMarkerColor(2);
@@ -20,22 +20,22 @@
    xyq3ia->SetMarkerColor(2);
    xyq3oa->SetMarkerColor(2);
 
-   c1->cd(1);
+   c2a->cd(1);
 
    xydipi->Draw();
    xydipia->Draw("same");
 
-   c1->cd(2);
+   c2a->cd(2);
 
    xydipo->Draw();
    xydipoa->Draw("same");
 
-   c1->cd(3);
+   c2a->cd(3);
 
    xyq3i->Draw();
    xyq3ia->Draw("same");
 
-   c1->cd(4);
+   c2a->cd(4);
 
    xyq3o->Draw();
    xyq3oa->Draw("same");

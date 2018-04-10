@@ -11,21 +11,21 @@
    gStyle->SetLabelSize(0.052,"y");
    gROOT->ForceStyle();
 
-   TCanvas *c1 = new TCanvas();
-   c1->Divide(2,2);
+   TCanvas *c3a = new TCanvas();
+   c3a->Divide(2,2);
 
    xyfoc1a->SetMarkerColor(2);
 
-   c1->cd(1);
+   c3a->cd(1);
 
    xyfoc1->Draw();
    xyfoc1a->Draw("same");
 
-   c1->cd(2);
+   c3a->cd(2);
 
    xyfoc2->Draw();
 
-   c1->cd(3);
+   c3a->cd(3);
 
    xyfoc2->Draw("LEGO");
 

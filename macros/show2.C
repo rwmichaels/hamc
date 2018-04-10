@@ -2,20 +2,20 @@
 
 // Show some histograms
 
-TCanvas *c1 = new TCanvas;
+TCanvas *c2 = new TCanvas;
 
-c1->Divide(2,2);
+c2->Divide(2,2);
 
-c1->cd(1);
+c2->cd(1);
 th1->Draw();
 
-c1->cd(2);
+c2->cd(2);
 th2->Draw();
 
-c1->cd(3);
+c2->cd(3);
 th3->Draw();
 
-c1->cd(4);
+c2->cd(4);
 th4->Draw();
 
 
