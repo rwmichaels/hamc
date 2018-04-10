@@ -62,7 +62,7 @@ Int_t hamcTransLerWarmSeptum::TransForm(hamcTrack *trk, Int_t where) const {
   Int_t xbig = -9999;
   Int_t debug_trans = 0; // to get do some debugging here.
 
-  long dimen=5;
+  int dimen=5;
   float xtrans[5], xout[5];
 
   xtrans[0] = trk->tvect_orig->GetX();
@@ -81,19 +81,19 @@ Int_t hamcTransLerWarmSeptum::TransForm(hamcTrack *trk, Int_t where) const {
 //     xtrans[2] = 0.;
 //     xtrans[3] = 0.02;
 //     xtrans[4] = 0.001;
-     Float_t xtof=x_sp_fp__(xtrans,&dimen);    // tgt -> fp
-     Float_t ttof=t_sp_fp__(xtrans,&dimen);
-     Float_t ytof=y_sp_fp__(xtrans,&dimen);
-     Float_t ptof=p_sp_fp__(xtrans,&dimen);     
-     xout[0]=x_sp_col__(xtrans,&dimen);// tgt -> col
-     xout[1]=t_sp_col__(xtrans,&dimen);
-     xout[2]=y_sp_col__(xtrans,&dimen);
-     xout[3]=p_sp_col__(xtrans,&dimen);
+     Float_t xtof=x_sp_fp_(xtrans,&dimen);    // tgt -> fp
+     Float_t ttof=t_sp_fp_(xtrans,&dimen);
+     Float_t ytof=y_sp_fp_(xtrans,&dimen);
+     Float_t ptof=p_sp_fp_(xtrans,&dimen);     
+     xout[0]=x_sp_col_(xtrans,&dimen);// tgt -> col
+     xout[1]=t_sp_col_(xtrans,&dimen);
+     xout[2]=y_sp_col_(xtrans,&dimen);
+     xout[3]=p_sp_col_(xtrans,&dimen);
      xout[4]=xtrans[4];
-     Float_t xcolf=x_sp_cfp__(xout,&dimen);    // col -> fp
-     Float_t tcolf=t_sp_cfp__(xout,&dimen);
-     Float_t ycolf=y_sp_cfp__(xout,&dimen);
-     Float_t pcolf=p_sp_cfp__(xout,&dimen);
+     Float_t xcolf=x_sp_cfp_(xout,&dimen);    // col -> fp
+     Float_t tcolf=t_sp_cfp_(xout,&dimen);
+     Float_t ycolf=y_sp_cfp_(xout,&dimen);
+     Float_t pcolf=p_sp_cfp_(xout,&dimen);
      cout << endl << endl;
      cout <<"orig flag "<<origin<<endl;
      cout <<"orig "<<xtrans[0]<<" "<<xtrans[1]<<" "<<xtrans[2]<<" "<<xtrans[3]<<" "<<xtrans[4]<<endl;
@@ -107,18 +107,18 @@ Int_t hamcTransLerWarmSeptum::TransForm(hamcTrack *trk, Int_t where) const {
 
       case ISEPTIN: 
 
-        xout[0]=x_sp_sen__(xtrans,&dimen);
-        xout[1]=t_sp_sen__(xtrans,&dimen);
-        xout[2]=y_sp_sen__(xtrans,&dimen);
-        xout[3]=p_sp_sen__(xtrans,&dimen);
+        xout[0]=x_sp_sen_(xtrans,&dimen);
+        xout[1]=t_sp_sen_(xtrans,&dimen);
+        xout[2]=y_sp_sen_(xtrans,&dimen);
+        xout[3]=p_sp_sen_(xtrans,&dimen);
         break;
 
       case ISEPTOUT: 
  
-        xout[0]=x_sp_sex__(xtrans,&dimen);
-        xout[1]=t_sp_sex__(xtrans,&dimen);
-        xout[2]=y_sp_sex__(xtrans,&dimen);
-        xout[3]=p_sp_sex__(xtrans,&dimen);
+        xout[0]=x_sp_sex_(xtrans,&dimen);
+        xout[1]=t_sp_sex_(xtrans,&dimen);
+        xout[2]=y_sp_sex_(xtrans,&dimen);
+        xout[3]=p_sp_sex_(xtrans,&dimen);
         break;
 
       case ICOLLIM3: 
@@ -130,67 +130,67 @@ Int_t hamcTransLerWarmSeptum::TransForm(hamcTrack *trk, Int_t where) const {
       case ICOLLIM: 
       case ICOLLIM2: 
 
-        xout[0]=x_sp_col__(xtrans,&dimen);
-        xout[1]=t_sp_col__(xtrans,&dimen);
-        xout[2]=y_sp_col__(xtrans,&dimen);
-        xout[3]=p_sp_col__(xtrans,&dimen);
+        xout[0]=x_sp_col_(xtrans,&dimen);
+        xout[1]=t_sp_col_(xtrans,&dimen);
+        xout[2]=y_sp_col_(xtrans,&dimen);
+        xout[3]=p_sp_col_(xtrans,&dimen);
         break;
 
       case IQ1EXIT: 
 
-        xout[0]=x_sp_q1ex__(xtrans,&dimen);
-        xout[1]=t_sp_q1ex__(xtrans,&dimen);
-        xout[2]=y_sp_q1ex__(xtrans,&dimen);
-        xout[3]=p_sp_q1ex__(xtrans,&dimen);
+        xout[0]=x_sp_q1ex_(xtrans,&dimen);
+        xout[1]=t_sp_q1ex_(xtrans,&dimen);
+        xout[2]=y_sp_q1ex_(xtrans,&dimen);
+        xout[3]=p_sp_q1ex_(xtrans,&dimen);
         break;
 
       case IDIPIN:
 
-        xout[0]=x_sp_den__(xtrans,&dimen);
-        xout[1]=t_sp_den__(xtrans,&dimen);
-        xout[2]=y_sp_den__(xtrans,&dimen);
-        xout[3]=p_sp_den__(xtrans,&dimen);
+        xout[0]=x_sp_den_(xtrans,&dimen);
+        xout[1]=t_sp_den_(xtrans,&dimen);
+        xout[2]=y_sp_den_(xtrans,&dimen);
+        xout[3]=p_sp_den_(xtrans,&dimen);
         break;
 
       case IDIPEXIT:
 
-        xout[0]=x_sp_dex__(xtrans,&dimen);
-        xout[1]=t_sp_dex__(xtrans,&dimen);
-        xout[2]=y_sp_dex__(xtrans,&dimen);
-        xout[3]=p_sp_dex__(xtrans,&dimen);
+        xout[0]=x_sp_dex_(xtrans,&dimen);
+        xout[1]=t_sp_dex_(xtrans,&dimen);
+        xout[2]=y_sp_dex_(xtrans,&dimen);
+        xout[3]=p_sp_dex_(xtrans,&dimen);
 
         break;
 
       case IQ3IN:
 
-        xout[0]=x_sp_q3en__(xtrans,&dimen);
-        xout[1]=t_sp_q3en__(xtrans,&dimen);
-        xout[2]=y_sp_q3en__(xtrans,&dimen);
-        xout[3]=p_sp_q3en__(xtrans,&dimen);
+        xout[0]=x_sp_q3en_(xtrans,&dimen);
+        xout[1]=t_sp_q3en_(xtrans,&dimen);
+        xout[2]=y_sp_q3en_(xtrans,&dimen);
+        xout[3]=p_sp_q3en_(xtrans,&dimen);
         break;
 
       case IQ3EXIT:
 
-        xout[0]=x_sp_q3ex__(xtrans,&dimen);
-        xout[1]=t_sp_q3ex__(xtrans,&dimen);
-        xout[2]=y_sp_q3ex__(xtrans,&dimen);
-        xout[3]=p_sp_q3ex__(xtrans,&dimen);
+        xout[0]=x_sp_q3ex_(xtrans,&dimen);
+        xout[1]=t_sp_q3ex_(xtrans,&dimen);
+        xout[2]=y_sp_q3ex_(xtrans,&dimen);
+        xout[3]=p_sp_q3ex_(xtrans,&dimen);
         break;
 
       case IFOCAL:
 
-        xout[0]=x_sp_fp__(xtrans,&dimen);
-        xout[1]=t_sp_fp__(xtrans,&dimen);
-        xout[2]=y_sp_fp__(xtrans,&dimen);
-        xout[3]=p_sp_fp__(xtrans,&dimen);
+        xout[0]=x_sp_fp_(xtrans,&dimen);
+        xout[1]=t_sp_fp_(xtrans,&dimen);
+        xout[2]=y_sp_fp_(xtrans,&dimen);
+        xout[3]=p_sp_fp_(xtrans,&dimen);
         break;
 
       case IPLANE1:
 
-	xout[0]=x_sp_fp__(xtrans,&dimen);
-        xout[1]=t_sp_fp__(xtrans,&dimen);
-        xout[2]=y_sp_fp__(xtrans,&dimen);
-        xout[3]=p_sp_fp__(xtrans,&dimen);
+	xout[0]=x_sp_fp_(xtrans,&dimen);
+        xout[1]=t_sp_fp_(xtrans,&dimen);
+        xout[2]=y_sp_fp_(xtrans,&dimen);
+        xout[3]=p_sp_fp_(xtrans,&dimen);
 
         trk->tvect->Load(xout);
         Drift(1.0, trk);  // 1 meter
@@ -198,10 +198,10 @@ Int_t hamcTransLerWarmSeptum::TransForm(hamcTrack *trk, Int_t where) const {
 
       case IPLANE2:
 
-	xout[0]=x_sp_fp__(xtrans,&dimen);
-        xout[1]=t_sp_fp__(xtrans,&dimen);
-        xout[2]=y_sp_fp__(xtrans,&dimen);
-        xout[3]=p_sp_fp__(xtrans,&dimen);
+	xout[0]=x_sp_fp_(xtrans,&dimen);
+        xout[1]=t_sp_fp_(xtrans,&dimen);
+        xout[2]=y_sp_fp_(xtrans,&dimen);
+        xout[3]=p_sp_fp_(xtrans,&dimen);
 
         trk->tvect->Load(xout);
         Drift(1.48, trk);  // 1.48 m
@@ -221,58 +221,58 @@ Int_t hamcTransLerWarmSeptum::TransForm(hamcTrack *trk, Int_t where) const {
 
       case IQ1EXIT: 
 
-        xout[0]=x_sp_cq1x__(xtrans,&dimen);
-        xout[1]=t_sp_cq1x__(xtrans,&dimen);
-        xout[2]=y_sp_cq1x__(xtrans,&dimen);
-        xout[3]=p_sp_cq1x__(xtrans,&dimen);
+        xout[0]=x_sp_cq1x_(xtrans,&dimen);
+        xout[1]=t_sp_cq1x_(xtrans,&dimen);
+        xout[2]=y_sp_cq1x_(xtrans,&dimen);
+        xout[3]=p_sp_cq1x_(xtrans,&dimen);
         break;
 
       case IDIPIN:
 
-        xout[0]=x_sp_cden__(xtrans,&dimen);
-        xout[1]=t_sp_cden__(xtrans,&dimen);
-        xout[2]=y_sp_cden__(xtrans,&dimen);
-        xout[3]=p_sp_cden__(xtrans,&dimen);
+        xout[0]=x_sp_cden_(xtrans,&dimen);
+        xout[1]=t_sp_cden_(xtrans,&dimen);
+        xout[2]=y_sp_cden_(xtrans,&dimen);
+        xout[3]=p_sp_cden_(xtrans,&dimen);
         break;
 
       case IDIPEXIT:
 
-        xout[0]=x_sp_cdex__(xtrans,&dimen);
-        xout[1]=t_sp_cdex__(xtrans,&dimen);
-        xout[2]=y_sp_cdex__(xtrans,&dimen);
-        xout[3]=p_sp_cdex__(xtrans,&dimen);
+        xout[0]=x_sp_cdex_(xtrans,&dimen);
+        xout[1]=t_sp_cdex_(xtrans,&dimen);
+        xout[2]=y_sp_cdex_(xtrans,&dimen);
+        xout[3]=p_sp_cdex_(xtrans,&dimen);
         break;
 
       case IQ3IN:
 
-        xout[0]=x_sp_cq3e__(xtrans,&dimen);
-        xout[1]=t_sp_cq3e__(xtrans,&dimen);
-        xout[2]=y_sp_cq3e__(xtrans,&dimen);
-        xout[3]=p_sp_cq3e__(xtrans,&dimen);
+        xout[0]=x_sp_cq3e_(xtrans,&dimen);
+        xout[1]=t_sp_cq3e_(xtrans,&dimen);
+        xout[2]=y_sp_cq3e_(xtrans,&dimen);
+        xout[3]=p_sp_cq3e_(xtrans,&dimen);
         break;
 
       case IQ3EXIT:
 
-        xout[0]=x_sp_cq3x__(xtrans,&dimen);
-        xout[1]=t_sp_cq3x__(xtrans,&dimen);
-        xout[2]=y_sp_cq3x__(xtrans,&dimen);
-        xout[3]=p_sp_cq3x__(xtrans,&dimen);
+        xout[0]=x_sp_cq3x_(xtrans,&dimen);
+        xout[1]=t_sp_cq3x_(xtrans,&dimen);
+        xout[2]=y_sp_cq3x_(xtrans,&dimen);
+        xout[3]=p_sp_cq3x_(xtrans,&dimen);
         break;
 
       case IFOCAL:
 
-        xout[0]=x_sp_cfp__(xtrans,&dimen);
-        xout[1]=t_sp_cfp__(xtrans,&dimen);
-        xout[2]=y_sp_cfp__(xtrans,&dimen);
-        xout[3]=p_sp_cfp__(xtrans,&dimen);
+        xout[0]=x_sp_cfp_(xtrans,&dimen);
+        xout[1]=t_sp_cfp_(xtrans,&dimen);
+        xout[2]=y_sp_cfp_(xtrans,&dimen);
+        xout[3]=p_sp_cfp_(xtrans,&dimen);
         break;
 
       case IPLANE1:
 
-	xout[0]=x_sp_cfp__(xtrans,&dimen);
-        xout[1]=t_sp_cfp__(xtrans,&dimen);
-        xout[2]=y_sp_cfp__(xtrans,&dimen);
-        xout[3]=p_sp_cfp__(xtrans,&dimen);
+	xout[0]=x_sp_cfp_(xtrans,&dimen);
+        xout[1]=t_sp_cfp_(xtrans,&dimen);
+        xout[2]=y_sp_cfp_(xtrans,&dimen);
+        xout[3]=p_sp_cfp_(xtrans,&dimen);
 
         trk->tvect->Load(xout);
         Drift(1.0, trk);  // 1 meter
@@ -280,10 +280,10 @@ Int_t hamcTransLerWarmSeptum::TransForm(hamcTrack *trk, Int_t where) const {
 
       case IPLANE2:
 
-	xout[0]=x_sp_cfp__(xtrans,&dimen);
-        xout[1]=t_sp_cfp__(xtrans,&dimen);
-        xout[2]=y_sp_cfp__(xtrans,&dimen);
-        xout[3]=p_sp_cfp__(xtrans,&dimen);
+	xout[0]=x_sp_cfp_(xtrans,&dimen);
+        xout[1]=t_sp_cfp_(xtrans,&dimen);
+        xout[2]=y_sp_cfp_(xtrans,&dimen);
+        xout[3]=p_sp_cfp_(xtrans,&dimen);
 
         trk->tvect->Load(xout);
         Drift(1.48, trk);  // 1.48 m
