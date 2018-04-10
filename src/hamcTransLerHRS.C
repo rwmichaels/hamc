@@ -62,7 +62,7 @@ Int_t hamcTransLerHRS::TransForm(hamcTrack *trk, Int_t where) const {
 
   Int_t xbig = -9999;
 
-  long dimen=5;
+  int dimen=5;
   float xtrans[5], xout[5];
 
   xtrans[0] = trk->tvect_orig->GetX();
@@ -94,52 +94,52 @@ Int_t hamcTransLerHRS::TransForm(hamcTrack *trk, Int_t where) const {
 
       case IQ1EXIT: 
 
-        xout[0]=x_e_q1ex__(xtrans,&dimen);
-        xout[1]=t_e_q1ex__(xtrans,&dimen);
-        xout[2]=y_e_q1ex__(xtrans,&dimen);
-        xout[3]=p_e_q1ex__(xtrans,&dimen);
+        xout[0]=x_e_q1ex_(xtrans,&dimen);
+        xout[1]=t_e_q1ex_(xtrans,&dimen);
+        xout[2]=y_e_q1ex_(xtrans,&dimen);
+        xout[3]=p_e_q1ex_(xtrans,&dimen);
         break;
 
       case IDIPIN:
 
-        xout[0]=x_e_dent__(xtrans,&dimen);
-        xout[1]=t_e_dent__(xtrans,&dimen);
-        xout[2]=y_e_dent__(xtrans,&dimen);
-        xout[3]=p_e_dent__(xtrans,&dimen);
+        xout[0]=x_e_dent_(xtrans,&dimen);
+        xout[1]=t_e_dent_(xtrans,&dimen);
+        xout[2]=y_e_dent_(xtrans,&dimen);
+        xout[3]=p_e_dent_(xtrans,&dimen);
         break;
 
       case IDIPEXIT:
 
-        xout[0]=x_e_dext__(xtrans,&dimen);
-        xout[1]=t_e_dext__(xtrans,&dimen);
-        xout[2]=y_e_dext__(xtrans,&dimen);
-        xout[3]=p_e_dext__(xtrans,&dimen);
+        xout[0]=x_e_dext_(xtrans,&dimen);
+        xout[1]=t_e_dext_(xtrans,&dimen);
+        xout[2]=y_e_dext_(xtrans,&dimen);
+        xout[3]=p_e_dext_(xtrans,&dimen);
         break;
 
       case IQ3IN:
 
-        xout[0]=x_e_q3en__(xtrans,&dimen);
-        xout[1]=t_e_q3en__(xtrans,&dimen);
-        xout[2]=y_e_q3en__(xtrans,&dimen);
-        xout[3]=p_e_q3en__(xtrans,&dimen);
+        xout[0]=x_e_q3en_(xtrans,&dimen);
+        xout[1]=t_e_q3en_(xtrans,&dimen);
+        xout[2]=y_e_q3en_(xtrans,&dimen);
+        xout[3]=p_e_q3en_(xtrans,&dimen);
         break;
 
       case IQ3EXIT:
 
-        xout[0]=x_e_q3ex__(xtrans,&dimen);
-        xout[1]=t_e_q3ex__(xtrans,&dimen);
-        xout[2]=y_e_q3ex__(xtrans,&dimen);
-        xout[3]=p_e_q3ex__(xtrans,&dimen);
+        xout[0]=x_e_q3ex_(xtrans,&dimen);
+        xout[1]=t_e_q3ex_(xtrans,&dimen);
+        xout[2]=y_e_q3ex_(xtrans,&dimen);
+        xout[3]=p_e_q3ex_(xtrans,&dimen);
         break;
 
       case IFOCAL:
       case IPLANE1:
       case IPLANE2:
 
-        xout[0]=x_e_fp__(xtrans,&dimen);
-        xout[1]=t_e_fp__(xtrans,&dimen);
-        xout[2]=y_e_fp__(xtrans,&dimen);
-        xout[3]=p_e_fp__(xtrans,&dimen);
+        xout[0]=x_e_fp_(xtrans,&dimen);
+        xout[1]=t_e_fp_(xtrans,&dimen);
+        xout[2]=y_e_fp_(xtrans,&dimen);
+        xout[3]=p_e_fp_(xtrans,&dimen);
         break;
 
       default:
@@ -168,52 +168,52 @@ Int_t hamcTransLerHRS::TransForm(hamcTrack *trk, Int_t where) const {
 
       case IQ1EXIT: 
 
-        xout[0]=x_h_q1ex__(xtrans,&dimen);
-        xout[1]=t_h_q1ex__(xtrans,&dimen);
-        xout[2]=y_h_q1ex__(xtrans,&dimen);
-        xout[3]=p_h_q1ex__(xtrans,&dimen);
+        xout[0]=x_h_q1ex_(xtrans,&dimen);
+        xout[1]=t_h_q1ex_(xtrans,&dimen);
+        xout[2]=y_h_q1ex_(xtrans,&dimen);
+        xout[3]=p_h_q1ex_(xtrans,&dimen);
         break;
 
       case IDIPIN:
 
-        xout[0]=x_h_dent__(xtrans,&dimen);
-        xout[1]=t_h_dent__(xtrans,&dimen);
-        xout[2]=y_h_dent__(xtrans,&dimen);
-        xout[3]=p_h_dent__(xtrans,&dimen);
+        xout[0]=x_h_dent_(xtrans,&dimen);
+        xout[1]=t_h_dent_(xtrans,&dimen);
+        xout[2]=y_h_dent_(xtrans,&dimen);
+        xout[3]=p_h_dent_(xtrans,&dimen);
         break;
 
       case IDIPEXIT:
 
-        xout[0]=x_h_dext__(xtrans,&dimen);
-        xout[1]=t_h_dext__(xtrans,&dimen);
-        xout[2]=y_h_dext__(xtrans,&dimen);
-        xout[3]=p_h_dext__(xtrans,&dimen);
+        xout[0]=x_h_dext_(xtrans,&dimen);
+        xout[1]=t_h_dext_(xtrans,&dimen);
+        xout[2]=y_h_dext_(xtrans,&dimen);
+        xout[3]=p_h_dext_(xtrans,&dimen);
         break;
 
       case IQ3IN:
 
-        xout[0]=x_h_q3en__(xtrans,&dimen);
-        xout[1]=t_h_q3en__(xtrans,&dimen);
-        xout[2]=y_h_q3en__(xtrans,&dimen);
-        xout[3]=p_h_q3en__(xtrans,&dimen);
+        xout[0]=x_h_q3en_(xtrans,&dimen);
+        xout[1]=t_h_q3en_(xtrans,&dimen);
+        xout[2]=y_h_q3en_(xtrans,&dimen);
+        xout[3]=p_h_q3en_(xtrans,&dimen);
         break;
 
       case IQ3EXIT:
 
-        xout[0]=x_h_q3ex__(xtrans,&dimen);
-        xout[1]=t_h_q3ex__(xtrans,&dimen);
-        xout[2]=y_h_q3ex__(xtrans,&dimen);
-        xout[3]=p_h_q3ex__(xtrans,&dimen);
+        xout[0]=x_h_q3ex_(xtrans,&dimen);
+        xout[1]=t_h_q3ex_(xtrans,&dimen);
+        xout[2]=y_h_q3ex_(xtrans,&dimen);
+        xout[3]=p_h_q3ex_(xtrans,&dimen);
         break;
 
       case IFOCAL:
       case IPLANE1:
       case IPLANE2:
 
-        xout[0]=x_h_fp__(xtrans,&dimen);
-        xout[1]=t_h_fp__(xtrans,&dimen);
-        xout[2]=y_h_fp__(xtrans,&dimen);
-        xout[3]=p_h_fp__(xtrans,&dimen);
+        xout[0]=x_h_fp_(xtrans,&dimen);
+        xout[1]=t_h_fp_(xtrans,&dimen);
+        xout[2]=y_h_fp_(xtrans,&dimen);
+        xout[3]=p_h_fp_(xtrans,&dimen);
         break;
 
       default:
@@ -223,6 +223,10 @@ Int_t hamcTransLerHRS::TransForm(hamcTrack *trk, Int_t where) const {
     }
 
   }
+
+  //  cout << "\n---- hamcTransLerHRS "<<where<<endl;
+  //  cout << "    in "<<xtrans[0]<<"  "<<xtrans[1]<<"  "<<xtrans[2]<<"  "<<xtrans[3]<<endl;
+  //  cout << "    out "<<xout[0]<<"  "<<xout[1]<<"  "<<xout[2]<<"  "<<xout[3]<<endl;
 
   if (xout[0] != xbig) { // this means xout was loaded; if it wasn't
                          // loaded then we dont change trk->tvect.

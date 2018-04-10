@@ -62,7 +62,7 @@ Int_t hamcTransLerColdSeptum::TransForm(hamcTrack *trk, Int_t where) const {
 
   Int_t xbig = -9999;
 
-  long dimen=5;
+  int dimen=5;
   float xtrans[5], xout[5];
 
   xtrans[0] = trk->tvect_orig->GetX();
@@ -82,18 +82,18 @@ Int_t hamcTransLerColdSeptum::TransForm(hamcTrack *trk, Int_t where) const {
 
       case ISEPTIN: 
 
-        xout[0]=x_sl_ep3__(xtrans,&dimen);
-        xout[1]=t_sl_ep3__(xtrans,&dimen);
-        xout[2]=y_sl_ep3__(xtrans,&dimen);
-        xout[3]=p_sl_ep3__(xtrans,&dimen);
+        xout[0]=x_sl_ep3_(xtrans,&dimen);
+        xout[1]=t_sl_ep3_(xtrans,&dimen);
+        xout[2]=y_sl_ep3_(xtrans,&dimen);
+        xout[3]=p_sl_ep3_(xtrans,&dimen);
         break;
 
       case ISEPTOUT: 
  
-        xout[0]=x_sl_ep7__(xtrans,&dimen);
-        xout[1]=t_sl_ep7__(xtrans,&dimen);
-        xout[2]=y_sl_ep7__(xtrans,&dimen);
-        xout[3]=p_sl_ep7__(xtrans,&dimen);
+        xout[0]=x_sl_ep7_(xtrans,&dimen);
+        xout[1]=t_sl_ep7_(xtrans,&dimen);
+        xout[2]=y_sl_ep7_(xtrans,&dimen);
+        xout[3]=p_sl_ep7_(xtrans,&dimen);
         break;
 
       case ICOLLIM: 
@@ -103,52 +103,52 @@ Int_t hamcTransLerColdSeptum::TransForm(hamcTrack *trk, Int_t where) const {
 
       case IQ1EXIT: 
 
-        xout[0]=x_sl_q1ex__(xtrans,&dimen);
-        xout[1]=t_sl_q1ex__(xtrans,&dimen);
-        xout[2]=y_sl_q1ex__(xtrans,&dimen);
-        xout[3]=p_sl_q1ex__(xtrans,&dimen);
+        xout[0]=x_sl_q1ex_(xtrans,&dimen);
+        xout[1]=t_sl_q1ex_(xtrans,&dimen);
+        xout[2]=y_sl_q1ex_(xtrans,&dimen);
+        xout[3]=p_sl_q1ex_(xtrans,&dimen);
         break;
 
       case IDIPIN:
 
-        xout[0]=x_sl_dent__(xtrans,&dimen);
-        xout[1]=t_sl_dent__(xtrans,&dimen);
-        xout[2]=y_sl_dent__(xtrans,&dimen);
-        xout[3]=p_sl_dent__(xtrans,&dimen);
+        xout[0]=x_sl_dent_(xtrans,&dimen);
+        xout[1]=t_sl_dent_(xtrans,&dimen);
+        xout[2]=y_sl_dent_(xtrans,&dimen);
+        xout[3]=p_sl_dent_(xtrans,&dimen);
         break;
 
       case IDIPEXIT:
 
-        xout[0]=x_sl_dext__(xtrans,&dimen);
-        xout[1]=t_sl_dext__(xtrans,&dimen);
-        xout[2]=y_sl_dext__(xtrans,&dimen);
-        xout[3]=p_sl_dext__(xtrans,&dimen);
+        xout[0]=x_sl_dext_(xtrans,&dimen);
+        xout[1]=t_sl_dext_(xtrans,&dimen);
+        xout[2]=y_sl_dext_(xtrans,&dimen);
+        xout[3]=p_sl_dext_(xtrans,&dimen);
         break;
 
       case IQ3IN:
 
-        xout[0]=x_sl_q3en__(xtrans,&dimen);
-        xout[1]=t_sl_q3en__(xtrans,&dimen);
-        xout[2]=y_sl_q3en__(xtrans,&dimen);
-        xout[3]=p_sl_q3en__(xtrans,&dimen);
+        xout[0]=x_sl_q3en_(xtrans,&dimen);
+        xout[1]=t_sl_q3en_(xtrans,&dimen);
+        xout[2]=y_sl_q3en_(xtrans,&dimen);
+        xout[3]=p_sl_q3en_(xtrans,&dimen);
         break;
 
       case IQ3EXIT:
 
-        xout[0]=x_sl_q3ex__(xtrans,&dimen);
-        xout[1]=t_sl_q3ex__(xtrans,&dimen);
-        xout[2]=y_sl_q3ex__(xtrans,&dimen);
-        xout[3]=p_sl_q3ex__(xtrans,&dimen);
+        xout[0]=x_sl_q3ex_(xtrans,&dimen);
+        xout[1]=t_sl_q3ex_(xtrans,&dimen);
+        xout[2]=y_sl_q3ex_(xtrans,&dimen);
+        xout[3]=p_sl_q3ex_(xtrans,&dimen);
         break;
 
       case IFOCAL:
       case IPLANE1:
       case IPLANE2:
 
-        xout[0]=x_sl_fp__(xtrans,&dimen);
-        xout[1]=t_sl_fp__(xtrans,&dimen);
-        xout[2]=y_sl_fp__(xtrans,&dimen);
-        xout[3]=p_sl_fp__(xtrans,&dimen);
+        xout[0]=x_sl_fp_(xtrans,&dimen);
+        xout[1]=t_sl_fp_(xtrans,&dimen);
+        xout[2]=y_sl_fp_(xtrans,&dimen);
+        xout[3]=p_sl_fp_(xtrans,&dimen);
         break;
 
       default:
@@ -165,18 +165,18 @@ Int_t hamcTransLerColdSeptum::TransForm(hamcTrack *trk, Int_t where) const {
 
       case ISEPTIN: 
 
-        xout[0]=x_sr_ep3__(xtrans,&dimen);
-        xout[1]=t_sr_ep3__(xtrans,&dimen);
-        xout[2]=y_sr_ep3__(xtrans,&dimen);
-        xout[3]=p_sr_ep3__(xtrans,&dimen);
+        xout[0]=x_sr_ep3_(xtrans,&dimen);
+        xout[1]=t_sr_ep3_(xtrans,&dimen);
+        xout[2]=y_sr_ep3_(xtrans,&dimen);
+        xout[3]=p_sr_ep3_(xtrans,&dimen);
         break;
 
       case ISEPTOUT: 
  
-        xout[0]=x_sr_ep7__(xtrans,&dimen);
-        xout[1]=t_sr_ep7__(xtrans,&dimen);
-        xout[2]=y_sr_ep7__(xtrans,&dimen);
-        xout[3]=p_sr_ep7__(xtrans,&dimen);
+        xout[0]=x_sr_ep7_(xtrans,&dimen);
+        xout[1]=t_sr_ep7_(xtrans,&dimen);
+        xout[2]=y_sr_ep7_(xtrans,&dimen);
+        xout[3]=p_sr_ep7_(xtrans,&dimen);
         break;
 
       case ICOLLIM: 
@@ -186,52 +186,52 @@ Int_t hamcTransLerColdSeptum::TransForm(hamcTrack *trk, Int_t where) const {
 
       case IQ1EXIT: 
 
-        xout[0]=x_sr_q1ex__(xtrans,&dimen);
-        xout[1]=t_sr_q1ex__(xtrans,&dimen);
-        xout[2]=y_sr_q1ex__(xtrans,&dimen);
-        xout[3]=p_sr_q1ex__(xtrans,&dimen);
+        xout[0]=x_sr_q1ex_(xtrans,&dimen);
+        xout[1]=t_sr_q1ex_(xtrans,&dimen);
+        xout[2]=y_sr_q1ex_(xtrans,&dimen);
+        xout[3]=p_sr_q1ex_(xtrans,&dimen);
         break;
 
       case IDIPIN:
 
-        xout[0]=x_sr_dent__(xtrans,&dimen);
-        xout[1]=t_sr_dent__(xtrans,&dimen);
-        xout[2]=y_sr_dent__(xtrans,&dimen);
-        xout[3]=p_sr_dent__(xtrans,&dimen);
+        xout[0]=x_sr_dent_(xtrans,&dimen);
+        xout[1]=t_sr_dent_(xtrans,&dimen);
+        xout[2]=y_sr_dent_(xtrans,&dimen);
+        xout[3]=p_sr_dent_(xtrans,&dimen);
         break;
 
       case IDIPEXIT:
 
-        xout[0]=x_sr_dext__(xtrans,&dimen);
-        xout[1]=t_sr_dext__(xtrans,&dimen);
-        xout[2]=y_sr_dext__(xtrans,&dimen);
-        xout[3]=p_sr_dext__(xtrans,&dimen);
+        xout[0]=x_sr_dext_(xtrans,&dimen);
+        xout[1]=t_sr_dext_(xtrans,&dimen);
+        xout[2]=y_sr_dext_(xtrans,&dimen);
+        xout[3]=p_sr_dext_(xtrans,&dimen);
         break;
 
       case IQ3IN:
 
-        xout[0]=x_sr_q3en__(xtrans,&dimen);
-        xout[1]=t_sr_q3en__(xtrans,&dimen);
-        xout[2]=y_sr_q3en__(xtrans,&dimen);
-        xout[3]=p_sr_q3en__(xtrans,&dimen);
+        xout[0]=x_sr_q3en_(xtrans,&dimen);
+        xout[1]=t_sr_q3en_(xtrans,&dimen);
+        xout[2]=y_sr_q3en_(xtrans,&dimen);
+        xout[3]=p_sr_q3en_(xtrans,&dimen);
         break;
 
       case IQ3EXIT:
 
-        xout[0]=x_sr_q3ex__(xtrans,&dimen);
-        xout[1]=t_sr_q3ex__(xtrans,&dimen);
-        xout[2]=y_sr_q3ex__(xtrans,&dimen);
-        xout[3]=p_sr_q3ex__(xtrans,&dimen);
+        xout[0]=x_sr_q3ex_(xtrans,&dimen);
+        xout[1]=t_sr_q3ex_(xtrans,&dimen);
+        xout[2]=y_sr_q3ex_(xtrans,&dimen);
+        xout[3]=p_sr_q3ex_(xtrans,&dimen);
         break;
 
       case IFOCAL:
       case IPLANE1:
       case IPLANE2:
 
-        xout[0]=x_sr_fp__(xtrans,&dimen);
-        xout[1]=t_sr_fp__(xtrans,&dimen);
-        xout[2]=y_sr_fp__(xtrans,&dimen);
-        xout[3]=p_sr_fp__(xtrans,&dimen);
+        xout[0]=x_sr_fp_(xtrans,&dimen);
+        xout[1]=t_sr_fp_(xtrans,&dimen);
+        xout[2]=y_sr_fp_(xtrans,&dimen);
+        xout[3]=p_sr_fp_(xtrans,&dimen);
         break;
 
       default:

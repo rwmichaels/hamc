@@ -2,6 +2,11 @@
 //  for the 4 degree septum for CREX 
 //  R. Michaels  April 2013
 
+// How many underscores ?  
+// use "nm" to tell, "nm crex_4degr.o" and if check if you see one or two 
+// trailing underscores
+
+
 #include "hamcTransLer4deg.h"
 #include "hamcTrans.h"
 #include "hamcTrack.h"
@@ -62,7 +67,7 @@ Int_t hamcTransLer4deg::TransForm(hamcTrack *trk, Int_t where) const {
   Int_t xbig = -9999;
   Int_t debug_trans = 1; // to get do some debugging here.
 
-  long dimen=5;
+  int dimen=5;
   float xtrans[5], xout[5];
 
   xtrans[0] = trk->tvect_orig->GetX();
@@ -83,10 +88,10 @@ Int_t hamcTransLer4deg::TransForm(hamcTrack *trk, Int_t where) const {
 
       case ISEPTOUT: 
  
-        xout[0]=x_s4_sext__(xtrans,&dimen);
-        xout[1]=t_s4_sext__(xtrans,&dimen);
-        xout[2]=y_s4_sext__(xtrans,&dimen);
-        xout[3]=p_s4_sext__(xtrans,&dimen);
+        xout[0]=x_s4_sext_(xtrans,&dimen);
+        xout[1]=t_s4_sext_(xtrans,&dimen);
+        xout[2]=y_s4_sext_(xtrans,&dimen);
+        xout[3]=p_s4_sext_(xtrans,&dimen);
 
         break;
 
@@ -99,67 +104,67 @@ Int_t hamcTransLer4deg::TransForm(hamcTrack *trk, Int_t where) const {
       case ICOLLIM: 
       case ICOLLIM2: 
 
-        xout[0]=x_s4_q1en__(xtrans,&dimen);
-        xout[1]=t_s4_q1en__(xtrans,&dimen);
-        xout[2]=y_s4_q1en__(xtrans,&dimen);
-        xout[3]=p_s4_q1en__(xtrans,&dimen);
+        xout[0]=x_s4_q1en_(xtrans,&dimen);
+        xout[1]=t_s4_q1en_(xtrans,&dimen);
+        xout[2]=y_s4_q1en_(xtrans,&dimen);
+        xout[3]=p_s4_q1en_(xtrans,&dimen);
         break;
 
       case IQ1EXIT: 
 
-        xout[0]=x_s4_q1ex__(xtrans,&dimen);
-        xout[1]=t_s4_q1ex__(xtrans,&dimen);
-        xout[2]=y_s4_q1ex__(xtrans,&dimen);
-        xout[3]=p_s4_q1ex__(xtrans,&dimen);
+        xout[0]=x_s4_q1ex_(xtrans,&dimen);
+        xout[1]=t_s4_q1ex_(xtrans,&dimen);
+        xout[2]=y_s4_q1ex_(xtrans,&dimen);
+        xout[3]=p_s4_q1ex_(xtrans,&dimen);
         break;
 
       case IDIPIN:
 
-        xout[0]=x_s4_den__(xtrans,&dimen);
-        xout[1]=t_s4_den__(xtrans,&dimen);
-        xout[2]=y_s4_den__(xtrans,&dimen);
-        xout[3]=p_s4_den__(xtrans,&dimen);
+        xout[0]=x_s4_den_(xtrans,&dimen);
+        xout[1]=t_s4_den_(xtrans,&dimen);
+        xout[2]=y_s4_den_(xtrans,&dimen);
+        xout[3]=p_s4_den_(xtrans,&dimen);
         break;
 
       case IDIPEXIT:
 
-        xout[0]=x_s4_dex__(xtrans,&dimen);
-        xout[1]=t_s4_dex__(xtrans,&dimen);
-        xout[2]=y_s4_dex__(xtrans,&dimen);
-        xout[3]=p_s4_dex__(xtrans,&dimen);
+        xout[0]=x_s4_dex_(xtrans,&dimen);
+        xout[1]=t_s4_dex_(xtrans,&dimen);
+        xout[2]=y_s4_dex_(xtrans,&dimen);
+        xout[3]=p_s4_dex_(xtrans,&dimen);
 
         break;
 
       case IQ3IN:
 
-        xout[0]=x_s4_q3en__(xtrans,&dimen);
-        xout[1]=t_s4_q3en__(xtrans,&dimen);
-        xout[2]=y_s4_q3en__(xtrans,&dimen);
-        xout[3]=p_s4_q3en__(xtrans,&dimen);
+        xout[0]=x_s4_q3en_(xtrans,&dimen);
+        xout[1]=t_s4_q3en_(xtrans,&dimen);
+        xout[2]=y_s4_q3en_(xtrans,&dimen);
+        xout[3]=p_s4_q3en_(xtrans,&dimen);
         break;
 
       case IQ3EXIT:
 
-        xout[0]=x_s4_q3ex__(xtrans,&dimen);
-        xout[1]=t_s4_q3ex__(xtrans,&dimen);
-        xout[2]=y_s4_q3ex__(xtrans,&dimen);
-        xout[3]=p_s4_q3ex__(xtrans,&dimen);
+        xout[0]=x_s4_q3ex_(xtrans,&dimen);
+        xout[1]=t_s4_q3ex_(xtrans,&dimen);
+        xout[2]=y_s4_q3ex_(xtrans,&dimen);
+        xout[3]=p_s4_q3ex_(xtrans,&dimen);
         break;
 
       case IFOCAL:
 
-        xout[0]=x_s4_fp__(xtrans,&dimen);
-        xout[1]=t_s4_fp__(xtrans,&dimen);
-        xout[2]=y_s4_fp__(xtrans,&dimen);
-        xout[3]=p_s4_fp__(xtrans,&dimen);
+        xout[0]=x_s4_fp_(xtrans,&dimen);
+        xout[1]=t_s4_fp_(xtrans,&dimen);
+        xout[2]=y_s4_fp_(xtrans,&dimen);
+        xout[3]=p_s4_fp_(xtrans,&dimen);
         break;
 
       case IPLANE1:
 
-	xout[0]=x_s4_fp__(xtrans,&dimen);
-        xout[1]=t_s4_fp__(xtrans,&dimen);
-        xout[2]=y_s4_fp__(xtrans,&dimen);
-        xout[3]=p_s4_fp__(xtrans,&dimen);
+	xout[0]=x_s4_fp_(xtrans,&dimen);
+        xout[1]=t_s4_fp_(xtrans,&dimen);
+        xout[2]=y_s4_fp_(xtrans,&dimen);
+        xout[3]=p_s4_fp_(xtrans,&dimen);
 
         trk->tvect->Load(xout);
         Drift(1.0, trk);  // 1 meter
@@ -167,10 +172,10 @@ Int_t hamcTransLer4deg::TransForm(hamcTrack *trk, Int_t where) const {
 
       case IPLANE2:
 
-	xout[0]=x_s4_fp__(xtrans,&dimen);
-        xout[1]=t_s4_fp__(xtrans,&dimen);
-        xout[2]=y_s4_fp__(xtrans,&dimen);
-        xout[3]=p_s4_fp__(xtrans,&dimen);
+	xout[0]=x_s4_fp_(xtrans,&dimen);
+        xout[1]=t_s4_fp_(xtrans,&dimen);
+        xout[2]=y_s4_fp_(xtrans,&dimen);
+        xout[3]=p_s4_fp_(xtrans,&dimen);
 
         trk->tvect->Load(xout);
         Drift(1.48, trk);  // 1.48 m
