@@ -6,6 +6,7 @@
 
 #include "Rtypes.h"
 #include "hamcPhysics.h"
+#include "hamcTransMat.h"
 #include "TH1F.h"
 #include "TH2F.h"
 #include "TMath.h"
@@ -31,73 +32,6 @@
 using namespace std;
 
 class hamcExpt;
-
-class hamcQuad {
-// Quadrupole beamline element.
-//         (x,x')    cm/rad  (not mrad)
-//         (x',x)    rad/cm
- public:
-  hamcQuad(Float_t bbp, Float_t rrad, Float_t llen) : 
-// bbp = field (gauss) at pole,  rrad = radius of quad (cm), llen = length (cm)
-    bp(bbp), rad(rrad), len(llen), focusx(1), pcut(0.01), huge(999999), debug(0) 
-    {  grad = bp / rad;
-      kappa0 = TMath::Sqrt(4.8e-10 * grad / 1.6e-3); }
-  virtual ~hamcQuad() {};
-  void SetFocusX() { focusx = 1; };
-  void SetFocusY() { focusx = 0; };
-  Float_t GetMatrix(Float_t pmom, Int_t index) {
-    if (pmom < pcut) return huge;
-    kappa = kappa0 / TMath::Sqrt(pmom);
-    kL = kappa * len;
-    exp1 = exp(kL);
-    exp2 = exp(-1*kL);
-    coshx = (exp1 + exp2)/2;
-    sinhx = (exp1 - exp2)/2;
-     if (debug) 
-       std::cout << "focus "<<focusx<<"  pmom "<<pmom<<"  kappa "<<kappa<<"  kL "<<kL<<std::endl;
-    if (focusx) {
-      if (index == 0) return TMath::Cos(kL);
-      if (index == 1) return (1/kappa)*TMath::Sin(kL);
-      if (index == 2) return -1*kappa*TMath::Sin(kL);
-      if (index == 3) return TMath::Cos(kL);
-      if (index == 4) return coshx;
-      if (index == 5) return (1/kappa)*sinhx;
-      if (index == 6) return kappa*sinhx;
-      if (index == 7) return coshx;
-    } else {
-      if (index == 0) return coshx;
-      if (index == 1) return (1/kappa)*sinhx;
-      if (index == 2) return kappa*sinhx;
-      if (index == 3) return coshx;
-      if (index == 4) return TMath::Cos(kL);
-      if (index == 5) return (1/kappa)*TMath::Sin(kL);
-      if (index == 6) return -1*kappa*TMath::Sin(kL);
-      if (index == 7) return TMath::Cos(kL);
-    }
-    return 0;
-  }
-  Float_t GetLen() { return len; };
-  void Print() {
-    std::cout << "Quad values "<<std::endl;
-    std::cout << "grad "<<grad<<"    kappa "<<kappa<<std::endl;
-    if (focusx) {
-      std::cout<<"focus in X"<<std::endl;
-    } else {
-      std::cout<<"focus in Y"<<std::endl;
-    }
-  }
- private:
-  Float_t bp, rad, len;
-  Int_t focusx;
-  Float_t pcut, huge;
-  Int_t debug;
-  Float_t grad, kappa0;
-  Float_t exp1, exp2;
-  Float_t kappa, kL, coshx, sinhx;
-#ifndef NODICT
-ClassDef (hamcQuad, 0)   // Quadrupole beamline element
-#endif
-};
 
 class hamcPhyPREX : public hamcPhysics {
 
