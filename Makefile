@@ -10,7 +10,7 @@ MAKENODICTIONARY=1
 
 # Using fortran-dependent code (=1) or not (=0), soon to be obsolete.
 # If not, then rely on HRSTRans (libhrstrans) for transport.
-# USEFORTRAN=1
+USEFORTRAN=1
 
 export OSNAME := $(shell uname)
 
@@ -41,7 +41,7 @@ ifeq ($(OSNAME),Linux)
    ROOTGLIBS     = $(shell root-config --glibs)
    INCLUDES      = -I$(ROOTSYS)/include
    CXX           = $(GCC)
-   CXXFLAGS      = -Wall -Wunused-variable -fno-exceptions -fpermissive -std=c++11 -fPIC $(INCLUDES)
+   CXXFLAGS      = -fno-exceptions -fpermissive  -std=c++11 -fPIC $(INCLUDES)
    LD            = $(GLD)
    LDFLAGS       = 
    SOFLAGS       = -shared 
@@ -85,14 +85,21 @@ SRC = $(SRCDIR)/hamcExpt.C $(SRCDIR)/hamcSingles.C $(SRCDIR)/hamcPhysics.C \
       $(SRCDIR)/hamcInout.C $(SRCDIR)/THaString.C $(SRCDIR)/hamcMultScatt.C
 
 # Fortran-dependent sources
-FORSRC=$(SRCDIR)/hamcTransLer4deg.C \
-      $(SRCDIR)/hamcTransLerWarmSeptum.C \
-      $(SRCDIR)/hamcTransLerColdSeptum.C \
-      $(SRCDIR)/hamcTransLerHRS.C 
+# which of these you need depends on what you are compiling.
+# too tired to think much now, but
+#  Ler4deg was for CREX
+#  WarmSeptum for CREX-I,  ColdSeptum is largely irrelevant.
+#  LerHRS is Std. HRS, so HAPPEX-III etc.
+#FORSRC=$(SRCDIR)/hamcTransLer4deg.C \
+#      $(SRCDIR)/hamcTransLerWarmSeptum.C \
+#      $(SRCDIR)/hamcTransLerColdSeptum.C \
+#      $(SRCDIR)/hamcTransLerHRS.C 
+
+FORSRC=$(SRCDIR)/hamcTransLerHRS.C $(SRCDIR)/hamcTransLerWarmSeptum.C $(SRCDIR)/hamcTransLerColdSeptum.C $(SRCDIR)/hamcTransLer4deg.C
 
 ifdef USEFORTRAN 
-   SRC+=$FORSRC
-   CXXFLAGS += -DUSEFORTRAN
+   SRC+=$(FORSRC)
+   CXXFLAGS += -DUSEFORTRAN -lgfortran
 endif
 
 DEPS = $(SRC:.C=.d)
@@ -100,7 +107,7 @@ DEP  = $(SRC:.C=.d)
 HEAD = $(SRC:.C=.h) 
 
 PROGS = prex happex 
-ifdef USEFORTRAN
+ifdef DOPVDIS
   PROGS += pvdis
 endif
 HAMCLIBS = libhamc.a
@@ -115,9 +122,12 @@ else
 endif
 
 ifdef USEFORTRAN
-OBJS += $(SRCDIR)/crex_4degr.o $(SRCDIR)/prex_forward.o $(SRCDIR)/monte_trans_hrs.o $(SRCDIR)/R6_forward.o $(SRCDIR)/ls_6d_forward.o
-#Replace line below with line above for standard HRS optics
+# PREX-I or C-REX Optics HRS+septum
+#OBJS += $(SRCDIR)/crex_4degr.o $(SRCDIR)/prex_forward.o $(SRCDIR)/monte_trans_hrs.o $(SRCDIR)/R6_forward.o $(SRCDIR)/ls_6d_forward.o
+# Standard HRS Optics, i.e. HRS w/out Septum
 #OBJS += $(SRCDIR)/prex_retune_for.o $(SRCDIR)/monte_trans_hrs.o $(SRCDIR)/R6_forward.o $(SRCDIR)/ls_6d_forward.o
+# Try a combination
+OBJS += $(SRCDIR)/crex_4degr.o $(SRCDIR)/prex_retune_for.o $(SRCDIR)/monte_trans_hrs.o $(SRCDIR)/R6_forward.o $(SRCDIR)/ls_6d_forward.o
 endif
 
 # PREX experiment
@@ -146,7 +156,7 @@ else
   PVDIS_OBJS = $(PVDIS_SRC:.C=.o)
 endif
 
-ifdef USEFORTRAN
+ifdef DOPVDIS
   PVDIS_OBJS += ./PVDIS/getpdf_mrst2003c.o ./PVDIS/mrst2003c.o ./PVDIS/NextUn.o ./PVDIS/r1998.o ./PVDIS/readpdf_single.o ./PVDIS/xsec.o
 endif
 
@@ -165,9 +175,11 @@ happex: $(HAPPEX_OBJS) $(HAPPEX_HEAD) $(OBJS) $(SRC)  $(HEAD)
 # Note, PVDIS relies heavily on Fortran.  This needs to be fixed if
 # we care about it (noted, Jan 2018).
 
+ifdef DOPVDIS
 pvdis: $(PVDIS_OBJS) $(PVDIS_HEAD) $(OBJS) $(SRC) $(HEAD)
 	rm -f $@
 	$(LD) $(CXXFLAGS) -o $@ $(OBJS) $(PVDIS_OBJS) $(ALL_LIBS)
+endif
 
 $(HAMCLIBS_NODICT): $(LOBJS_NODICT) $(LSRC) $(HEAD)
 	rm -f $@
