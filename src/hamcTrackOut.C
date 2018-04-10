@@ -378,26 +378,36 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 
    expt->inout->BookHisto(kFALSE, kFALSE, IFOCAL, "xyfoc1", 
 		      "X-Y at focal plane (even if not accepted)", 
-                            &ytrans, nbin,-0.4,0.4,
-                            &xtrans, nbin,-1.2,0.2); 
+			  &xtrans, nbin,-1.2,0.2,
+			  &ytrans, nbin,-0.4,0.4);
 
    expt->inout->BookHisto(kFALSE, kTRUE, IFOCAL, "xyfoc1a", 
 		      "Accepted X-Y at focal plane", 
-                            &ytrans, nbin,-0.4,0.4,
-                            &xtrans, nbin,-1.2,0.2); 
+			  &xtrans, nbin,-1.2,0.2,
+			  &ytrans, nbin,-0.4,0.4);
+
+   expt->inout->BookHisto(kFALSE, kTRUE, IFOCAL, "xyfoc2a", 
+		      "Accepted X-Y at focal plane", 
+			  &xtrans, 100,-0.8,0.3,
+			  &ytrans, 100,-0.05,0.05);
 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "xyfoc2", 
 		      "Weighted  X-Y at focal plane", 
-                            &xtrans, nbin,-0.5,0.02,
-                            &ytrans, nbin,-0.04,0.04); 
+                            &xtrans, 200,-1.2,0.6,
+ 			    &ytrans, 200,-0.2,0.2);
+
+    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "xyfoc3", 
+		      "Weighted  X-Y at focal plane", 
+                            &xtrans, 200,-1,0.25,
+                            &ytrans, 200,-0.1,0.1); 
 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "xfoc",
                          "X at focal plane",
-			   &xtrans, nbin, -0.5, 0.02);
+			   &xtrans, 200, -1.2, 0.6);
 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "yfoc",
                          "Y at focal plane",
-			   &ytrans, nbin, -0.04, 0.04);
+			   &ytrans, 200, -0.1, 0.1);
 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "xdet",
                          "X (det. frame)",
@@ -406,6 +416,10 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "qsq",
 			   "Qsq (weighted, in accept)",
 			   &qsq, 200,  0.0015, 0.025);
+
+    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "qsq_hap3",
+			   "Qsq (weighted, in accept)",
+			   &qsq, 200,  0.3, 0.8);
 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "qsq_obs",
 			   "Qsq (weighted, in accept)",
