@@ -60,6 +60,10 @@ Int_t hamcEvent::Init(hamcExpt* expt) {
   tracksievenoms = new hamcTrackOut();
 
   expt->inout->AddToNtuple("inaccept",&inaccept);
+  expt->inout->AddToNtuple("xtgt",&xtgt);
+  expt->inout->AddToNtuple("ytgt",&ytgt);
+  expt->inout->AddToNtuple("thtgt",&thtgt);
+  expt->inout->AddToNtuple("phtgt",&phtgt);
   expt->inout->AddToNtuple("xcol",&xcol);
   expt->inout->AddToNtuple("ycol",&ycol);
   expt->inout->AddToNtuple("thcol",&thcol);
@@ -100,6 +104,8 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
    if (beam) beam->Generate(expt);
 
    inaccept = 1;
+   xtgt = -999;  ytgt = -999;
+   thtgt = -999; phtgt = -999;
    xcol = -999;  ycol = -999;
    thcol = -999; phcol = -999;
    thnoms = -999; phnoms = -999;
@@ -164,6 +170,13 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
      for (Int_t ibrk=0; ibrk<spect->GetNumBrk(); ibrk++) {
 
        brkpoint = spect->break_point[ibrk]->where;
+
+       if (brkpoint == ITARGET) {
+	   xtgt = track->GetTransX();
+	   ytgt = track->GetTransY();
+           thtgt = track->GetTransTheta();
+           phtgt = track->GetTransPhi();
+       }
 
        if (brkpoint != ITARGET) {
 

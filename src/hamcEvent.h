@@ -33,6 +33,7 @@ private:
 
      Bool_t did_init;
      static const Int_t debug=0;
+     Float_t xtgt, ytgt, thtgt, phtgt;
      Float_t xcol, ycol, thcol, phcol, xsep, ysep;
      Float_t thnoms, phnoms, thsiv, phsiv, thsinoms, phsinoms;
      Int_t evnum;
