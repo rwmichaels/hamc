@@ -407,7 +407,7 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "yfoc",
                          "Y at focal plane",
-			   &ytrans, 200, -0.1, 0.1);
+			   &ytrans, 200, -0.05, 0.05);
 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "xdet",
                          "X (det. frame)",
