@@ -180,7 +180,17 @@ Int_t hamcTHRSTrans::TransForm(hamcTrack *trk, Int_t where) const {
 
       case IFOCAL:
 
-        hrsmatrix = *(trans->GetTransport());
+	hrsmatrix = *(trans->GetTransport());
+
+#ifdef TEST1
+        cout << endl<<endl<<"FOCAL plane m.e."<<endl;
+        cout << "x_x0 "<< hrsmatrix[THRSTrans::kX][THRSTrans::kX];
+        cout << "  x_th "<< hrsmatrix[THRSTrans::kX][THRSTrans::kTh];
+        cout << "  x_d "<< hrsmatrix[THRSTrans::kX][THRSTrans::kd];
+        cout << "  y_ph "<< hrsmatrix[THRSTrans::kY][THRSTrans::kPh];
+        cout << "  y_y0 "<< hrsmatrix[THRSTrans::kY][THRSTrans::kY]<<endl;;
+#endif
+
         break;
 
       default:
