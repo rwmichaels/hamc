@@ -1,0 +1,80 @@
+# Setup parameters for hamc for PREX
+# This uses THRSTrans for the transport model.
+
+# Setup choices for HRS
+hrs_setup warmseptum thrstrans usepaulcollim
+
+# tune B with Q1 Q2 Q3 optimized to match data
+quad_fields q1 0.11 q2 -0.1375  q3 -0.150
+
+# standard HRS tune, this does not belong with septum
+# quad_fields q1 0.1746 q2 -0.1385  q3 -0.1281
+
+# "useempiricalangle" is different from (slightly better than) "usepaulcollim"
+# for empirical, need HRS_arm left; or change "osign" in hamcAperture.h
+
+# this is the A_T hole in paulcollim.
+# t (thickness) is in g/cm2, this gives t/X0 ~ 0.117
+#spreader_collim a 9 z 4 t 7.6
+spreader_collim a 9 z 4 t 0.0001
+
+# HRS momentum and angle
+HRS_P0 1.063
+# Left HRS, survey 5.007, Nilanga 5.053
+# HRS_angle 5.007, Nilanga 
+# Right HRS, survey 4.910, Nilanga same
+ HRS_angle 4.910
+
+#HRS_angle 5.053
+
+# If Angle_cut is turned on, there is a cut on scattering angle 
+# The cut of 4.58 simulates accurately the mistune of septum to 730 A
+# which is where we ran in 2010.
+
+Angle_cut 4.73
+
+#HRS_arm left
+HRS_arm right
+
+PREX_model horpb
+
+
+# The HRS_acceptoff is normally commented out (or deleted)
+# When uncommented it's a way of testing the acceptance model.
+# Turn on one thing at a time to check the cuts at each point.
+# 0 means ignore the acceptance limit, 1 means use it.
+#  1         2       3        4      5     6     7        8        9   10
+# target,  collim septin, septout,  q1, dipin, dipexit, q3in, q3exit, focal
+
+# cut at collim
+HRS_acceptoff 0 1 0 0 1 1 0 1 1 0 0
+#HRS_acceptoff 0 0 0 0 0 0 0 0 0 0 0 
+
+
+
+# Beam parameters.  Raster is in meters, typ 0.002 (means +/- this)
+# normally raster 0.003 x 0.002 
+# current in uA.
+
+beam  E0 1.0605 E0sigma 0.00011   rastered  xraster 0.003  yraster 0.002 current 70
+
+
+# range of angles (scatt, azimuth) in degrees
+# phi=0 is up.  phi=90 is into HRS,  phi=180 is down.
+out_angles thetamin 0.001 thetamax 20  phimin 0 phimax 180
+
+radcor numer
+
+# distance of detector to focal plane (meters)
+detector dist 0
+
+# uncomment the following line if you want to iterate
+#  iterate
+
+# Here is the variable to iterate
+# kick:track P0 0.003
+
+# to turn off ntup (good for high stats).  
+# comment this out to receive an ntuple output.
+#hamc_inout nontup
+
