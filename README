@@ -9,7 +9,10 @@
 This is a single-arm Monte Carlo used by the parity experiments
 in Hall A.  It was used by HAPPEX-III, PVDIS, PREX, and C-REX.
 
-For version control, I'm using github.  
+Some documentation about hamc is here:
+http://hallaweb.jlab.org/parity/prex/hamc
+
+For version control, I'm using github:  
 https://github.com/rwmichaels/hamc
 
 A good way to proceed is to make your repository on github.com,
