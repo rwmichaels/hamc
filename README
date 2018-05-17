@@ -2,18 +2,19 @@
 
      hamc  =  Hall  A  Monte  Carlo
 
-     R. Michaels,  initial version Jan 2009; updated Jan 2018
+     R. Michaels,  initial version Jan 2009; updated May 2018
 
 ============================================================================
 
 This is a single-arm Monte Carlo used by the parity experiments
-in Hall A.  It was used by HAPPEX-III, PVDIS, PREX, anc C-REX.
+in Hall A.  It was used by HAPPEX-III, PVDIS, PREX, and C-REX.
 
 For version control, I'm using github.  
+https://github.com/rwmichaels/hamc
+
 A good way to proceed is to make your repository on github.com,
-the Fork https://github.com/rwmichaels/hamc, then "git clone"
-it to your local PC, and if you have useful changes you can 
-make a "pull request" to me.
+the Fork my repository, then "git clone" it to your local PC.
+If you have useful changes you can make a "pull request" to me.
 
 To proceed do the following
 
@@ -29,6 +30,7 @@ or
     ./happex
    (and don't forget the dot "." and slash "/")
 
+
 Optional argument is the number of events, like this:
 
     ./prex 1000000
@@ -43,12 +45,31 @@ To show some results,
    root [7] .x ./macros/show4.C
    (etc)
 
-
 I/O control of code
 
     prex.dat   to control prex
     happex.dat to control happex
 
+You can find versions of prex*.dat in ./PREX directory.  You 
+likely want "prex_hrstrans.dat" so copy that to prex.dat in the
+run directory.  ("cp ./PREX/prex_hrstrans.dat prex.dat")
+
 New in 2018 is the transport code THRSTrans.  The old fortran
-code (LeRose functions) still exist but are effectively turned
-off (USEFORTRAN flag in Makefile).
+code (LeRose functions) still exist but can be effectively turned
+off by disabling the USEFORTRAN flag in the Makefile.  
+
+For THRSTrans you need the separately maintained library.  
+You can see from the Makefile where this located
+
+  grep HRSTRANS Makefile 
+  HRSTRANSLIB   = /home/rom/hrstrans1/lib
+  ALL_LIBS = $(LIBS) $(HRSTRANSLIB)/libhrstrans.so
+  INCLUDES += -I$(HRSTRANSLIB)
+
+and you'll need to control HRSTRANSLIB.  Both libhrstrans.so
+and the header THRSTrans.h need to be in this directory.
+To obtain THRSTrans, you could use my git repo for that,
+though in principle Seamus Riordan should be maintaining it.
+https://github.com/rwmichaels/hrstrans
+
+
