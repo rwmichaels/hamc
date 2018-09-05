@@ -1,6 +1,7 @@
 # hamc = Hall A Monte Carlo
 # R. Michaels, May 2008
 # Update  Jan 2018  with USEFORTRAN option
+# Update  Aug 2018  add the water cell "experiment"
 
 # Choose the compiler.
 GCC=g++
@@ -106,7 +107,7 @@ DEPS = $(SRC:.C=.d)
 DEP  = $(SRC:.C=.d)
 HEAD = $(SRC:.C=.h) 
 
-PROGS = prex happex 
+PROGS = prex happex water
 ifdef DOPVDIS
   PROGS += pvdis
 endif
@@ -148,6 +149,16 @@ else
   HAPPEX_OBJS = $(HAPPEX_SRC:.C=.o)
 endif
 
+# WATER cell
+Water_SRC = ./Water/main_Water.C ./Water/hamcExptWater.C ./Water/hamcPhyWater.C ./Water/hamcTgtWater.C
+# Make the dictionary
+ifdef MAKENODICTIONARY
+  Water_OBJS = $(Water_SRC:.C=_NODICT.o)
+else
+  Water_OBJS = $(Water_SRC:.C=.o)
+endif
+
+
 # PVDIS experiment
 PVDIS_SRC = ./PVDIS/main_PVDIS.C ./PVDIS/hamcExptPVDIS.C ./PVDIS/hamcPhyPVDIS.C ./PVDIS/hamcTgtPVDIS.C 
 ifdef MAKENODICTIONARY
@@ -171,6 +182,10 @@ prex: $(PREX_OBJS) $(PREX_HEAD) $(OBJS) $(SRC) $(HEAD)
 happex: $(HAPPEX_OBJS) $(HAPPEX_HEAD) $(OBJS) $(SRC)  $(HEAD) 
 	rm -f $@
 	$(LD) $(CXXFLAGS) -o $@ $(OBJS) $(HAPPEX_OBJS) $(ALL_LIBS)
+
+water: $(Water_OBJS) $(Water_HEAD) $(OBJS) $(SRC)  $(HEAD) 
+	rm -f $@
+	$(LD) $(CXXFLAGS) -o $@ $(OBJS) $(Water_OBJS) $(ALL_LIBS)
 
 # Note, PVDIS relies heavily on Fortran.  This needs to be fixed if
 # we care about it (noted, Jan 2018).
@@ -267,7 +282,7 @@ tarfile: clean version
 	tar cvf $(VERS).tar ./$(VERS)
 
 clean:
-	rm -f $(SRCDIR)/*.o core hamcDict* $(PROGS) $(HAMCLIBS) $(HAMCLIBS_NODICT) libhamc.so ./PREX/*.o ./HAPPEX/*.o ./PVDIS/*.o
+	rm -f $(SRCDIR)/*.o core hamcDict* $(PROGS) $(HAMCLIBS) $(HAMCLIBS_NODICT) libhamc.so ./PREX/*.o ./HAPPEX/*.o ./PVDIS/*.o ./Water/*.o
 
 realclean:  clean
 	rm -f *.d *.tar  *~
