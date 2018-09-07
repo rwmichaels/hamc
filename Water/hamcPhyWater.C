@@ -176,6 +176,8 @@ Float_t hamcPhyWater::O16CrossSection(Float_t energy, Float_t angle) {
 
   mott = pow(((znuc*0.197*cos(halfangle_rad))/137),2)/ (400*pow(energy,2)*sin4);
 
+  // comparing to the "mott" from hydrogen calculation ... and they agreed.
+
   Float_t ang_rad = 3.14159*angle/180.;
 
   sin2 = pow(sin(ang_rad/2.0),2);
@@ -189,10 +191,10 @@ Float_t hamcPhyWater::O16CrossSection(Float_t energy, Float_t angle) {
 #ifdef THING1
   cout << "GEp, etc "<<sin2<<"  "<<cos2<<"  "<<GEp<<"   "<<GMp<<"   "<<G_E2<<"   "<<G_M2<<endl;
   cout << "d_sig part 1 "<<1e-6*pow(Alpha,2)/4./pow(energy,2)/pow(sin2,2)/(1.+2.*energy/Mp*sin2)<<endl;
-  cout << "crap 1 "<<pow(Alpha,2)/4.<<endl;
-  cout << "crap 2 "<<energy<<"  "<<pow(Alpha,2)/4./pow(energy,2)<<endl;
-  cout << "crap 3 "<<pow(Alpha,2)/4./pow(energy,2)/pow(sin2,2)<<endl;
-  cout << "crap 4 "<<1/(1.+2.*energy/Mp*sin2)<<endl;
+  cout << "dbg1 "<<pow(Alpha,2)/4.<<endl;
+  cout << "dbg2 "<<energy<<"  "<<pow(Alpha,2)/4./pow(energy,2)<<endl;
+  cout << "dbg3 "<<pow(Alpha,2)/4./pow(energy,2)/pow(sin2,2)<<endl;
+  cout << "dbg4 "<<1/(1.+2.*energy/Mp*sin2)<<endl;
 #endif
 
   d_sig = pow(Alpha,2)/4./pow(energy,2)/pow(sin2,2)/(1.+2.*energy/Mp*sin2)
@@ -201,16 +203,15 @@ Float_t hamcPhyWater::O16CrossSection(Float_t energy, Float_t angle) {
   d_sig = d_sig * hbc2 * 1e-6;   // converts to barns/sr
 
   //  cout << "d_sig all "<<d_sig<<endl;
- 
-  //  cout << "Zsq * mott "<<znuc*znuc*d_sig<<endl;
+   //  cout << "Zsq * mott "<<znuc*znuc*d_sig<<endl;
 
   if(ldebug) cout << "Mott  "<<znuc<<"  "<<energy<<"   "<<angle<<"   "<<mott<<endl;
 
   // Extremely crude lookup of FF-squared.  We only need 3 values at the moment.
 
-  form_factor = 0.226; // it is FF^2
-  if (qinvf > 0.46 && qinvf < 0.9) form_factor = 0.139;
-  if (qinvf >= 0.9) form_factor = 0.00367;
+  form_factor = 0.645; // it is FF^2
+  if (qinvf > 0.46 && qinvf < 0.9) form_factor = 0.575;
+  if (qinvf >= 0.9) form_factor = 0.087;
 
   if (ldebug) cout << "q "<<qinvf<<"   ff^2 = "<<form_factor<<endl;
 
