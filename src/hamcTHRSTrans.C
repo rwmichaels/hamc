@@ -110,6 +110,7 @@ Int_t hamcTHRSTrans::TransForm(hamcTrack *trk, Int_t where) const {
       case ICOLLIM: 
       case ICOLLIM2: 
       case ICOLLIM3: 
+      case ICOLLIM4: 
 
         hrsmatrix = *(trans->GetTransport(5));
         break;
