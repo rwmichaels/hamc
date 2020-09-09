@@ -138,16 +138,8 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
 
      track->GenerateOut(expt);
 
+     // used in the breakpoint loop, after target
      Float_t angcut = expt->GetAngCut();
-
-     if (angcut > 0) {  // To simulate mistuned Septum need 
-       Float_t theta_loc = (180./PI)*track->GetUpdatedScatt();
-        if (theta_loc < angcut) {
-          inaccept = 0;
-          continue;
-        }
-        if ((evnum%10000)==0) cout << "Warning !  Using (w/MS) angle cut "<<angcut<<endl;
-     }
 
 // Weight by cross section (optionally used for some histograms)
 // The 100 is just for convenience.
@@ -178,6 +170,16 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
            phtgt = track->GetTransPhi();
        }
 
+       if (brkpoint > ITARGET && angcut > 0) {  // To simulate mistuned Septum need 
+          Float_t theta_loc = (180./PI)*track->GetUpdatedScatt();
+           if (theta_loc < angcut) {
+             inaccept = 0;
+           }
+           if ((evnum%10000)==0) cout << "Warning !  Using (w/MS) angle cut "<<angcut<<endl;
+        }
+
+
+
        if (brkpoint != ITARGET) {
 
          tracknoms->Transport(spect->transport, brkpoint);
@@ -201,7 +203,7 @@ Int_t hamcEvent::Process(hamcExpt* expt) {
 	 }
 
 // Things to do for specific break points
-         if (brkpoint == ICOLLIM || brkpoint == ICOLLIM2 || brkpoint == ICOLLIM3 ) {
+         if (brkpoint == ICOLLIM || brkpoint == ICOLLIM2 || brkpoint == ICOLLIM3|| brkpoint == ICOLLIM4 ) {
 	   xcol = track->GetTransX();
 	   ycol = track->GetTransY();
            thcol = track->GetTransTheta();

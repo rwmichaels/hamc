@@ -18,6 +18,7 @@
 #define ICOLLIM       2
 #define ICOLLIM2      3
 #define ICOLLIM3      4
+#define ICOLLIM4     44
 #define ISEPTIN       5
 #define ISEPTOUT      6
 #define IQ1IN         7 
@@ -127,6 +128,7 @@ class hamcSpecHRS {
 
      void UseCollimator();   // To use the front-end collmator 
      void UsePaulColl();     // To use Paul's 2-piece collimator.
+     void UsePREX2Coll();    // To use the PREX-II collimator
      void UseAngleColl();    // To use empirically derived angle collimation
 
      void UseHRSOnly();      // HRS without septum
@@ -145,6 +147,7 @@ class hamcSpecHRS {
 
      Bool_t IsCollimated() { return collim_choice!=nocollim; };
      Bool_t IsPaulCollim() { return collim_choice==paul_coll; };
+     Bool_t IsPREX2Collim() { return collim_choice==prex2_coll; };
      Bool_t IsAngleCollim() { return collim_choice==angle_coll; };
      Bool_t IsColdSeptum()  { return sept_choice==coldsept; };
      Bool_t Is4degSeptum()  { return sept_choice==sept4deg; };
@@ -185,6 +188,7 @@ class hamcSpecHRS {
      static const Int_t reg_coll  =1;
      static const Int_t paul_coll =2;
      static const Int_t angle_coll=3;
+     static const Int_t prex2_coll=4;
      Bool_t use_guido;
 
      Int_t BuildSpectrom();

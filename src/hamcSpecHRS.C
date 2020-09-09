@@ -80,6 +80,10 @@ void hamcSpecHRS::UsePaulColl(void) {
   collim_choice = paul_coll;
 }
 
+void hamcSpecHRS::UsePREX2Coll(void) {
+  collim_choice = prex2_coll;
+}
+
 void hamcSpecHRS::UseAngleColl(void) {
   // Empirical angle cut.
   collim_choice = angle_coll;
@@ -160,6 +164,10 @@ Int_t hamcSpecHRS::Init(hamcExpt *expt) {
    if (parser.IsFound("usepaulcollim")) {
      cout << "hamcSpecHRS: Using Paul's composite collimator"<<endl;
      UsePaulColl();
+   }   
+   if (parser.IsFound("useprex2collim")) {
+     cout << "hamcSpecHRS: Using PREX-II collimator"<<endl;
+     UsePREX2Coll();
    }   
    if (parser.IsFound("useempiricalangle")) {
      cout << "hamcSpecHRS: Using empirical angle collimation"<<endl;
@@ -257,14 +265,20 @@ Int_t hamcSpecHRS::BuildSpectrom() {
      if (IsCollimated()) {
         if (IsPaulCollim()) {
  	   AddBreakPoint(ICOLLIM2);
-	} else {
-	   if (IsAngleCollim()) {
-   	      AddBreakPoint(ICOLLIM3);
-	   } else {
-              AddBreakPoint(ICOLLIM);
-	   }
-        }
+           goto done1;
+	} 
+	if (IsAngleCollim()) {
+   	   AddBreakPoint(ICOLLIM3);
+           goto done1;
+	} 
+        if (IsPREX2Collim()) {
+	  AddBreakPoint(ICOLLIM4);
+          goto done1;
+	}
+	// if no other choice
+        AddBreakPoint(ICOLLIM);
      }
+ done1:
      AddBreakPoint(IFOCAL); 
 
      return OK;
@@ -277,15 +291,22 @@ Int_t hamcSpecHRS::BuildSpectrom() {
      if (IsCollimated()) {
         if (IsPaulCollim()) {
  	   AddBreakPoint(ICOLLIM2);
-	} else {
-	   if (IsAngleCollim()) {
-   	      AddBreakPoint(ICOLLIM3);
-	   } else {
-              AddBreakPoint(ICOLLIM);
-	   }
-        }
+           goto done2;
+	} 
+	if (IsAngleCollim()) {
+   	   AddBreakPoint(ICOLLIM3);
+           goto done2;
+	} 
+        if (IsPREX2Collim()) {
+	  AddBreakPoint(ICOLLIM4);
+          goto done2;
+	}
+	// if no other choice
+        AddBreakPoint(ICOLLIM);
      }
-     if (IsWarmSeptum() || IsColdSeptum()) {
+ done2:
+ 
+    if (IsWarmSeptum() || IsColdSeptum()) {
         AddBreakPoint(ISEPTIN);   // septum input
         AddBreakPoint(ISEPTOUT);  // setpum out
      } 
@@ -299,6 +320,8 @@ Int_t hamcSpecHRS::BuildSpectrom() {
      AddBreakPoint(IQ3IN);
      AddBreakPoint(IQ3EXIT);
      AddBreakPoint(IFOCAL);
+
+  cout << "break pt size here 4444 "<<break_point.size()<<endl; 
 
   }
 
@@ -438,6 +461,14 @@ void hamcSpecHRS::AddBreakPoint(Int_t where) {
      case ICOLLIM3:
        if (IsWarmSeptum()) { 
  	break_point.push_back(new hamcSpecBrk(where, new  hamcAngleCollim()));
+         idx = break_point.size()-1; 
+       }
+       break;
+
+// Collim4 is the new PREX-II collimator
+     case ICOLLIM4:
+       if (IsWarmSeptum()) { 
+	 break_point.push_back(new hamcSpecBrk(where, new hamcPREX2Coll()));
          idx = break_point.size()-1; 
        }
        break;

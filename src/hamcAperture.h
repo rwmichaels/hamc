@@ -11,6 +11,8 @@
 #include <iostream>
 #include "hamcTrack.h"
 
+using namespace std;
+
 class hamcAperture {  // an aperture that defines the acceptance
 public:
     hamcAperture() : xcent(0),ycent(0) {};
@@ -342,7 +344,59 @@ private:
 #ifndef NODICT
 ClassDef (hamcPaulBox, 0)   // Paul's semicircular, really complicated box.
 #endif
-};
+  };
+
+  class hamcPREX2Coll : public hamcAperture {  
+    // The PREX-II collimator
+  public:
+    hamcPREX2Coll() : hamcAperture() {  
+        osign = -1;  // +1 for L-HRS, -1 for R-HRS
+        rmin = 0.175;
+        rmax = 0.315;
+        rmin_c = 0.147 + 0.352*rmin;
+        rmax_c = 0.147 + 0.352*rmax;
+        chamfer1_m = 1.88;
+        chamfer1_b = 0.0722;
+        chamfer1_s = 0.04;
+        chamfer2_m = 10.;
+        chamfer2_b = 0.05;
+        chamfer2_s = 0.03456;
+        xmax = 0.089;
+        ymin0 = -0.03975;
+    }
+    ~hamcPREX2Coll() {};
+    Int_t WhichBox( Float_t x, Float_t y ) const {
+       y = osign*y;
+       Float_t ymin = osign*ymin0;
+       if( fabs(x) > xmax) return -1;
+       if( y > ymin ) return -1;
+
+       if( x < ((-chamfer1_m*(y+chamfer1_s) - chamfer1_b)) ) return -1;
+       if( x > ((chamfer1_m*(y+chamfer1_s) + chamfer1_b)) ) return -1;
+
+       if( x < ((-chamfer2_m*(y+chamfer2_s) - chamfer2_b)) ) return -1;
+       if( x > ((chamfer2_m*(y+chamfer2_s) + chamfer2_b)) ) return -1;
+
+       if( x*x + (y+rmin_c)*(y+rmin_c) < rmin*rmin ) return -1;
+       if( x*x + (y+rmax_c)*(y+rmax_c) > rmax*rmax ) return -1;
+
+       return 1;
+    };
+    Bool_t CheckAccept(Float_t x, Float_t y) const {
+      Int_t idx = WhichBox(x,y);
+      if (idx != -1) return kTRUE;
+      return kFALSE;
+    }
+    private:
+      Float_t osign; // +1 for L-HRS, -1 for R-HRS
+      Float_t rmin,rmax,rmin_c,rmax_c;
+      Float_t chamfer1_m,chamfer1_b,chamfer1_s;
+      Float_t chamfer2_m,chamfer2_b,chamfer2_s;
+      Float_t xmax,ymin0;
+#ifndef NODICT
+ClassDef (hamcPREX2Coll, 0)   // PREXII collimator
+#endif
+  };
 
 class hamcAngleCollim : public hamcAperture {  
 // This is a purely empirical collimation for the HRS.
