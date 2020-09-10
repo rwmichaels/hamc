@@ -152,7 +152,7 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "momu", 
 	        "Momentum in HRS", &pmom, nbin, 0.5*P0,1.1*P0);
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "momz", 
-	   "Momentum in HRS (zoom)", &pmom, nbin, 0.94*P0,1.01*P0);
+		 "Momentum in HRS (zoom)", &pmom, 100, 0.925, 0.955);
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "momb", 
 	   "Momentum in HRS (hamc)", &pmom, 200, 1.01, 1.07);
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "momb2", 
@@ -203,11 +203,11 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "th0",
                           "Theta(transport) at target",
-                          &thtgt, nbin, -0.07, 0.07);
+                          &thtgt, 100, -0.06, 0.06);
 
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "phi0",
                           "Phi(transport) at target",
-                          &ph0, nbin, -0.04, 0.04);
+                          &ph0, 100, -0.04, 0.04);
 
    expt->inout->BookHisto(kTRUE, kTRUE, ICOLLIM, "phtrans1",
                           "Phi(transport) with mult. scatt",
@@ -415,7 +415,7 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "qsq",
 			   "Qsq (weighted, in accept)",
-			   &qsq, 200,  0.0015, 0.025);
+			   &qsq, 100,  0.003, 0.014);
 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "qsq_hap3",
 			   "Qsq (weighted, in accept)",
