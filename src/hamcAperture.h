@@ -10,6 +10,7 @@
 #include <vector>
 #include <iostream>
 #include "hamcTrack.h"
+#define LEFTHRS 1
 
 using namespace std;
 
@@ -349,8 +350,7 @@ ClassDef (hamcPaulBox, 0)   // Paul's semicircular, really complicated box.
   class hamcPREX2Coll : public hamcAperture {  
     // The PREX-II collimator
   public:
-    hamcPREX2Coll() : hamcAperture() {  
-        osign = -1;  // +1 for L-HRS, -1 for R-HRS
+    hamcPREX2Coll(Int_t which_spectrom) : hamcAperture() {  
         rmin = 0.175;
         rmax = 0.315;
         rmin_c = 0.147 + 0.352*rmin;
@@ -362,14 +362,19 @@ ClassDef (hamcPaulBox, 0)   // Paul's semicircular, really complicated box.
         chamfer2_b = 0.05;
         chamfer2_s = 0.03456;
         xmax = 0.089;
-        ymin0 = -0.03975;
+        ymin = -0.03975;
+        osign=-1;
+        if(which_spectrom == LEFTHRS) {
+// actually the same transport model is used for R-HRS and L-HRS,
+// so no flipping here; only the sign of tg_ph is flipped for comparison 
+// to real data at the target.
+	  osign = -1.0; 
+        }
     }
     ~hamcPREX2Coll() {};
     Int_t WhichBox( Float_t x, Float_t y ) const {
-       y = osign*y;
-       Float_t ymin = osign*ymin0;
        if( fabs(x) > xmax) return -1;
-       if( y > ymin ) return -1;
+/*       if( y < ymin ) return -1;
 
        if( x < ((-chamfer1_m*(y+chamfer1_s) - chamfer1_b)) ) return -1;
        if( x > ((chamfer1_m*(y+chamfer1_s) + chamfer1_b)) ) return -1;
@@ -379,6 +384,15 @@ ClassDef (hamcPaulBox, 0)   // Paul's semicircular, really complicated box.
 
        if( x*x + (y+rmin_c)*(y+rmin_c) < rmin*rmin ) return -1;
        if( x*x + (y+rmax_c)*(y+rmax_c) > rmax*rmax ) return -1;
+*/
+       if( x < ((-chamfer1_m*(osign*y+chamfer1_s) - chamfer1_b)) ) return -1;//New
+       if( x > ((chamfer1_m*(osign*y+chamfer1_s) + chamfer1_b)) ) return -1;//New
+
+       if( x < ((-chamfer2_m*(osign*y+chamfer2_s) - chamfer2_b)) ) return -1;//New
+       if( x > ((chamfer2_m*(osign*y+chamfer2_s) + chamfer2_b)) ) return -1;//New
+
+       if( x*x + (osign*y+rmin_c)*(osign*y+rmin_c) < rmin*rmin ) return -1;//New
+       if( x*x + (osign*y+rmax_c)*(osign*y+rmax_c) > rmax*rmax ) return -1;//New
 
        return 1;
     };
@@ -392,7 +406,7 @@ ClassDef (hamcPaulBox, 0)   // Paul's semicircular, really complicated box.
       Float_t rmin,rmax,rmin_c,rmax_c;
       Float_t chamfer1_m,chamfer1_b,chamfer1_s;
       Float_t chamfer2_m,chamfer2_b,chamfer2_s;
-      Float_t xmax,ymin0;
+      Float_t xmax,ymin;
 #ifndef NODICT
 ClassDef (hamcPREX2Coll, 0)   // PREXII collimator
 #endif
