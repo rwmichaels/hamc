@@ -9,9 +9,9 @@ GLD=g++
 
 MAKENODICTIONARY=1
 
-# Using fortran-dependent code (=1) or not (=0), soon to be obsolete.
-# If not, then rely on HRSTRans (libhrstrans) for transport.
-USEFORTRAN=1
+# Using fortran-dependent code (LeRose functions) uncomment this.
+# Lately we rely on HRSTRans (libhrstrans) for transport.
+# USEFORTRAN=1
 
 export OSNAME := $(shell uname)
 
