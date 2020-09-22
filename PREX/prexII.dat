@@ -1,39 +1,31 @@
 # (optional) Setup parameters for hamc for PREX
 
-# Setup choices for HRS
+# Setup choices for HRS.  Using prex2 collimator normally
 hrs_setup warmseptum thrstrans useprex2collim
+#usepaulcollim
+#useempiricalangle
+#
+#
 
-# tune B with Q1 Q2 Q3 optimized by Bob, and the Septum Fringe bugfix
-# Again, this is a result of MY optimization.
-# quad_fields q1 0.121 q2 -0.140  q3 -0.153
-# And here is tune P used in the 2019 PREX run
+# HRSTrans parameters.  Here is tune P used in the 2019 PREX run
 quad_fields q1 0.11505 q2 -0.136543 q3 = -0.159619
 
-# standard HRS tune, this does not belong with septum
+# For references, here is standard HRS tune, this does not belong with septum
 # quad_fields q1 0.1746 q2 -0.1385  q3 -0.1281
 
-# "useempiricalangle" is different from (slightly better than) "usepaulcollim"
-# for empirical, need HRS_arm left; or change "osign" in hamcAperture.h
-
-# this is the A_T hole in paulcollim.
-# t (thickness) is in g/cm2, this gives t/X0 ~ 0.117
-#spreader_collim a 9 z 4 t 7.6
 # turn off A_T hole for PREX-2
 spreader_collim a 9 z 4 t 0.0001
 
-# HRS momentum and angle (4.87 --> 4.74 for PREX-II)
+# HRS momentum and angle (4.74 for PREX-II)
 HRS_P0 0.95
 HRS_angle 4.74
 
 # If Angle_cut is turned on, there is a cut on scattering angle 
-# The cut of 4.58 simulates accurately the mistune of septum to 730 A
-# which is where we ran in 2010.
-# The cut 4.28 is where we want to run, I think.
+# Ideally this should be commented out and let the collimator do the job.
+# Angle_cut 3.0
 
-Angle_cut 2.64
-
-# HRS_arm left
-HRS_arm right
+HRS_arm left
+# HRS_arm right
 
 PREX_model horpb
 
@@ -44,10 +36,9 @@ PREX_model horpb
 # 0 means ignore the acceptance limit, 1 means use it.
 #  1         2       3        4      5     6     7        8        9   10
 # target,  collim septin, septout,  q1, dipin, dipexit, q3in, q3exit, focal
-
 # cut at collim
-HRS_acceptoff 0 1 0 0 1 1 0 1 1 0 0
-# HRS_acceptoff 0 0 0 0 0 0 0 0 0 0 0 
+HRS_acceptoff   0 1 0 0 1 1 0 1 1 0
+# HRS_acceptoff 0 0 0 0 0 0 0 0 0 0  
 
 
 
@@ -75,5 +66,5 @@ detector dist 0
 
 # to turn off ntup (good for high stats).  
 # comment this out to receive an ntuple output.
-hamc_inout nontup
+# hamc_inout nontup
 
