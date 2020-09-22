@@ -467,8 +467,8 @@ void hamcSpecHRS::AddBreakPoint(Int_t where) {
 
 // Collim4 is the new PREX-II collimator
      case ICOLLIM4:
-       if (IsWarmSeptum()) { 
-	 break_point.push_back(new hamcSpecBrk(where, new hamcPREX2Coll()));
+       if (IsWarmSeptum()) {    // 
+	 break_point.push_back(new hamcSpecBrk(where, new hamcPREX2Coll(which_spectrom)));
          idx = break_point.size()-1; 
        }
        break;
