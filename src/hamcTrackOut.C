@@ -142,7 +142,7 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
    expt->inout->BookHisto(kFALSE, kTRUE, IFOCAL, "hthacc", 
 	        "Theta Accepted", &theta_deg, 600,2.0,8.0);
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "hthaccw", 
-	        "Theta Accepted, Weighted", &theta_deg, 600,2.0,8.0);
+	        "Theta Accepted, Weighted", &theta_deg, 200,2.0,8.0);
    expt->inout->BookHisto(kTRUE, kTRUE, ITARGET, "xtg","X at target",&xtrans,200,-0.1,0.1);
    expt->inout->BookHisto(kTRUE, kTRUE, ITARGET, "ytg","Y at target",&ytrans,200,-0.05,0.05);
    expt->inout->BookHisto(kFALSE, kFALSE, ITARGET, "ph", 
@@ -152,7 +152,7 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "momu", 
 	        "Momentum in HRS", &pmom, nbin, 0.5*P0,1.1*P0);
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "momz", 
-		 "Momentum in HRS (zoom)", &pmom, 100, 0.925, 0.955);
+		"Momentum in HRS (zoom)", &pmom, 200, 0.91,0.96);
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "momb", 
 	   "Momentum in HRS (hamc)", &pmom, 200, 1.01, 1.07);
    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "momb2", 
@@ -219,7 +219,7 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 
 
 // For designing the collimator
-   expt->inout->BookHisto(kFALSE, kFALSE, ICOLLIM, "xycoll",
+   expt->inout->BookHisto(kFALSE, kFALSE, ICOLLIM, "xycol<l",
 			  "X-Y at collimator",
 			  &ytrans, nbin, -0.5, 0.5,
                           &xtrans, nbin, -0.5, 0.5);
@@ -309,15 +309,30 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
                             &xtrans, nbin,-xbox,xbox,
                             &ytrans, nbin,-ybox,ybox);
 
-   expt->inout->BookHisto(kFALSE, kFALSE, IQ1EXIT, "xyq1", 
+   expt->inout->BookHisto(kFALSE, kFALSE, ICOLLIM4, "xyq1", 
 		      "Transport X-Y at Q1 exit", 
                             &ytrans, nbin,-0.8,0.8,
                             &xtrans, nbin,-0.8,0.8);
 
-   expt->inout->BookHisto(kFALSE, kTRUE, IQ1EXIT, "xyq1a", 
+   expt->inout->BookHisto(kFALSE, kTRUE, ICOLLIM4, "xyq1a", 
 		   "Transport X-Y inside Q1 acceptance", 
                             &ytrans, nbin,-0.8,0.8,
                             &xtrans, nbin,-0.8,0.8);
+
+   expt->inout->BookHisto(kFALSE, kFALSE, ICOLLIM4, "xyq1z", 
+		      "Transport X-Y at Q1 exit (zoom)", 
+                            &ytrans, nbin,-0.20,0.20,
+                            &xtrans, nbin,-0.20,0.20);
+
+   expt->inout->BookHisto(kFALSE, kTRUE, ICOLLIM4, "xyq1za", 
+		   "Transport X-Y inside Q1 acceptance (zoom)", 
+                            &ytrans, nbin,-0.20,0.20,
+                            &xtrans, nbin,-0.20,0.20);
+
+   expt->inout->BookHisto(kTRUE, kTRUE, ICOLLIM4, "xyq1wza", 
+		"Transport X-Y inside Q1 accept. (weigted, zoom)", 
+                            &ytrans, 400,-0.20,0.20,
+                            &xtrans, 400,-0.20,0.20);
 
    Float_t xdlo,xdhi;
    parser.Load(expt->inout->GetStrVect("hrs_setup"));
@@ -415,7 +430,7 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "qsq",
 			   "Qsq (weighted, in accept)",
-			   &qsq, 100,  0.003, 0.014);
+			   &qsq, 100,  0.0016, 0.0152);
 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "qsq_hap3",
 			   "Qsq (weighted, in accept)",
