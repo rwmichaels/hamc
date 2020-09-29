@@ -8,7 +8,7 @@ hrs_setup warmseptum thrstrans useprex2collim
 #
 
 # HRSTrans parameters.  Here is tune P used in the 2019 PREX run
-quad_fields q1 0.11505 q2 -0.136543 q3 = -0.159619
+quad_fields q1 0.11505 q2 -0.136543 q3 -0.159619
 
 # For references, here is standard HRS tune, this does not belong with septum
 # quad_fields q1 0.1746 q2 -0.1385  q3 -0.1281
