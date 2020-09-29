@@ -171,7 +171,7 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
    expt->inout->BookHisto(kFALSE, kFALSE, IFOCAL, "thph",
 	  "Theta-Phi at target (unbiased)",&ph0,nbin,-0.3,0.3,
 			  &th0,nbin,-0.3,0.3);
-   expt->inout->BookHisto(kFALSE, kTRUE, ICOLLIM, "thphc",
+   expt->inout->BookHisto(kFALSE, kTRUE, ICOLLIM4, "thphc",
 	  "Theta-Phi at target (collimated)",&ph0,nbin,-0.3,0.3,
 			  &th0,nbin,-0.3,0.3);
    expt->inout->BookHisto(kFALSE, kTRUE, IFOCAL, "thpha",
@@ -209,7 +209,7 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
                           "Phi(transport) at target",
                           &ph0, 100, -0.04, 0.04);
 
-   expt->inout->BookHisto(kTRUE, kTRUE, ICOLLIM, "phtrans1",
+   expt->inout->BookHisto(kTRUE, kTRUE, ICOLLIM4, "phtrans1",
                           "Phi(transport) with mult. scatt",
                           &phtrans, nbin, -0.04, 0.04);
 
@@ -219,23 +219,23 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 
 
 // For designing the collimator
-   expt->inout->BookHisto(kFALSE, kFALSE, ICOLLIM, "xycol<l",
+   expt->inout->BookHisto(kFALSE, kFALSE, ICOLLIM4, "xycol<l",
 			  "X-Y at collimator",
 			  &ytrans, nbin, -0.5, 0.5,
                           &xtrans, nbin, -0.5, 0.5);
 
-   expt->inout->BookHisto(kFALSE, kTRUE, ICOLLIM, "xycolla",
+   expt->inout->BookHisto(kFALSE, kTRUE, ICOLLIM4, "xycolla",
 			  "X-Y at collimator in acceptance",
 			  &ytrans, nbin, -0.5, 0.5,
                           &xtrans, nbin, -0.5, 0.5);
 
 // For designing the collimator2
-   expt->inout->BookHisto(kFALSE, kFALSE, ICOLLIM2, "xycoll2",
+   expt->inout->BookHisto(kFALSE, kFALSE, ICOLLIM4, "xycoll2",
 			  "X-Y at collimator2",
 			  &ytrans, nbin, -0.5, 0.5,
                           &xtrans, nbin, -0.5, 0.5);
 
-   expt->inout->BookHisto(kFALSE, kTRUE, ICOLLIM2, "xycoll2a",
+   expt->inout->BookHisto(kFALSE, kTRUE, ICOLLIM4, "xycoll2a",
 			  "X-Y at collimator2 in acceptance",
 			  &ytrans, nbin, -0.5, 0.5,
                           &xtrans, nbin, -0.5, 0.5);
@@ -244,7 +244,7 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
   expt->inout->BookHisto(kFALSE, kFALSE, IFOCAL, "thph2",
 		     "Theta-Phi at target (Monte Carlo)",&ph0,nbin,-0.06,0.06,
 			  &th0,nbin,-0.1,0.1);
-   expt->inout->BookHisto(kFALSE, kTRUE, ICOLLIM, "thphc2",
+   expt->inout->BookHisto(kFALSE, kTRUE, ICOLLIM4, "thphc2",
 		  "Theta-Phi at target (collimated)",&ph0,nbin,-0.06,0.06,
 			  &th0,nbin,-0.1,0.1);
    expt->inout->BookHisto(kFALSE, kTRUE, IFOCAL, "thpha2",
@@ -255,12 +255,12 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 			  &th0,nbin,-0.1,0.1);
 
 // For designing the collimator3
-   expt->inout->BookHisto(kFALSE, kFALSE, ICOLLIM3, "xycoll3",
+   expt->inout->BookHisto(kFALSE, kFALSE, ICOLLIM4, "xycoll3",
 			  "X-Y at collimator3",
 			  &ytrans, nbin, -0.5, 0.5,
                           &xtrans, nbin, -0.5, 0.5);
 
-   expt->inout->BookHisto(kFALSE, kTRUE, ICOLLIM3, "xycoll3a",
+   expt->inout->BookHisto(kFALSE, kTRUE, ICOLLIM4, "xycoll3a",
 			  "X-Y at collimator3 in acceptance",
 			  &ytrans, nbin, -0.5, 0.5,
                           &xtrans, nbin, -0.5, 0.5);
@@ -277,11 +277,11 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 // Note, since Xtrans is vertical, it makes a little more sense to 
 // plot it on the vertical axis (and Ytrans on horizontal)
 
-   expt->inout->BookHisto(kFALSE, kFALSE, ICOLLIM, "xycol", 
+   expt->inout->BookHisto(kFALSE, kFALSE, ICOLLIM4, "xycol", 
 		      "Transport X-Y at collimator", 
                             &ytrans, nbin,-xbox,xbox,
                             &xtrans, nbin,-ybox,ybox);
-   expt->inout->BookHisto(kFALSE, kTRUE, ICOLLIM, "xycola", 
+   expt->inout->BookHisto(kFALSE, kTRUE, ICOLLIM4, "xycola", 
 		   "Transport X-Y inside collimator acceptance", 
 			  &ytrans, nbin,-0.2,0.2,
 			  &xtrans, nbin,-0.35,-0.17);
@@ -393,8 +393,16 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 
    expt->inout->BookHisto(kFALSE, kFALSE, IFOCAL, "xyfoc1", 
 		      "X-Y at focal plane (even if not accepted)", 
-			  &xtrans, nbin,-1.2,0.2,
+			  &xtrans, nbin,-1.2,0.5,
 			  &ytrans, nbin,-0.4,0.4);
+
+   expt->inout->BookHisto(kFALSE, kFALSE, IFOCAL, "xfoc1", 
+		      "X-Y at focal plane (even if not accepted)", 
+			  &xtrans, nbin,-1.2,0.5,
+			  &ytrans, nbin,-0.4,0.4);
+
+
+
 
    expt->inout->BookHisto(kFALSE, kTRUE, IFOCAL, "xyfoc1a", 
 		      "Accepted X-Y at focal plane", 
@@ -422,7 +430,15 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "yfoc",
                          "Y at focal plane",
-			   &ytrans, 200, -0.05, 0.05);
+			   &ytrans, 200, -0.2, 0.2);
+
+    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "thfoc",
+                         "theta at focal plane",
+			   &thtrans, 200, -0.1,0.1);
+
+    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "phfoc",
+                         "phi at focal plane",
+			   &phtrans, 200, -0.04,0.04);
 
     expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "xdet",
                          "X (det. frame)",
