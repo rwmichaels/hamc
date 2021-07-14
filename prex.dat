@@ -1,31 +1,32 @@
 # (optional) Setup parameters for hamc for PREX
 
-# Setup choices for HRS
-hrs_setup warmseptum uselerose useempiricalangle
+# Setup choices for HRS.  Using prex2 collimator normally
+hrs_setup warmseptum thrstrans useempiricalangle 
+#useprex2collim
+#usepaulcollim
+#usetrkcorr
+#
+#
 
-# "useempiricalangle" is different from (slightly better than) "usepaulcollim"
-# for empirical, need HRS_arm left; or change "osign" in hamcAperture.h
+# HRSTrans parameters.  Here is tune P used in the 2019 PREX run
+quad_fields q1 0.11505 q2 -0.136543 q3 -0.159619
 
-# this is the A_T hole in paulcollim.
-# t (thickness) is in g/cm2, this gives t/X0 ~ 0.117
-spreader_collim a 9 z 4 t 7.6
+# For references, here is standard HRS tune, this does not belong with septum
+# quad_fields q1 0.1746 q2 -0.1385  q3 -0.1281
 
-# HRS momentum and angle
-HRS_P0 1.063
-# Left HRS, survey 5.007, Nilanga 5.053
-# HRS_angle 5.007, Nilanga 
-# Right HRS, survey 4.910, Nilanga same
- HRS_angle 4.910
+# turn off A_T hole for PREX-2
+spreader_collim a 9 z 4 t 0.0001
 
-#HRS_angle 5.053
+# HRS momentum and angle (4.74 for PREX-II)
+HRS_P0 0.95
+HRS_angle 4.74
 
 # If Angle_cut is turned on, there is a cut on scattering angle 
-# The cut of 4.58 simulates accurately the mistune of septum to 730 A
-# which is where we ran in 2010.
-Angle_cut 4.73
+# Ideally this should be commented out and let the collimator do the job.
+# Angle_cut 3.0
 
-#HRS_arm left
-HRS_arm right
+HRS_arm left
+# HRS_arm right
 
 PREX_model horpb
 
@@ -34,19 +35,20 @@ PREX_model horpb
 # When uncommented it's a way of testing the acceptance model.
 # Turn on one thing at a time to check the cuts at each point.
 # 0 means ignore the acceptance limit, 1 means use it.
-#  1         2       3        4             5     6     7        8        9   10
-# target, septin, septout, collim(collim2), q1, dipin, dipexit, q3in, q3exit, focal
-
+#  1         2       3        4      5     6     7        8        9   10
+# target,  collim septin, septout,  q1, dipin, dipexit, q3in, q3exit, focal
 # cut at collim
-HRS_acceptoff 0 0 0 1 1 1 1 1 1 1 
+HRS_acceptoff   0 1 0 0 1 1 0 1 1 0
+# HRS_acceptoff 0 0 0 0 0 0 0 0 0 0  
 
 
 
-# Beam parameters.  Raster is in meters, typ 0.002 (means +/- this)
-# normally raster 0.003 x 0.002 
+# Beam parameters.
+# Raster is in meters, typ 0.006 (full width, so +/- half this)
+# normally raster 0.006 x 0.004 
 # current in uA.
 
-beam  E0 1.0605 E0sigma 0.00011   rastered  xraster 0.003  yraster 0.002 current 70
+beam  E0 0.95 E0sigma 0.00011   rastered  xraster 0.006  yraster 0.004 current 70
 
 
 # range of angles (scatt, azimuth) in degrees
@@ -56,7 +58,7 @@ out_angles thetamin 0.001 thetamax 20  phimin 0 phimax 180
 radcor numer
 
 # distance of detector to focal plane (meters)
-detector dist 1.23
+detector dist 0
 
 # uncomment the following line if you want to iterate
 #  iterate
@@ -66,5 +68,5 @@ detector dist 1.23
 
 # to turn off ntup (good for high stats).  
 # comment this out to receive an ntuple output.
-#hamc_inout nontup
+# hamc_inout nontup
 
