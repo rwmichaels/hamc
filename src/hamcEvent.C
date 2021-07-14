@@ -11,6 +11,7 @@
 #include "hamcTrackOut.h"
 #include "hamcInout.h"
 #include "hamcTarget.h"
+#include "HrsTrkCorr.h"
 #include "Rtypes.h"
 #include <string>
 #include <vector>
@@ -25,6 +26,7 @@ hamcEvent::hamcEvent()
 {
   evnum = 0;
   beam = new hamcBeam();
+  trkcorr=0;
   did_init = kFALSE;
 }
 
@@ -55,6 +57,15 @@ Int_t hamcEvent::Init(hamcExpt* expt) {
     }
   }
 
+  Int_t which_hrs = expt->GetSpectrom(0)->which_spectrom;         
+  if (which_hrs == LEFTHRS) {  
+    trkcorr = new HrsTrkCorr(HrsTrkCorr::kRight);
+  } else {
+    trkcorr = new HrsTrkCorr(HrsTrkCorr::kLeft);
+  }
+  trkcorr->Init();
+  trkcorr->Print();
+  
   tracknoms = new hamcTrackOut();
   tracksieve = new hamcTrackOut();
   tracksievenoms = new hamcTrackOut();

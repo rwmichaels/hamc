@@ -46,7 +46,8 @@ hamcSpecHRS::hamcSpecHRS(Int_t which, Float_t pmom, Float_t angle) : P0(pmom), c
   dipk1 = 0.050178;
   dipk2 = 0.037056;
   fTune = THRSTrans::kPREX;
-
+  use_trkcorr = 0;
+  
   // set collim_distance (numbers from Kiad's pointing diagrams), 13Dec10, rupesh
   // collim_distance below are for hapIII
   if (which_spectrom == LEFTHRS) collim_distance = 1.1825;   // <- meters LHRS
@@ -135,6 +136,9 @@ Int_t hamcSpecHRS::Init(hamcExpt *expt) {
 
    parser.Load(expt->inout->GetStrVect("hrs_setup"));
    //   parser.Print();
+   if (parser.IsFound("usetrkcorr")) {
+     use_trkcorr=1;
+   }   
    if (parser.IsFound("noseptum")) {
      UseHRSOnly();
    }   

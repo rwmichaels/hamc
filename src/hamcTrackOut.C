@@ -2,6 +2,7 @@
 //  R. Michaels  July 2008
 
 #include "hamcTrackOut.h"
+#include "HrsTrkCorr.h"
 #include "hamcTrack.h"
 #include "hamcBeam.h"
 #include "hamcPhysics.h"
@@ -460,6 +461,14 @@ Int_t hamcTrackOut::Init(Int_t ispec, hamcExpt *expt) {
 			   "Qsq (weighted, in accept)",
 			   &qsq_atrk, 200, 0.0015, 0.025);
 
+    expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "dtgth",
+			   "Average shift in tg_th",
+			   &dtgth, 100, -0.004, 0.004);
+
+   expt->inout->BookHisto(kTRUE, kTRUE, IFOCAL, "dtgph",
+			   "Average shift in tg_ph",
+			   &dtgph, 100, -0.004, 0.004);
+
 
     // Add some variables to the event ntuple
     // These get filled at the focal plane
@@ -620,7 +629,11 @@ Int_t hamcTrackOut::LabToTrans(hamcExpt *expt) {
 
   Int_t ldebug=0;
   Int_t useold_test = 0;
-
+  Double_t ybeam,newph,newth;
+  Int_t use_trkcorr =  expt->GetSpectrom(0)->use_trkcorr;
+  Float_t delsign =-1;
+  static int lcnt = 0;
+  
   Float_t stc, ctc, ttc, sts, cts, tts, sps, cps;
   stc = TMath::Sin(theta_central);
   ctc = TMath::Cos(theta_central);
@@ -678,6 +691,29 @@ Int_t hamcTrackOut::LabToTrans(hamcExpt *expt) {
   Float_t tanphi_t = xsign * ( ttc - tanphprime)/(1 + ttc * tanphprime); 
   Float_t tantheta_t = -1. *  (sts * cps) * TMath::Sqrt( 1 + tanphi_t * tanphi_t)/(TMath::Sqrt(cts * cts + sts*sts*sps*sps));
 
+  dtgph = 999;  dtgth = 999;
+  
+  if (use_trkcorr) {
+    if((lcnt++ % 1000)==0) cout << "Using track corrections (HrsTrkCorr) "<<endl;
+    // horizontal transport position.
+       ybeam = 1000*tvect->GetY(); // units: millimeters
+// transport angles at the target: tanphi_t, tantheta_t are horizontal, vertical
+       expt->event->trkcorr->Load(ybeam, tanphi_t, tantheta_t);
+// corrections to the transport angles
+// note: delsign = +1 is "normal" -- moving ideal sieve holes to distorted track
+       newph = tanphi_t + delsign * expt->event->trkcorr->GetDeltaTgPh();
+       newth = tantheta_t + delsign * expt->event->trkcorr->GetDeltaTgTh();
+// overwrite tg_th and tg_ph, to be used in rest of tracking.
+       tanphi_t = newph;
+       tantheta_t = newth;
+
+       dtgph =  delsign * expt->event->trkcorr->GetDeltaTgPh();
+       dtgth =  delsign * expt->event->trkcorr->GetDeltaTgTh();
+  }
+
+       
+       //  cout << "trkcorr stuff "<<ybeam<<"  "<<tanphi_t<<"  "<<newph<<"  "<<tantheta_t<<"  "<<newth<<endl;
+  
   ph0 = tanphi_t;
   if (flip_phi) ph0 = -1.0*tanphi_t;
   th0 = tantheta_t;

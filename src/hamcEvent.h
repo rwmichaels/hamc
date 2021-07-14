@@ -10,6 +10,7 @@
 class hamcBeam;
 class hamcTrackOut;
 class hamcExpt;
+class HrsTrkCorr;
 
 class hamcEvent {
 
@@ -26,6 +27,7 @@ class hamcEvent {
      hamcTrackOut* tracknoms;
      hamcTrackOut* tracksieve;
      hamcTrackOut* tracksievenoms;
+     HrsTrkCorr* trkcorr;
      Int_t inaccept;  // In acceptance (1) or not (0)
      Int_t brkpoint;  // which break point we're on.
 

@@ -163,6 +163,7 @@ class hamcSpecHRS {
      Float_t GetCollimDist() const { return collim_distance; };
 
      Int_t which_spectrom, numdet;
+     Int_t use_trkcorr;
      std::string name, desc;
      Float_t P0, P0_sigma, central_angle;
      Float_t collim2_radlen1, collim2_radlen2;
