@@ -101,6 +101,8 @@ class hamcTrack {
      Float_t xtrans, thtrans, ytrans, phtrans, dpptrans, ztrans;
 // The following transport right after scattering.
      Float_t x0,th0,y0,ph0,dpp0,z0;
+// shifts in tg_th and tg_ph from HrsTrkCorr
+     Float_t dtgth, dtgph;
 // The following are theta, phi after multiple scattering applied to present location
      Float_t th_ms, ph_ms;
 
