@@ -16,7 +16,7 @@ For version control, I'm using github:
 https://github.com/rwmichaels/hamc
 
 A good way to proceed is to make your repository on github.com,
-the Fork my repository, then "git clone" it to your local PC.
+then Fork my repository, then "git clone" it to your local PC.
 If you have useful changes you can make a "pull request" to me.
 
 To proceed do the following
@@ -74,5 +74,9 @@ and the header THRSTrans.h need to be in this directory.
 To obtain THRSTrans, you could use my git repo for that,
 though in principle Seamus Riordan should be maintaining it.
 https://github.com/rwmichaels/hrstrans
+
+July 2021 : added HrsTrkCorr option (usetrkcorr in prex.dat).
+But this is a specialist item, it's safest to leave that flag
+out of the hrs_setup line in prex.dat control file.
 
 
