@@ -374,8 +374,8 @@ ClassDef (hamcPaulBox, 0)   // Paul's semicircular, really complicated box.
     ~hamcPREX2Coll() {};
     Int_t WhichBox( Float_t x, Float_t y ) const {
        if( fabs(x) > xmax) return -1;
-/*       if( y < ymin ) return -1;
-
+       if( osign*y < ymin ) return -1;
+/*
        if( x < ((-chamfer1_m*(y+chamfer1_s) - chamfer1_b)) ) return -1;
        if( x > ((chamfer1_m*(y+chamfer1_s) + chamfer1_b)) ) return -1;
 
@@ -391,8 +391,8 @@ ClassDef (hamcPaulBox, 0)   // Paul's semicircular, really complicated box.
        if( x < ((-chamfer2_m*(osign*y+chamfer2_s) - chamfer2_b)) ) return -1;//New
        if( x > ((chamfer2_m*(osign*y+chamfer2_s) + chamfer2_b)) ) return -1;//New
 
-       if( x*x + (osign*y+rmin_c)*(osign*y+rmin_c) < rmin*rmin ) return -1;//New
-       if( x*x + (osign*y+rmax_c)*(osign*y+rmax_c) > rmax*rmax ) return -1;//New
+       if( sqrt(x*x + (osign*y+rmin_c)*(osign*y+rmin_c)) < rmin ) return -1;//New
+       if( sqrt(x*x + (osign*y+rmax_c)*(osign*y+rmax_c)) > rmax ) return -1;//New
 
        return 1;
     };
@@ -402,7 +402,7 @@ ClassDef (hamcPaulBox, 0)   // Paul's semicircular, really complicated box.
       return kFALSE;
     }
     private:
-      Float_t osign; // +1 for L-HRS, -1 for R-HRS
+      Float_t osign; // -1 for L-HRS, +1 for R-HRS
       Float_t rmin,rmax,rmin_c,rmax_c;
       Float_t chamfer1_m,chamfer1_b,chamfer1_s;
       Float_t chamfer2_m,chamfer2_b,chamfer2_s;
@@ -412,23 +412,26 @@ ClassDef (hamcPREX2Coll, 0)   // PREXII collimator
 #endif
   };
 
-class hamcAngleCollim : public hamcAperture {  
+class hamcAngleCollim1 : public hamcAperture {  
+
+// this version is for PREX-1
+
 // This is a purely empirical collimation for the HRS.
 // The target angles tg_th and tg_ph (called th0 and phi0 in hamc)
 // are checked to see if they are inside or outside a polygon
 // defined by points hpt[],vpt[] where "h" means the horizontal
 // angle (tg_ph) and "v" means vertical.
 public:
-  hamcAngleCollim() : hamcAperture() {
+  hamcAngleCollim1() : hamcAperture() {
     npts = 0;
     blowup = 1.0;   
     infty = 999999;
     debug = 0;
     Init();
   }
-  ~hamcAngleCollim() { };
+  ~hamcAngleCollim1() { };
   void Init() {
-    std::cout <<" Into AngleCollim init"<<std::endl;
+    std::cout <<" Into AngleCollim1 init"<<std::endl;
     // These points must be in the order of the polygon (going CCW for example).
     // Units are radians.  "v" is vertical.
 
@@ -480,6 +483,406 @@ public:
     npts = vpt.size();
   
     Float_t osign = -1;  // +1 for L-HRS, -1 for R-HRS
+    ohmin = 99999;
+    ohmax = -99999;
+    ovmin = 99999;
+    ovmax = -99999;
+
+    Float_t hshift = 0.0;
+
+    for (Int_t i = 0; i < npts; i++) {
+  // Possible Sign flip for an HRS (compared to hamc)
+        hpt[i] = osign*hpt[i] + hshift;
+        hpt[i] = blowup * hpt[i];
+        vpt[i] = blowup * vpt[i];
+        if (hpt[i] < ohmin) ohmin = hpt[i];
+        if (hpt[i] > ohmax) ohmax = hpt[i];
+        if (vpt[i] < ovmin) ovmin = vpt[i];
+        if (vpt[i] > ovmax) ovmax = vpt[i];
+
+	//	std::cout << "Emp. angle "<<i<<"  "<<hpt[i]<<"  "<<vpt[i]<<"  signs "<<hsign[i]<<"   "<<vsign[i]<<std::endl;
+    }
+
+     Print();
+  }
+  void Print() const { 
+    std::cout<<"Empirical angle collimation. **** Num points = "<<npts<<std::endl;
+    for (Int_t i = 0; i < npts; i++) {
+      std::cout << "Pt "<<i<<"  "<<hpt[i]<<"  "<<vpt[i];
+     }
+    hamcAperture::Print();
+  }
+  Int_t WhichBox(Float_t vert, Float_t horiz) const {
+ // Check angles from target.  Units are radians.
+ // Here, horiz is horizontal angle, vert = vertical
+
+    if (debug) std::cout << "Into WhichBox vert,horiz =  "<<vert<<"  "<<horiz<<std::endl;
+    if (horiz < ohmin || horiz > ohmax) return -1;
+    if (vert < ovmin || vert > ovmax) return -1;
+
+    Int_t i, j, c = 0;
+    for (i = 0, j = npts-1; i < npts; j = i++) {
+      if ( ((vpt[i]>vert) != (vpt[j]>vert)) &&
+	   (horiz < (hpt[j]-hpt[i]) * (vert-vpt[i]) / (vpt[j]-vpt[i]) + hpt[i]) )
+	c = !c;
+    }
+    if (c == 0) return -1;
+    return 1;
+
+  }
+  Bool_t CheckAccept(hamcTrack *trk) const {
+    if (!trk) return kFALSE;
+    Float_t theta = trk->tvect->GetTheta();
+    Float_t phi = trk->tvect->GetPhi();
+    Int_t idx = WhichBox(theta,phi);
+    if (idx == 1) return kTRUE;
+    return kFALSE;
+  }
+private:
+  Int_t npts;
+  Int_t debug;
+  Float_t blowup, infty;
+  Float_t ohmin, ohmax; 
+  Float_t ovmin, ovmax; 
+  std::vector<Float_t> vpt,hpt;
+
+#ifndef NODICT
+ClassDef (hamcAngleCollim1, 0)   // Empirical angle collimation.
+#endif
+};
+
+class hamcAngleCollim : public hamcAperture {  
+  //
+  // Updated for prex-2
+  //
+// This is a purely empirical collimation for the HRS.
+// The target angles tg_th and tg_ph (called th0 and phi0 in hamc)
+// are checked to see if they are inside or outside a polygon
+// defined by points hpt[],vpt[] where "h" means the horizontal
+// angle (tg_ph) and "v" means vertical.
+public:
+  hamcAngleCollim() : hamcAperture() {
+    npts = 0;
+    blowup = 1.0;   
+    infty = 999999;
+    debug = 0;
+    Init();
+  }
+  ~hamcAngleCollim() { };
+  void Init() {
+    std::cout <<" Into AngleCollim init"<<std::endl;
+    // These points must be in the order of the polygon (going CCW for example).
+    // Units are radians.  "v" is vertical.
+
+#ifdef TEST1
+    hpt.push_back(0);   vpt.push_back(-0.01);  
+    hpt.push_back(0);   vpt.push_back(0.01);   
+    hpt.push_back(0.005);   vpt.push_back(0.03);
+    hpt.push_back(0.02);   vpt.push_back(0.01); 
+    hpt.push_back(0.02);   vpt.push_back(-0.01);
+    hpt.push_back(0.005);   vpt.push_back(-0.03);
+#endif
+
+    // A first try at PREX-2 collimation.  Sept 24, 2020
+    //based on PREX-2 old database
+/*    hpt.push_back(0.01300);  vpt.push_back(0.04250);
+    hpt.push_back(0.01200);  vpt.push_back(0.04250);
+    hpt.push_back(0.01100);  vpt.push_back(0.04250);
+    hpt.push_back(0.01000);  vpt.push_back(0.04250);
+    hpt.push_back(0.00900);  vpt.push_back(0.04250);
+    hpt.push_back(0.00800);  vpt.push_back(0.04250);
+    hpt.push_back(0.00700);  vpt.push_back(0.04250);
+    hpt.push_back(0.00600);  vpt.push_back(0.04250);
+    hpt.push_back(0.00500);  vpt.push_back(0.04250);
+    hpt.push_back(0.00400);  vpt.push_back(0.04250);
+    hpt.push_back(0.00300);  vpt.push_back(0.04240);
+    hpt.push_back(0.00200);  vpt.push_back(0.04230);
+    hpt.push_back(0.00100);  vpt.push_back(0.04220);
+    hpt.push_back(0.00000);  vpt.push_back(0.04210);
+    hpt.push_back(-0.00100); vpt.push_back(0.04190);
+    hpt.push_back(-0.00200); vpt.push_back(0.04160);
+    hpt.push_back(-0.00300); vpt.push_back(0.04130);
+    hpt.push_back(-0.00400); vpt.push_back(0.04090);
+    hpt.push_back(-0.00500); vpt.push_back(0.04060);
+    hpt.push_back(-0.00600); vpt.push_back(0.04020);
+    hpt.push_back(-0.00700); vpt.push_back(0.03975);
+    hpt.push_back(-0.00800); vpt.push_back(0.03900);
+    hpt.push_back(-0.00900); vpt.push_back(0.03820);
+    hpt.push_back(-0.01000); vpt.push_back(0.03680);
+    hpt.push_back(-0.01100); vpt.push_back(0.03590);
+    hpt.push_back(-0.01200); vpt.push_back(0.03500);
+    hpt.push_back(-0.01300); vpt.push_back(0.03400);
+    hpt.push_back(-0.01400); vpt.push_back(0.03285);
+    hpt.push_back(-0.01500); vpt.push_back(0.03170);
+    hpt.push_back(-0.01600); vpt.push_back(0.03000);
+    hpt.push_back(-0.01700); vpt.push_back(0.02840);
+    hpt.push_back(-0.01800); vpt.push_back(0.02705);
+    hpt.push_back(-0.01900); vpt.push_back(0.02500);
+    hpt.push_back(-0.01950); vpt.push_back(0.02370);
+    hpt.push_back(-0.02000); vpt.push_back(0.02150);
+    hpt.push_back(-0.02050); vpt.push_back(0.02020);
+    hpt.push_back(-0.02100); vpt.push_back(0.01820);
+    hpt.push_back(-0.02150); vpt.push_back(0.01760);
+    hpt.push_back(-0.02200); vpt.push_back(0.01240);
+    hpt.push_back(-0.02250); vpt.push_back(0.00650);
+    hpt.push_back(-0.02270); vpt.push_back(0.00350);
+    hpt.push_back(-0.02285); vpt.push_back(0.00160);
+    hpt.push_back(-0.02300); vpt.push_back(0.00000);
+    hpt.push_back(-0.02285); vpt.push_back(-0.00160);
+    hpt.push_back(-0.02270); vpt.push_back(-0.00350);
+    hpt.push_back(-0.02250); vpt.push_back(-0.00650);
+    hpt.push_back(-0.02200); vpt.push_back(-0.01240);
+    hpt.push_back(-0.02150); vpt.push_back(-0.01760);
+    hpt.push_back(-0.02100); vpt.push_back(-0.01820);
+    hpt.push_back(-0.02050); vpt.push_back(-0.02020);
+    hpt.push_back(-0.02000); vpt.push_back(-0.02150);
+    hpt.push_back(-0.01950); vpt.push_back(-0.02370);
+    hpt.push_back(-0.01900); vpt.push_back(-0.02450);
+    hpt.push_back(-0.01800); vpt.push_back(-0.02560);
+    hpt.push_back(-0.01700); vpt.push_back(-0.02680);
+    hpt.push_back(-0.01600); vpt.push_back(-0.02810);
+    hpt.push_back(-0.01500); vpt.push_back(-0.02930);
+    hpt.push_back(-0.01400); vpt.push_back(-0.03010);
+    hpt.push_back(-0.01300); vpt.push_back(-0.03220);
+    hpt.push_back(-0.01200); vpt.push_back(-0.03340);
+    hpt.push_back(-0.01100); vpt.push_back(-0.03460);
+    hpt.push_back(-0.01000); vpt.push_back(-0.03550);
+    hpt.push_back(-0.00900); vpt.push_back(-0.03630);
+    hpt.push_back(-0.00800); vpt.push_back(-0.03700);
+    hpt.push_back(-0.00700); vpt.push_back(-0.03780);
+    hpt.push_back(-0.00600); vpt.push_back(-0.03880);
+    hpt.push_back(-0.00500); vpt.push_back(-0.03990);
+    hpt.push_back(-0.00400); vpt.push_back(-0.04100);
+    hpt.push_back(-0.00300); vpt.push_back(-0.04140);
+    hpt.push_back(-0.00200); vpt.push_back(-0.04170);
+    hpt.push_back(-0.00100); vpt.push_back(-0.04210);
+    hpt.push_back(0.00000);  vpt.push_back(-0.04260);
+    hpt.push_back(0.00100);  vpt.push_back(-0.04300);
+    hpt.push_back(0.00200);  vpt.push_back(-0.04350);
+    hpt.push_back(0.00300);  vpt.push_back(-0.04370);
+    hpt.push_back(0.00400);  vpt.push_back(-0.04400);
+    hpt.push_back(0.00500);  vpt.push_back(-0.04420);
+    hpt.push_back(0.00600);  vpt.push_back(-0.04440);
+    hpt.push_back(0.00700);  vpt.push_back(-0.04460);
+    hpt.push_back(0.00800);  vpt.push_back(-0.04480);
+    hpt.push_back(0.00900);  vpt.push_back(-0.04490);
+    hpt.push_back(0.01000);  vpt.push_back(-0.04500);
+    hpt.push_back(0.01100);  vpt.push_back(-0.04500);
+    hpt.push_back(0.01200);  vpt.push_back(-0.04505);
+    hpt.push_back(0.01300);  vpt.push_back(-0.04500);
+    hpt.push_back(0.012995); vpt.push_back(-0.04380);
+    hpt.push_back(0.01299); vpt.push_back(-0.04220);
+    hpt.push_back(0.012985); vpt.push_back(-0.04050);
+    hpt.push_back(0.01298); vpt.push_back(-0.03890);
+    hpt.push_back(0.012975); vpt.push_back(-0.03720);
+    hpt.push_back(0.01297); vpt.push_back(-0.03560);
+    hpt.push_back(0.012965); vpt.push_back(-0.03390);
+    hpt.push_back(0.01296); vpt.push_back(-0.03230);
+    hpt.push_back(0.012955); vpt.push_back(-0.03060);
+    hpt.push_back(0.01295); vpt.push_back(-0.02900);
+    hpt.push_back(0.012945); vpt.push_back(-0.02740);
+    hpt.push_back(0.01294); vpt.push_back(-0.02570);
+    hpt.push_back(0.012935); vpt.push_back(-0.02400);
+    hpt.push_back(0.01293); vpt.push_back(-0.02240);
+    hpt.push_back(0.012925); vpt.push_back(-0.02070);
+    hpt.push_back(0.01292); vpt.push_back(-0.01910);
+    hpt.push_back(0.012915); vpt.push_back(-0.01740);
+    hpt.push_back(0.01291); vpt.push_back(-0.01580);
+    hpt.push_back(0.012905); vpt.push_back(-0.01420);
+    hpt.push_back(0.01290); vpt.push_back(-0.01250);
+    hpt.push_back(0.012895); vpt.push_back(-0.01090);
+    hpt.push_back(0.01289); vpt.push_back(-0.00920);
+    hpt.push_back(0.01265); vpt.push_back(-0.00808);
+    hpt.push_back(0.01230); vpt.push_back(-0.00646);
+    hpt.push_back(0.01195); vpt.push_back(-0.00484);
+    hpt.push_back(0.01160); vpt.push_back(-0.00324);
+    hpt.push_back(0.01140); vpt.push_back(-0.00161);
+    hpt.push_back(0.01130); vpt.push_back(-0.00000);
+    hpt.push_back(0.01140); vpt.push_back(-0.00161);
+    hpt.push_back(0.01160); vpt.push_back(0.00324);
+    hpt.push_back(0.01195); vpt.push_back(0.00484);
+    hpt.push_back(0.01230); vpt.push_back(0.00646);
+    hpt.push_back(0.01265); vpt.push_back(0.00808);
+    hpt.push_back(0.01289); vpt.push_back(0.00920);
+    hpt.push_back(0.012895); vpt.push_back(0.01070);
+    hpt.push_back(0.01290); vpt.push_back(0.01223);
+    hpt.push_back(0.012905); vpt.push_back(0.01370);
+    hpt.push_back(0.01291); vpt.push_back(0.01525);
+    hpt.push_back(0.012915); vpt.push_back(0.01675);
+    hpt.push_back(0.01292); vpt.push_back(0.01826);
+    hpt.push_back(0.012925); vpt.push_back(0.01975);
+    hpt.push_back(0.01293); vpt.push_back(0.02128);
+    hpt.push_back(0.012935); vpt.push_back(0.02278);
+    hpt.push_back(0.01294); vpt.push_back(0.02430);
+    hpt.push_back(0.012945); vpt.push_back(0.02580);
+    hpt.push_back(0.01295); vpt.push_back(0.02733);
+    hpt.push_back(0.012955); vpt.push_back(0.02883);
+    hpt.push_back(0.01296); vpt.push_back(0.03034);
+    hpt.push_back(0.012965); vpt.push_back(0.03184);
+    hpt.push_back(0.01297); vpt.push_back(0.03337);
+    hpt.push_back(0.012975); vpt.push_back(0.034870);
+    hpt.push_back(0.01298); vpt.push_back(0.03638);
+    hpt.push_back(0.012985); vpt.push_back(0.037880);
+    hpt.push_back(0.01299); vpt.push_back(0.03942);
+    hpt.push_back(0.012995); vpt.push_back(0.040920);
+*/
+
+    // A first try at PREX-2 collimation.  Oct 25, 2020
+    //based on PREX-2 new database
+    hpt.push_back(0.01500);  vpt.push_back(0.03890);
+    hpt.push_back(0.01400);  vpt.push_back(0.03890);
+    hpt.push_back(0.01300);  vpt.push_back(0.03890);
+    hpt.push_back(0.01200);  vpt.push_back(0.03890);
+    hpt.push_back(0.01100);  vpt.push_back(0.03890);
+    hpt.push_back(0.01000);  vpt.push_back(0.03890);
+    hpt.push_back(0.00900);  vpt.push_back(0.03890);
+    hpt.push_back(0.00800);  vpt.push_back(0.03890);
+    hpt.push_back(0.00700);  vpt.push_back(0.03890);
+    hpt.push_back(0.00600);  vpt.push_back(0.03890);
+    hpt.push_back(0.00500);  vpt.push_back(0.03890);
+    hpt.push_back(0.00400);  vpt.push_back(0.03890);
+    hpt.push_back(0.00300);  vpt.push_back(0.03880);
+    hpt.push_back(0.00200);  vpt.push_back(0.03870);
+    hpt.push_back(0.00100);  vpt.push_back(0.03860);
+    hpt.push_back(0.00000);  vpt.push_back(0.03850);
+    hpt.push_back(-0.00100); vpt.push_back(0.03840);
+    hpt.push_back(-0.00200); vpt.push_back(0.03820);
+    hpt.push_back(-0.00300); vpt.push_back(0.03810);
+    hpt.push_back(-0.00400); vpt.push_back(0.03780);
+    hpt.push_back(-0.00500); vpt.push_back(0.03760);
+    hpt.push_back(-0.00600); vpt.push_back(0.03730);
+    hpt.push_back(-0.00700); vpt.push_back(0.03690);
+    hpt.push_back(-0.00800); vpt.push_back(0.03640);
+    hpt.push_back(-0.00900); vpt.push_back(0.03590);
+    hpt.push_back(-0.01000); vpt.push_back(0.03520);
+    hpt.push_back(-0.01100); vpt.push_back(0.03430);
+    hpt.push_back(-0.01200); vpt.push_back(0.03360);
+    hpt.push_back(-0.01300); vpt.push_back(0.03270);
+    hpt.push_back(-0.01400); vpt.push_back(0.03160);
+    hpt.push_back(-0.01500); vpt.push_back(0.03000);
+    hpt.push_back(-0.01600); vpt.push_back(0.02800);
+    hpt.push_back(-0.01700); vpt.push_back(0.02760);
+    hpt.push_back(-0.01800); vpt.push_back(0.02650);
+    hpt.push_back(-0.01900); vpt.push_back(0.02500);
+    hpt.push_back(-0.01950); vpt.push_back(0.02370);
+    hpt.push_back(-0.02000); vpt.push_back(0.02150);
+    hpt.push_back(-0.02050); vpt.push_back(0.02020);
+    hpt.push_back(-0.02100); vpt.push_back(0.01820);
+    hpt.push_back(-0.02150); vpt.push_back(0.01760);
+    hpt.push_back(-0.02200); vpt.push_back(0.01240);
+    hpt.push_back(-0.02250); vpt.push_back(0.00650);
+    hpt.push_back(-0.02270); vpt.push_back(0.00350);
+    hpt.push_back(-0.02285); vpt.push_back(0.00160);
+    hpt.push_back(-0.02300); vpt.push_back(0.00000);
+    hpt.push_back(-0.02295); vpt.push_back(-0.00160);
+    hpt.push_back(-0.02290); vpt.push_back(-0.00350);
+    hpt.push_back(-0.02280); vpt.push_back(-0.00650);
+    hpt.push_back(-0.02265); vpt.push_back(-0.01240);
+    hpt.push_back(-0.02240); vpt.push_back(-0.01900);
+    hpt.push_back(-0.02200); vpt.push_back(-0.02050);
+    hpt.push_back(-0.02140); vpt.push_back(-0.02200);
+    hpt.push_back(-0.02050); vpt.push_back(-0.02600);
+    hpt.push_back(-0.01970); vpt.push_back(-0.02950);
+    hpt.push_back(-0.01900); vpt.push_back(-0.03060);
+    hpt.push_back(-0.01800); vpt.push_back(-0.03200);
+    hpt.push_back(-0.01700); vpt.push_back(-0.03350);
+    hpt.push_back(-0.01600); vpt.push_back(-0.03450);
+    hpt.push_back(-0.01500); vpt.push_back(-0.03510);
+    hpt.push_back(-0.01400); vpt.push_back(-0.03600);
+    hpt.push_back(-0.01300); vpt.push_back(-0.03700);
+    hpt.push_back(-0.01200); vpt.push_back(-0.03800);
+    hpt.push_back(-0.01100); vpt.push_back(-0.03900);
+    hpt.push_back(-0.01000); vpt.push_back(-0.04000);
+    hpt.push_back(-0.00900); vpt.push_back(-0.04090);
+    hpt.push_back(-0.00800); vpt.push_back(-0.04170);
+    hpt.push_back(-0.00700); vpt.push_back(-0.04240);
+    hpt.push_back(-0.00600); vpt.push_back(-0.04300);
+    hpt.push_back(-0.00500); vpt.push_back(-0.04360);
+    hpt.push_back(-0.00400); vpt.push_back(-0.04410);
+    hpt.push_back(-0.00300); vpt.push_back(-0.04450);
+    hpt.push_back(-0.00200); vpt.push_back(-0.04500);
+    hpt.push_back(-0.00100); vpt.push_back(-0.04570);
+    hpt.push_back(0.00000);  vpt.push_back(-0.04620);
+    hpt.push_back(0.00100);  vpt.push_back(-0.04650);
+    hpt.push_back(0.00200);  vpt.push_back(-0.04680);
+    hpt.push_back(0.00300);  vpt.push_back(-0.04700);
+    hpt.push_back(0.00400);  vpt.push_back(-0.04740);
+    hpt.push_back(0.00500);  vpt.push_back(-0.04780);
+    hpt.push_back(0.00600);  vpt.push_back(-0.04805);
+    hpt.push_back(0.00700);  vpt.push_back(-0.04840);
+    hpt.push_back(0.00800);  vpt.push_back(-0.04870);
+    hpt.push_back(0.00900);  vpt.push_back(-0.04900);
+    hpt.push_back(0.01000);  vpt.push_back(-0.04925);
+    hpt.push_back(0.01100);  vpt.push_back(-0.04950);
+    hpt.push_back(0.01200);  vpt.push_back(-0.04970);
+    hpt.push_back(0.01300);  vpt.push_back(-0.04980);
+    hpt.push_back(0.01400);  vpt.push_back(-0.05000);
+    hpt.push_back(0.01500);  vpt.push_back(-0.05020);
+    hpt.push_back(0.01498);  vpt.push_back(-0.05000);
+    hpt.push_back(0.01496); vpt.push_back(-0.04900);
+    hpt.push_back(0.01495); vpt.push_back(-0.04750);
+    hpt.push_back(0.01493); vpt.push_back(-0.04600);
+    hpt.push_back(0.01491); vpt.push_back(-0.04450);
+    hpt.push_back(0.01489); vpt.push_back(-0.04300);
+    hpt.push_back(0.01487); vpt.push_back(-0.04250);
+    hpt.push_back(0.01485); vpt.push_back(-0.04100);
+    hpt.push_back(0.01483); vpt.push_back(-0.03950);
+    hpt.push_back(0.01481); vpt.push_back(-0.03800);
+    hpt.push_back(0.01479); vpt.push_back(-0.03650);
+    hpt.push_back(0.01480); vpt.push_back(-0.03500);
+    hpt.push_back(0.01470); vpt.push_back(-0.03350);
+    hpt.push_back(0.01460); vpt.push_back(-0.03200);
+    hpt.push_back(0.01450); vpt.push_back(-0.03050);
+    hpt.push_back(0.01440); vpt.push_back(-0.02880);
+    hpt.push_back(0.01430); vpt.push_back(-0.02700);
+    hpt.push_back(0.01420); vpt.push_back(-0.02500);
+    hpt.push_back(0.01410); vpt.push_back(-0.02300);
+    hpt.push_back(0.01405); vpt.push_back(-0.02050);
+    hpt.push_back(0.01400); vpt.push_back(-0.01900);
+    hpt.push_back(0.01395); vpt.push_back(-0.01750);
+    hpt.push_back(0.01390); vpt.push_back(-0.01600);
+    hpt.push_back(0.01385); vpt.push_back(-0.01550);
+    hpt.push_back(0.01380); vpt.push_back(-0.01420);
+    hpt.push_back(0.01370); vpt.push_back(-0.01250);
+    hpt.push_back(0.01350); vpt.push_back(-0.01090);
+    hpt.push_back(0.01340); vpt.push_back(-0.00920);
+    hpt.push_back(0.01330); vpt.push_back(-0.00808);
+    hpt.push_back(0.01310); vpt.push_back(-0.00646);
+    hpt.push_back(0.01300); vpt.push_back(-0.00484);
+    hpt.push_back(0.01300); vpt.push_back(-0.00324);
+    hpt.push_back(0.01300); vpt.push_back(-0.00161);
+    hpt.push_back(0.01300); vpt.push_back(-0.00000);
+    hpt.push_back(0.01300); vpt.push_back(0.00161);
+    hpt.push_back(0.01300); vpt.push_back(0.00324);
+    hpt.push_back(0.01310); vpt.push_back(0.00484);
+    hpt.push_back(0.01330); vpt.push_back(0.00646);
+    hpt.push_back(0.01340); vpt.push_back(0.00808);
+    hpt.push_back(0.01350); vpt.push_back(0.00920);
+    hpt.push_back(0.01370); vpt.push_back(0.01070);
+    hpt.push_back(0.01380); vpt.push_back(0.01223);
+    hpt.push_back(0.01390); vpt.push_back(0.01370);
+    hpt.push_back(0.01400); vpt.push_back(0.01525);
+    hpt.push_back(0.01410); vpt.push_back(0.01675);
+    hpt.push_back(0.01420); vpt.push_back(0.01826);
+    hpt.push_back(0.01430); vpt.push_back(0.01975);
+    hpt.push_back(0.01440); vpt.push_back(0.02128);
+    hpt.push_back(0.01445); vpt.push_back(0.02278);
+    hpt.push_back(0.01450); vpt.push_back(0.02430);
+    hpt.push_back(0.01455); vpt.push_back(0.02580);
+    hpt.push_back(0.01460); vpt.push_back(0.02733);
+    hpt.push_back(0.01465); vpt.push_back(0.02883);
+    hpt.push_back(0.01470); vpt.push_back(0.03034);
+    hpt.push_back(0.01475); vpt.push_back(0.03184);
+    hpt.push_back(0.01480); vpt.push_back(0.03337);
+    hpt.push_back(0.01485); vpt.push_back(0.034870);
+    hpt.push_back(0.01495); vpt.push_back(0.03638);
+    hpt.push_back(0.01496); vpt.push_back(0.03700);
+    hpt.push_back(0.01497); vpt.push_back(0.03760);
+    hpt.push_back(0.01498); vpt.push_back(0.03810);
+
+    npts = vpt.size();
+  
+    Float_t osign = 1;  // -1 for L-HRS, +1 for R-HRS (this changed in 2020)
     ohmin = 99999;
     ohmax = -99999;
     ovmin = 99999;
