@@ -54,15 +54,17 @@ ifeq ($(OSNAME),Linux)
 
 endif
 
-HRSTRANSLIB   = /home/rom/hrstrans1/lib
+HRSTRANSLIB   = /home/robertmichaels/hrstrans/hrstrans
+HRSTCORRLIB   = /home/robertmichaels/trkcorr/lib
 
 MAKEDEPEND    = $(GCC)
 
-ALL_LIBS = $(LIBS) $(HRSTRANSLIB)/libhrstrans.so
+ALL_LIBS = $(LIBS) $(HRSTRANSLIB)/libhrstrans.so $(HRSTCORRLIB)/libtrkcorr.so
 
 SRCDIR=./src
 INCLUDES += -I$(SRCDIR)
 INCLUDES += -I$(HRSTRANSLIB)
+INCLUDES += -I$(HRSTCORRLIB)
 
 ifdef PROFILE
    CXXFLAGS += -pg
