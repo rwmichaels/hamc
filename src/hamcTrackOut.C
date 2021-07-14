@@ -631,7 +631,7 @@ Int_t hamcTrackOut::LabToTrans(hamcExpt *expt) {
   Int_t useold_test = 0;
   Double_t ybeam,newph,newth;
   Int_t use_trkcorr =  expt->GetSpectrom(0)->use_trkcorr;
-  Float_t delsign =-1;
+  Float_t delsign = 1;
   static int lcnt = 0;
   
   Float_t stc, ctc, ttc, sts, cts, tts, sps, cps;
